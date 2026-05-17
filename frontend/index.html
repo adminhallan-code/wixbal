@@ -263,11 +263,12 @@ tr:hover td{background:var(--bg)}
     
     <div class="fg3">
       <div>
-        <label>Teléfono</label>
-        <input id="f-telefono" placeholder="Ej. +502 1234 5678" />
+        <label>Teléfono <span style="color:var(--danger)">*</span></label>
+        <input id="f-telefono" placeholder="Ej. +502 1234 5678" oninput="_clearErr('f-telefono')" />
+        <span class="field-error" id="err-f-telefono"></span>
       </div>
       <div>
-        <label>Correo electrónico</label>
+        <label>Correo electrónico <span style="color:var(--danger)">*</span></label>
         <input id="f-correo" type="email" placeholder="Ej. cliente@correo.com" oninput="_clearErr('f-correo')" />
         <span class="field-error" id="err-f-correo"></span>
       </div>
@@ -767,15 +768,23 @@ function validarFormularioReserva() {
     _clearErr('f-personas');
   }
 
-  // Correo — opcional, pero si viene debe ser válido
+  // Teléfono — obligatorio
+  const telefonoRaw = document.getElementById('f-telefono').value.trim();
+  if (!telefonoRaw) {
+    _setErr('f-telefono', 'El teléfono es obligatorio.');
+    ok = false;
+  } else {
+    _clearErr('f-telefono');
+  }
+
+  // Correo — obligatorio y válido
   const correoRaw = document.getElementById('f-correo').value.trim();
-  if (correoRaw) {
-    if (!_EMAIL_RE_IDX.test(correoRaw)) {
-      _setErr('f-correo', 'Correo inválido. Debe tener el formato usuario@dominio.tld');
-      ok = false;
-    } else {
-      _clearErr('f-correo');
-    }
+  if (!correoRaw) {
+    _setErr('f-correo', 'El correo electrónico es obligatorio.');
+    ok = false;
+  } else if (!_EMAIL_RE_IDX.test(correoRaw)) {
+    _setErr('f-correo', 'Correo inválido. Debe tener el formato usuario@dominio.tld');
+    ok = false;
   } else {
     _clearErr('f-correo');
   }
