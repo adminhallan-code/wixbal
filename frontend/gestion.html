@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wolfs — Gestión</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icon-192.png" type="image/png">
+<meta name="theme-color" content="#111111">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="/auth.js"></script>
+<script src="/update.js"></script>
+<script src="/notif.js"></script>
+<style>
+:root{--bg:#f7f7f7;--surface:#fff;--surface2:#eeeeee;--border:#e0e0e0;--text:#111111;--text2:#555555;--text3:#888888;--accent:#111111;--accent-light:#f0f0f0;--warn:#b45309;--warn-light:#fef3c7;--danger:#991b1b;--danger-light:#fef2f2;--success:#166534;--success-light:#f0fdf4;--radius:10px;--radius-lg:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── Nav ── */
+.nav{background:#111;color:#fff;display:flex;align-items:center;gap:.5rem;padding:.65rem 1.25rem;position:sticky;top:0;z-index:100}
+.nav-logo{font-family:'DM Serif Display',serif;font-size:1.05rem;color:#fff;text-decoration:none;white-space:nowrap}
+.nav-links{display:flex;align-items:center;gap:.25rem;flex:1;flex-wrap:wrap}
+.nav-link{color:#ccc;text-decoration:none;font-size:.85rem;padding:.35rem .65rem;border-radius:6px;white-space:nowrap;transition:background .15s}
+.nav-link:hover,.nav-link.active{background:#2a2a2a;color:#fff}
+.dropdown{position:relative}
+.dropdown-btn{background:none;border:none;color:#ccc;font-size:.85rem;cursor:pointer;padding:.35rem .65rem;border-radius:6px;font-family:inherit;white-space:nowrap;transition:background .15s}
+.dropdown-btn:hover{background:#2a2a2a;color:#fff}
+.dropdown-content{display:none;position:absolute;top:calc(100% + 4px);left:0;background:#1a1a1a;border:1px solid #333;border-radius:8px;min-width:180px;z-index:200;overflow:hidden}
+.dropdown:hover .dropdown-content,.dropdown.open .dropdown-content{display:block}
+.dropdown-content a{display:block;padding:.55rem 1rem;color:#ccc;text-decoration:none;font-size:.83rem}
+.dropdown-content a:hover{background:#2a2a2a;color:#fff}
+.nav-spacer{flex:1}
+.nav-hamburger{display:none;background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;padding:.2rem .4rem;margin-left:auto;line-height:1;border-radius:6px}
+.nav-hamburger:hover{background:#2a2a2a}
+.nav-logout{background:none;border:1px solid #444;color:#ccc;font-size:.82rem;cursor:pointer;padding:.32rem .75rem;border-radius:6px;font-family:inherit;transition:all .15s;white-space:nowrap}
+.nav-logout:hover{background:#2a2a2a;color:#fff}
+.notif-bell-wrap{position:relative}
+#notif-bell-btn{background:none;border:none;cursor:pointer;font-size:1.1rem;padding:.3rem .5rem;border-radius:6px;color:#ccc;position:relative;display:flex;align-items:center;gap:4px}
+#notif-bell-btn:hover{background:#2a2a2a;color:#fff}
+#notif-badge{background:#ef4444;color:#fff;font-size:.65rem;font-weight:700;border-radius:999px;min-width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px}
+#notif-panel{position:absolute;top:calc(100% + 8px);right:0;width:320px;background:#fff;border:1px solid #e0e0e0;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:300;max-height:420px;overflow-y:auto}
+.notif-panel-title{padding:.75rem 1rem;font-weight:600;font-size:.85rem;border-bottom:1px solid var(--border);background:#f9f9f9;border-radius:var(--radius-lg) var(--radius-lg) 0 0}
+.notif-item{display:flex;gap:.75rem;padding:.75rem 1rem;border-bottom:1px solid var(--border);transition:background .1s}
+.notif-item:last-child{border-bottom:none}
+.notif-nueva{background:#fefce8}
+.notif-icon{font-size:1.1rem;flex-shrink:0;margin-top:2px}
+.notif-body{flex:1;min-width:0}
+.notif-titulo{font-weight:600;font-size:.82rem;margin-bottom:2px}
+.notif-msg{font-size:.78rem;color:var(--text2);line-height:1.4}
+.notif-time{font-size:.72rem;color:var(--text3);margin-top:4px}
+.notif-empty{padding:1.5rem;text-align:center;color:var(--text3);font-size:.85rem}
+
+/* ── Layout ── */
+.container{max-width:960px;margin:0 auto;padding:1.5rem 1rem}
+.page-title{font-family:'DM Serif Display',serif;font-size:1.6rem;margin-bottom:1.5rem}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:.5rem;margin-bottom:1.5rem;border-bottom:2px solid var(--border)}
+.tab-btn{background:none;border:none;padding:.6rem 1.1rem;font-family:'DM Sans',sans-serif;font-size:.9rem;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* ── Card ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1.25rem}
+.card-title{font-weight:600;font-size:1rem;margin-bottom:1rem}
+
+/* ── Búsqueda / form ── */
+.search-row{display:flex;gap:.75rem;margin-bottom:1rem}
+.search-row input{flex:1;padding:.6rem .8rem;border:1px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:.9rem}
+.search-row input:focus{outline:none;border-color:var(--accent)}
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1rem;border:none;border-radius:var(--radius);font-family:inherit;font-size:.85rem;font-weight:500;cursor:pointer;transition:opacity .15s}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-danger{background:#991b1b;color:#fff}
+.btn-warn{background:#b45309;color:#fff}
+.btn-ghost{background:var(--accent-light);color:var(--accent)}
+.field-error{display:block;font-size:11px;color:#991b1b;margin-top:3px}
+.field-error:empty{display:none}
+input.input-err{border-color:#991b1b!important}
+.btn:hover:not(:disabled){opacity:.85}
+
+/* ── Reservación encontrada ── */
+.rv-card{border:1px solid var(--border);border-radius:var(--radius);padding:1rem;background:var(--surface2);margin-bottom:1rem}
+.rv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.5rem .75rem;margin-bottom:.75rem}
+.rv-field label{font-size:.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:.03em;display:block}
+.rv-field span{font-size:.88rem;font-weight:500}
+.rv-actions{display:flex;gap:.5rem;flex-wrap:wrap}
+
+/* ── Campos extra ── */
+.field-group{margin-bottom:.75rem}
+.field-group label{display:block;font-size:.8rem;font-weight:500;margin-bottom:.3rem}
+.field-group input,.field-group textarea,.field-group select{width:100%;padding:.55rem .75rem;border:1px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:.88rem}
+.field-group input:focus,.field-group textarea:focus{outline:none;border-color:var(--accent)}
+.fee-box{background:var(--warn-light);border:1px solid #fde68a;border-radius:var(--radius);padding:.75rem 1rem;margin:.75rem 0;font-size:.9rem}
+.fee-box strong{font-size:1.1rem}
+
+/* ── Link generado ── */
+.link-box{display:flex;gap:.5rem;align-items:center;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--radius);padding:.75rem 1rem;margin-top:.75rem}
+.link-box a{font-size:.82rem;color:#166534;word-break:break-all;flex:1;text-decoration:none}
+.link-box a:hover{text-decoration:underline}
+
+/* ── Tabla pendientes ── */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{background:var(--surface2);padding:.6rem .75rem;text-align:left;font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.03em;color:var(--text2)}
+td{padding:.6rem .75rem;border-top:1px solid var(--border);vertical-align:middle}
+tr:hover td{background:var(--surface2)}
+.badge{display:inline-block;padding:.2rem .5rem;border-radius:999px;font-size:.72rem;font-weight:600}
+.badge-warn{background:var(--warn-light);color:var(--warn)}
+.badge-success{background:var(--success-light);color:var(--success)}
+.badge-danger{background:var(--danger-light);color:var(--danger)}
+.badge-gray{background:var(--surface2);color:var(--text2)}
+
+/* ── Notificaciones tab ── */
+.notif-feed{display:flex;flex-direction:column;gap:.75rem}
+.notif-feed-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.9rem 1rem;display:flex;gap:.75rem}
+.notif-feed-item.notif-cancelacion{border-left:4px solid #ef4444}
+.notif-feed-item.notif-reprogramacion_pagada{border-left:4px solid #22c55e}
+.notif-feed-icon{font-size:1.3rem;flex-shrink:0}
+.notif-feed-body{flex:1}
+.notif-feed-titulo{font-weight:600;font-size:.88rem}
+.notif-feed-msg{font-size:.82rem;color:var(--text2);margin-top:2px;line-height:1.4}
+.notif-feed-time{font-size:.75rem;color:var(--text3);margin-top:.35rem}
+
+/* ── Alertas ── */
+.alert{padding:.75rem 1rem;border-radius:var(--radius);margin:.75rem 0;font-size:.88rem}
+.alert-ok{background:var(--success-light);color:var(--success);border:1px solid #bbf7d0}
+.alert-err{background:var(--danger-light);color:var(--danger);border:1px solid #fecaca}
+.hidden{display:none}
+
+/* ── Responsive móvil/tablet ── */
+@media(max-width:768px){
+  .nav-hamburger{display:flex;align-items:center;justify-content:center}
+  .nav-links{display:none;width:100%;flex-direction:column;align-items:stretch;gap:0;padding:.5rem 0;border-top:1px solid #2a2a2a;margin-top:.4rem}
+  .nav-links.open{display:flex}
+  .nav-link{padding:.7rem .9rem;border-radius:4px}
+  .dropdown-btn{width:100%;text-align:left;padding:.7rem .9rem;border-radius:4px}
+  .dropdown-content{position:static;border:none;border-radius:0;box-shadow:none;background:#161616;padding-left:1rem}
+  .dropdown:hover .dropdown-content{display:none}
+  .dropdown.open .dropdown-content{display:block}
+  .nav-spacer{display:none}
+  .nav-logout{margin:.4rem .9rem;width:calc(100% - 1.8rem);padding:.7rem;text-align:center}
+  .notif-bell-wrap{width:100%;padding:0 .9rem}
+  #notif-bell-btn{width:100%;justify-content:flex-start;padding:.7rem 0}
+  #notif-panel{position:fixed;top:0;left:0;right:0;width:100%;border-radius:0;max-height:60vh;border-top:none}
+}
+@media(max-width:768px){
+  .container,.main{padding:1rem .75rem !important}
+  .card{padding:1rem}
+  .page-title{font-size:1.3rem}
+  .search-row{flex-direction:column}
+  .search-row input,.search-row select,.search-row button{width:100%}
+  .btn{min-height:40px}
+  .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;padding-bottom:2px}
+  .tab-btn{white-space:nowrap;font-size:.82rem;padding:.5rem .8rem}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{min-width:500px}
+  .rv-grid{grid-template-columns:1fr 1fr !important}
+  .rv-actions{flex-wrap:wrap}
+  input,select,textarea{font-size:16px !important}
+}
+@media(max-width:480px){
+  .rv-grid{grid-template-columns:1fr !important}
+  .rv-actions button,.rv-actions a{width:100%}
+}
+</style>
+</head>
+<body>
+
+<!-- ── NAV — generado por nav.js ── -->
+<nav class="nav"></nav>
+<script src="/nav.js"></script>
+
+<div class="container">
+  <div class="page-title">Gestión de Reservaciones</div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="cambiarTab('cancelar')">🚫 Cancelar</button>
+    <button class="tab-btn"        onclick="cambiarTab('reprogramar')">📅 Reprogramar</button>
+    <button class="tab-btn"        onclick="cambiarTab('pendientes')">⏳ Pendientes de pago</button>
+    <button class="tab-btn"        onclick="cambiarTab('notificaciones')">🔔 Notificaciones</button>
+    <button class="tab-btn"        onclick="cambiarTab('solicitudes')" id="tab-btn-solicitudes">📋 Solicitudes <span id="sol-badge" style="display:none;background:#ef4444;color:#fff;border-radius:999px;font-size:.7rem;padding:1px 6px;margin-left:4px">0</span></button>
+  </div>
+
+  <!-- ══ TAB CANCELAR ══ -->
+  <div class="tab-content active" id="tab-cancelar">
+    <div class="card">
+      <div class="card-title">Buscar reservación para cancelar</div>
+      <div class="search-row">
+        <input id="c-buscar" placeholder="Nombre del cliente o ID..." oninput="buscarReservacion('cancelar')" />
+      </div>
+      <div id="c-resultados"></div>
+    </div>
+
+    <div class="card hidden" id="c-form">
+      <div class="card-title">Confirmar cancelación</div>
+      <div class="rv-card" id="c-rv-info"></div>
+      <div class="field-group">
+        <label>Motivo de cancelación (opcional)</label>
+        <textarea id="c-motivo" rows="2" placeholder="Ej. Cliente no pudo asistir..."></textarea>
+      </div>
+      <div id="c-alert" class="hidden"></div>
+      <button class="btn btn-danger" id="c-btn" onclick="confirmarCancelacion()">🚫 Confirmar cancelación</button>
+    </div>
+  </div>
+
+  <!-- ══ TAB REPROGRAMAR ══ -->
+  <div class="tab-content" id="tab-reprogramar">
+    <div class="card">
+      <div class="card-title">Buscar reservación para reprogramar</div>
+      <div class="search-row">
+        <input id="r-buscar" placeholder="Nombre del cliente o ID..." oninput="buscarReservacion('reprogramar')" />
+      </div>
+      <div id="r-resultados"></div>
+    </div>
+
+    <div class="card hidden" id="r-form">
+      <div class="card-title">Registrar reprogramación</div>
+      <div class="rv-card" id="r-rv-info"></div>
+      <div class="field-group">
+        <label>Nueva fecha de ascenso</label>
+        <input type="date" id="r-fecha" oninput="_clearErrG('r-fecha')" />
+        <span class="field-error" id="err-r-fecha"></span>
+      </div>
+      <div id="r-alert" class="hidden"></div>
+      <button class="btn btn-warn" id="r-btn" onclick="generarLinkReprogramacion()">📅 Registrar reprogramación</button>
+      <div id="r-link-result" class="hidden"></div>
+
+      <div style="margin-top:1rem;padding-top:1rem;border-top:1px dashed var(--border)">
+        <div style="font-size:.82rem;color:var(--text3);margin-bottom:.6rem">¿El cliente no sabe cuándo puede venir? Liberá su espacio en Amelia y establecé un recordatorio:</div>
+        <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+          <label style="font-size:.85rem;color:var(--text2)">Recordarme el:</label>
+          <input type="date" id="r-recordatorio-fecha" style="padding:.45rem .7rem;border:1px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:.85rem"/>
+          <button class="btn btn-ghost" onclick="establecerRecordatorio()">📌 Establecer recordatorio</button>
+        </div>
+        <div id="r-recordatorio-alert" class="hidden" style="margin-top:.5rem"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TAB PENDIENTES DE PAGO ══ -->
+  <div class="tab-content" id="tab-pendientes">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div class="card-title" style="margin:0">Reprogramaciones esperando pago</div>
+        <button class="btn btn-ghost" onclick="cargarPendientes()">↻ Actualizar</button>
+      </div>
+      <div id="pend-tabla"><div style="color:var(--text3);font-size:.85rem">Cargando...</div></div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div class="card-title" style="margin:0">⏰ Recordatorios de reprogramación pendiente</div>
+        <button class="btn btn-ghost" onclick="cargarRecordatorios()">↻ Actualizar</button>
+      </div>
+      <div id="rec-tabla"><div style="color:var(--text3);font-size:.85rem">Cargando...</div></div>
+    </div>
+  </div>
+
+  <!-- ══ TAB SOLICITUDES ══ -->
+  <div class="tab-content" id="tab-solicitudes">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div class="card-title" style="margin:0">Solicitudes de Link Pendientes</div>
+        <button class="btn btn-ghost" onclick="cargarSolicitudes()">↻ Actualizar</button>
+      </div>
+      <div id="sol-lista"><div style="color:var(--text3);font-size:.85rem">Cargando...</div></div>
+    </div>
+  </div>
+
+  <!-- ══ TAB NOTIFICACIONES ══ -->
+  <div class="tab-content" id="tab-notificaciones">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div class="card-title" style="margin:0">Historial de notificaciones</div>
+        <button class="btn btn-ghost" onclick="cargarNotifFeed()">↻ Actualizar</button>
+      </div>
+      <div id="notif-feed-wrap"><div style="color:var(--text3);font-size:.85rem">Cargando...</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BACKEND = '';
+let _tabActual = 'cancelar';
+let _rvSeleccionada = null; // reservación seleccionada actualmente
+
+// ── Tabs ────────────────────────────────────────────────────────
+function cambiarTab(tab) {
+  _tabActual = tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  const tabs = ['cancelar','reprogramar','pendientes','notificaciones','solicitudes'];
+  document.querySelectorAll('.tab-btn')[tabs.indexOf(tab)].classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'pendientes')     { cargarPendientes(); cargarRecordatorios(); }
+  if (tab === 'notificaciones') cargarNotifFeed();
+  if (tab === 'solicitudes')    cargarSolicitudes();
+}
+
+// ── Búsqueda de reservaciones ────────────────────────────────────
+let _buscarTimer = null;
+async function buscarReservacion(modo) {
+  clearTimeout(_buscarTimer);
+  _buscarTimer = setTimeout(() => _ejecutarBusqueda(modo), 350);
+}
+
+async function _ejecutarBusqueda(modo) {
+  const q = document.getElementById(modo === 'cancelar' ? 'c-buscar' : 'r-buscar').value.trim();
+  const cont = document.getElementById(modo === 'cancelar' ? 'c-resultados' : 'r-resultados');
+  const form = document.getElementById(modo === 'cancelar' ? 'c-form' : 'r-form');
+  form.classList.add('hidden');
+  if (q.length < 2) { cont.innerHTML = ''; return; }
+
+  cont.innerHTML = '<div style="color:var(--text3);font-size:.85rem;padding:.5rem 0">Buscando...</div>';
+
+  // Si es número, buscar por ID
+  let url;
+  if (/^\d+$/.test(q)) {
+    url = `${BACKEND}/api/reservaciones/${q}`;
+  } else {
+    url = `${BACKEND}/api/reservaciones/buscar?q=${encodeURIComponent(q)}`;
+  }
+
+  try {
+    const res  = await fetch(url);
+    const data = res.ok ? await res.json() : [];
+    const lista = Array.isArray(data) ? data : [data];
+    const validos = lista.filter(r => r && r.id);
+
+    if (!validos.length) {
+      cont.innerHTML = '<div style="color:var(--text3);font-size:.85rem;padding:.5rem 0">Sin resultados.</div>';
+      return;
+    }
+    cont.innerHTML = validos.map(r => `
+      <div class="rv-card" style="cursor:pointer;margin-bottom:.5rem" onclick="seleccionarRV(${JSON.stringify(JSON.stringify(r))}, '${modo}')">
+        <div style="font-weight:600">${r.nombre || '—'}</div>
+        <div style="font-size:.82rem;color:var(--text2)">${fmt(r.fecha_ascenso)} · ${r.tipo_cabana} · ${r.agencia||'—'} · <span style="color:${r.estado_pago==='Cancelado'?'#991b1b':r.estado_pago==='Completado'?'#166534':'#b45309'}">${r.estado_pago}</span></div>
+      </div>`).join('');
+  } catch {
+    cont.innerHTML = '<div style="color:#991b1b;font-size:.85rem">Error al buscar.</div>';
+  }
+}
+
+function seleccionarRV(jsonStr, modo) {
+  const rv = JSON.parse(jsonStr);
+  _rvSeleccionada = rv;
+  const cont = document.getElementById(modo === 'cancelar' ? 'c-resultados' : 'r-resultados');
+  cont.innerHTML = '';
+  document.getElementById(modo === 'cancelar' ? 'c-buscar' : 'r-buscar').value = rv.nombre || '';
+
+  if (modo === 'cancelar') {
+    document.getElementById('c-rv-info').innerHTML = rvInfoHtml(rv);
+    document.getElementById('c-alert').className = 'hidden';
+    document.getElementById('c-btn').disabled = (rv.estado_pago === 'Cancelado');
+    document.getElementById('c-form').classList.remove('hidden');
+  } else {
+    document.getElementById('r-rv-info').innerHTML = rvInfoHtml(rv);
+    document.getElementById('r-alert').className = 'hidden';
+    document.getElementById('r-link-result').classList.add('hidden');
+    document.getElementById('r-form').classList.remove('hidden');
+  }
+}
+
+function rvInfoHtml(rv) {
+  return `<div class="rv-grid">
+    <div class="rv-field"><label>Nombre</label><span>${rv.nombre||'—'}</span></div>
+    <div class="rv-field"><label>Fecha actual</label><span>${fmt(rv.fecha_ascenso)}</span></div>
+    <div class="rv-field"><label>Cabaña</label><span>${rv.tipo_cabana||'—'}</span></div>
+    <div class="rv-field"><label>Personas</label><span>${rv.no_personas||'—'}</span></div>
+    <div class="rv-field"><label>Paquete</label><span>${rv.paquete||'—'}</span></div>
+    <div class="rv-field"><label>Agencia</label><span>${rv.agencia||'—'}</span></div>
+    <div class="rv-field"><label>Estado</label><span>${rv.estado_pago||'—'}</span></div>
+  </div>`;
+}
+
+// ── Cancelar ─────────────────────────────────────────────────────
+async function confirmarCancelacion() {
+  if (!_rvSeleccionada) return;
+  const rv = _rvSeleccionada;
+  if (rv.estado_pago === 'Cancelado') { showAlert('c', 'Esta reservación ya está cancelada.', 'err'); return; }
+  if (!confirm(`¿Cancelar la reservación de ${rv.nombre} para el ${fmt(rv.fecha_ascenso)}?\n\nEsta acción notificará a todo el equipo.`)) return;
+
+  const btn = document.getElementById('c-btn');
+  btn.disabled = true; btn.textContent = 'Cancelando...';
+
+  try {
+    const res = await fetch(`${BACKEND}/api/reservaciones/${rv.id}/cancelar`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        motivo: document.getElementById('c-motivo').value.trim() || null,
+        cancelado_por: authUser()?.nombre || 'Admin'
+      })
+    });
+    if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Error'); }
+    showAlert('c', `✅ Reservación cancelada. Notificación enviada al equipo.`, 'ok');
+    _rvSeleccionada = null;
+    document.getElementById('c-buscar').value = '';
+    setTimeout(() => document.getElementById('c-form').classList.add('hidden'), 3000);
+  } catch(e) {
+    showAlert('c', `❌ ${e.message}`, 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = '🚫 Confirmar cancelación';
+  }
+}
+
+// ── Validación inline (gestion) ──────────────────────────────────
+function _setErrG(id, msg) {
+  const input = document.getElementById(id);
+  const errEl = document.getElementById('err-' + id);
+  if (input) input.classList.toggle('input-err', !!msg);
+  if (errEl) errEl.textContent = msg || '';
+}
+function _clearErrG(id) { _setErrG(id, ''); }
+// ─────────────────────────────────────────────────────────────────
+
+// ── Reprogramar ──────────────────────────────────────────────────
+async function generarLinkReprogramacion() {
+  if (!_rvSeleccionada) return;
+  const rv         = _rvSeleccionada;
+  const nuevaFecha = document.getElementById('r-fecha').value;
+  if (!nuevaFecha) { _setErrG('r-fecha', 'Seleccioná la nueva fecha de ascenso.'); showAlert('r', 'Seleccioná la nueva fecha de ascenso.', 'err'); return; }
+  const _fa = new Date(nuevaFecha + 'T00:00:00');
+  if (isNaN(_fa.getTime())) { _setErrG('r-fecha', 'Fecha inválida.'); return; }
+  const _hoy = new Date(); _hoy.setHours(0,0,0,0);
+  if (_fa < _hoy) { _setErrG('r-fecha', 'La nueva fecha debe ser hoy o en el futuro.'); return; }
+  if (nuevaFecha === rv.fecha_ascenso) { _setErrG('r-fecha', 'La nueva fecha es igual a la fecha actual.'); showAlert('r', 'La nueva fecha es igual a la fecha actual.', 'err'); return; }
+  _clearErrG('r-fecha');
+
+  const btn = document.getElementById('r-btn');
+  btn.disabled = true; btn.textContent = 'Registrando...';
+
+  try {
+    const res = await fetch(`${BACKEND}/api/reservaciones/${rv.id}/solicitar-reprogramacion`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        nueva_fecha:    nuevaFecha,
+        solicitado_por: authUser()?.nombre || 'Admin'
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Error al registrar');
+
+    const resultWrap = document.getElementById('r-link-result');
+    resultWrap.innerHTML = `
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--radius);padding:.75rem 1rem;margin-top:.75rem;font-size:.88rem;color:#166534">
+        ✅ Reprogramación registrada.<br>
+        <strong>${fmt(rv.fecha_ascenso)}</strong> → <strong>${fmt(nuevaFecha)}</strong><br>
+        <span style="color:var(--text2);font-size:.82rem">El equipo recibirá recordatorios automáticos hasta que se confirme el pago en efectivo.</span>
+      </div>`;
+    resultWrap.classList.remove('hidden');
+    showAlert('r', '✅ Reprogramación registrada exitosamente.', 'ok');
+  } catch(e) {
+    showAlert('r', `❌ ${e.message}`, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📅 Registrar reprogramación';
+  }
+}
+
+// ── Pendientes de pago ───────────────────────────────────────────
+async function cargarPendientes() {
+  const wrap = document.getElementById('pend-tabla');
+  wrap.innerHTML = '<div style="color:var(--text3);font-size:.85rem">Cargando...</div>';
+  try {
+    const res  = await fetch(`${BACKEND}/api/reschedule-pendientes`);
+    const rows = res.ok ? await res.json() : [];
+    if (!rows.length) {
+      wrap.innerHTML = '<div style="color:var(--text3);font-size:.85rem;padding:.5rem 0">Sin reprogramaciones pendientes.</div>';
+      return;
+    }
+    wrap.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr>
+        <th>Cliente</th><th>Fecha original</th><th>Nueva fecha</th><th>Paquete</th><th>Registrado por</th><th>Acciones</th>
+      </tr></thead>
+      <tbody>${rows.map(r => `<tr>
+        <td><strong>${r.nombre||'—'}</strong><br><small style="color:var(--text3)">${r.agencia||''}</small></td>
+        <td>${fmt(r.fecha_original)}</td>
+        <td><strong style="color:var(--success)">${fmt(r.fecha_nueva)}</strong></td>
+        <td>${r.paquete||'—'}</td>
+        <td style="font-size:.8rem;color:var(--text3)">${r.solicitado_por||'—'}</td>
+        <td>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+            <button class="btn btn-primary" style="font-size:.78rem;background:#166534" onclick="marcarPagadoReschedule(${r.id}, '${(r.nombre||'').replace(/'/g,"\\'")}')">💵 Marcar pagado</button>
+            <button class="btn btn-danger" style="font-size:.78rem" onclick="cancelarReschedule(${r.id}, '${(r.nombre||'').replace(/'/g,"\\'")}')">✕ Cancelar</button>
+          </div>
+        </td>
+      </tr>`).join('')}
+      </tbody></table></div>`;
+  } catch {
+    wrap.innerHTML = '<div style="color:#991b1b;font-size:.85rem">Error al cargar.</div>';
+  }
+}
+
+async function marcarPagadoReschedule(id, nombre) {
+  if (!confirm(`¿Confirmar que ${nombre} pagó en efectivo la reprogramación?`)) return;
+  try {
+    const res = await fetch(`${BACKEND}/api/reschedule-pendientes/${id}/marcar-pagado`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({marcado_por: authUser()?.nombre || 'Admin'})
+    });
+    if (!res.ok) throw new Error('Error');
+    cargarPendientes();
+    cargarRecordatorios();
+  } catch {
+    alert('Error al marcar como pagado.');
+  }
+}
+
+async function cancelarReschedule(id, nombre) {
+  if (!confirm(`¿Cancelar la reprogramación de ${nombre}?\nAmelia volverá a la fecha original.`)) return;
+  try {
+    const res = await fetch(`${BACKEND}/api/reschedule-pendientes/${id}/cancelar`, {method:'POST'});
+    if (!res.ok) throw new Error('Error');
+    cargarPendientes();
+    cargarRecordatorios();
+  } catch {
+    alert('Error al cancelar la reprogramación.');
+  }
+}
+
+// ── Recordatorios de reprogramación pendiente ────────────────────
+async function establecerRecordatorio() {
+  if (!_rvSeleccionada) return;
+  const rv    = _rvSeleccionada;
+  const fecha = document.getElementById('r-recordatorio-fecha').value;
+  if (!fecha) { showAlert('r-recordatorio', 'Seleccioná una fecha para el recordatorio.', 'err'); return; }
+
+  if (!confirm(`¿Establecer la reservación de ${rv.nombre} como pendiente de reprogramación?\n\nEsto cancelará su espacio en Amelia para que otra persona pueda reservarlo.\nEl sistema recordará al equipo a partir del ${fmt(fecha)}.`)) return;
+
+  try {
+    const res = await fetch(`${BACKEND}/api/reservaciones/${rv.id}/establecer-recordatorio`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        recordar_el: fecha,
+        creado_por:  authUser()?.nombre || 'Admin'
+      })
+    });
+    if (!res.ok) throw new Error('Error al guardar');
+    showAlert('r-recordatorio', `✅ Listo. El espacio en Amelia quedó libre y el sistema avisará al equipo a partir del ${fmt(fecha)}, cada 3 días hasta resolver.`, 'ok');
+    document.getElementById('r-recordatorio-fecha').value = '';
+    cargarRecordatorios();
+  } catch(e) {
+    showAlert('r-recordatorio', `❌ ${e.message}`, 'err');
+  }
+}
+
+async function cargarRecordatorios() {
+  const wrap = document.getElementById('rec-tabla');
+  if (!wrap) return;
+  wrap.innerHTML = '<div style="color:var(--text3);font-size:.85rem">Cargando...</div>';
+  try {
+    const res  = await fetch(`${BACKEND}/api/reschedule-recordatorios`);
+    const rows = res.ok ? await res.json() : [];
+    if (!rows.length) {
+      wrap.innerHTML = '<div style="color:var(--text3);font-size:.85rem;padding:.5rem 0">Sin recordatorios activos.</div>';
+      return;
+    }
+    wrap.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr>
+        <th>Cliente</th><th>Fecha original</th><th>Recordar el</th><th>Último aviso</th><th>Acciones</th>
+      </tr></thead>
+      <tbody>${rows.map(r => `<tr>
+        <td>
+          <strong>${r.nombre||'—'}</strong><br>
+          <small style="color:var(--text3)">${r.agencia||''} ${r.paquete ? '· '+r.paquete : ''} ${r.tipo_cabana ? '· '+r.tipo_cabana : ''}</small>
+        </td>
+        <td>${fmt(r.fecha_original)}</td>
+        <td><strong>${fmt(r.recordar_el)}</strong></td>
+        <td style="font-size:.8rem;color:var(--text3)">${r.ultimo_recordatorio ? fmt(r.ultimo_recordatorio.slice(0,10)) : '—'}</td>
+        <td>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center">
+            <input type="date" id="ext-${r.id}" style="padding:.35rem .5rem;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:.78rem"/>
+            <button class="btn btn-ghost" style="font-size:.75rem;padding:.35rem .6rem" onclick="extenderRecordatorio(${r.id})">↷ Extender</button>
+            <button class="btn btn-primary" style="font-size:.75rem;padding:.35rem .6rem" onclick="resolverRecordatorio(${r.id}, '${(r.nombre||'').replace(/'/g,"\\'")}')">✓ Resuelto</button>
+          </div>
+        </td>
+      </tr>`).join('')}
+      </tbody></table></div>`;
+  } catch {
+    wrap.innerHTML = '<div style="color:#991b1b;font-size:.85rem">Error al cargar recordatorios.</div>';
+  }
+}
+
+async function extenderRecordatorio(id) {
+  const nuevaFecha = document.getElementById(`ext-${id}`)?.value;
+  if (!nuevaFecha) { alert('Seleccioná la nueva fecha de recordatorio.'); return; }
+  try {
+    const res = await fetch(`${BACKEND}/api/reschedule-recordatorios/${id}/extender`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({nueva_fecha: nuevaFecha})
+    });
+    if (!res.ok) throw new Error('Error');
+    cargarRecordatorios();
+  } catch {
+    alert('Error al extender el recordatorio.');
+  }
+}
+
+async function resolverRecordatorio(id, nombre) {
+  if (!confirm(`¿Marcar el recordatorio de ${nombre} como resuelto?`)) return;
+  try {
+    const res = await fetch(`${BACKEND}/api/reschedule-recordatorios/${id}/resolver`, {method:'POST'});
+    if (!res.ok) throw new Error('Error');
+    cargarRecordatorios();
+  } catch {
+    alert('Error al resolver el recordatorio.');
+  }
+}
+
+// ── Notificaciones feed ──────────────────────────────────────────
+async function cargarNotifFeed() {
+  const wrap = document.getElementById('notif-feed-wrap');
+  wrap.innerHTML = '<div style="color:var(--text3);font-size:.85rem">Cargando...</div>';
+  try {
+    const res   = await fetch(`${BACKEND}/api/notificaciones`);
+    const notifs = res.ok ? await res.json() : [];
+    if (!notifs.length) {
+      wrap.innerHTML = '<div style="color:var(--text3);font-size:.85rem;padding:.5rem 0">Sin notificaciones recientes.</div>';
+      return;
+    }
+    const iconos = {cancelacion:'🚫', reprogramacion_pagada:'📅'};
+    wrap.innerHTML = `<div class="notif-feed">${notifs.map(n => `
+      <div class="notif-feed-item notif-${n.tipo}">
+        <div class="notif-feed-icon">${iconos[n.tipo]||'🔔'}</div>
+        <div class="notif-feed-body">
+          <div class="notif-feed-titulo">${n.titulo||''}</div>
+          <div class="notif-feed-msg">${n.mensaje||''}</div>
+          <div class="notif-feed-time">${fmtDatetime(n.creado_en)}${n.creado_por?' · '+n.creado_por:''}</div>
+        </div>
+      </div>`).join('')}</div>`;
+  } catch {
+    wrap.innerHTML = '<div style="color:#991b1b;font-size:.85rem">Error al cargar notificaciones.</div>';
+  }
+}
+
+// ── Endpoint búsqueda ────────────────────────────────────────────
+// El backend no tiene /api/reservaciones/buscar aún, así que lo hacemos
+// contra Supabase directamente (igual que el resto del frontend)
+const SB_URL = 'https://vimymnzlagzhfpbpjrvl.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpbXltbnpsYWd6aGZwYnBqcnZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NzcwNzEsImV4cCI6MjA5MjU1MzA3MX0.7p8ob8zr2dYkAvCV-8p_Mmp65laYlsG5KwCuyj7MdLc';
+const SB_HDR = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY };
+
+// Sobrescribimos _ejecutarBusqueda para usar Supabase directamente
+async function _ejecutarBusqueda(modo) {
+  const q    = document.getElementById(modo === 'cancelar' ? 'c-buscar' : 'r-buscar').value.trim();
+  const cont = document.getElementById(modo === 'cancelar' ? 'c-resultados' : 'r-resultados');
+  const form = document.getElementById(modo === 'cancelar' ? 'c-form' : 'r-form');
+  form.classList.add('hidden');
+  if (q.length < 2) { cont.innerHTML = ''; return; }
+  cont.innerHTML = '<div style="color:var(--text3);font-size:.85rem;padding:.5rem 0">Buscando...</div>';
+
+  try {
+    let url;
+    if (/^\d+$/.test(q)) {
+      url = `${SB_URL}/rest/v1/reservaciones?id=eq.${q}&select=id,nombre,fecha_ascenso,tipo_cabana,no_personas,paquete,agencia,estado_pago,link_pago&limit=5`;
+    } else {
+      url = `${SB_URL}/rest/v1/reservaciones?nombre=ilike.*${encodeURIComponent(q)}*&estado_pago=neq.Cancelado&select=id,nombre,fecha_ascenso,tipo_cabana,no_personas,paquete,agencia,estado_pago,link_pago&order=fecha_ascenso.desc&limit=8`;
+    }
+    const res  = await fetch(url, {headers: SB_HDR});
+    const rows = res.ok ? await res.json() : [];
+    if (!rows.length) {
+      cont.innerHTML = '<div style="color:var(--text3);font-size:.85rem;padding:.5rem 0">Sin resultados.</div>';
+      return;
+    }
+    cont.innerHTML = rows.map(r => `
+      <div class="rv-card" style="cursor:pointer;margin-bottom:.5rem" onclick='seleccionarRV(${JSON.stringify(JSON.stringify(r))}, "${modo}")'>
+        <div style="font-weight:600">${r.nombre||'—'} <span style="font-weight:400;font-size:.8rem;color:var(--text3)">#${r.id}</span></div>
+        <div style="font-size:.82rem;color:var(--text2)">${fmt(r.fecha_ascenso)} · ${r.tipo_cabana} · ${r.agencia||'—'} · <span style="font-weight:600;color:${r.estado_pago==='Cancelado'?'#991b1b':r.estado_pago==='Completado'?'#166534':'#b45309'}">${r.estado_pago}</span></div>
+      </div>`).join('');
+  } catch {
+    cont.innerHTML = '<div style="color:#991b1b;font-size:.85rem">Error al buscar.</div>';
+  }
+}
+
+// ── Helpers ──────────────────────────────────────────────────────
+function fmt(d) {
+  if (!d) return '—';
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+function fmtDatetime(iso) {
+  if (!iso) return '—';
+  try { return new Date(iso).toLocaleString('es-GT',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
+  catch { return iso; }
+}
+function showAlert(prefix, msg, tipo) {
+  const el = document.getElementById(prefix + '-alert');
+  el.textContent = msg;
+  el.className = tipo === 'ok' ? 'alert alert-ok' : 'alert alert-err';
+}
+
+// ── Solicitudes de Link ──────────────────────────────────────────
+async function cargarSolicitudes() {
+  const wrap = document.getElementById('sol-lista');
+  wrap.innerHTML = '<div style="color:var(--text3);font-size:.85rem">Cargando...</div>';
+  try {
+    const res  = await fetch(`${BACKEND}/api/solicitudes-link?estado=Pendiente`);
+    const rows = res.ok ? await res.json() : [];
+
+    // Actualizar badge
+    const badge = document.getElementById('sol-badge');
+    if (rows.length > 0) { badge.textContent = rows.length; badge.style.display = 'inline'; }
+    else { badge.style.display = 'none'; }
+
+    if (!rows.length) {
+      wrap.innerHTML = '<div style="color:var(--text3);font-size:.85rem;padding:.5rem 0">✓ Sin solicitudes pendientes.</div>';
+      return;
+    }
+    wrap.innerHTML = rows.map(sol => `
+      <div style="border:1.5px solid #fde68a;border-radius:var(--radius);padding:1rem;margin-bottom:.75rem;background:#fffbeb" id="sol-card-${sol.id}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.5rem;margin-bottom:.75rem">
+          <div>
+            <div style="font-weight:700;font-size:1rem">${sol.nombre||'—'}</div>
+            <div style="font-size:.8rem;color:var(--text2);margin-top:2px">
+              Solicitado por: <strong>${sol.solicitado_por||'—'}</strong> · ${fmtDatetime(sol.creado_en)}
+            </div>
+          </div>
+          <span class="badge badge-warn">⏳ Pendiente</span>
+        </div>
+        <div class="rv-grid">
+          <div class="rv-field"><label>Fecha ascenso</label><span>${fmt(sol.fecha_ascenso)}</span></div>
+          <div class="rv-field"><label>Cabaña</label><span>${sol.tipo_cabana||'—'}</span></div>
+          <div class="rv-field"><label>Personas</label><span>${sol.no_personas||'—'}</span></div>
+          <div class="rv-field"><label>Precio</label><span style="font-weight:600">Q${Number(sol.precio||0).toFixed(2)}</span></div>
+          <div class="rv-field"><label>Paquete</label><span>${sol.paquete||'—'}</span></div>
+          <div class="rv-field"><label>Agencia</label><span>${sol.agencia||'—'}</span></div>
+          ${sol.alergias?`<div class="rv-field"><label>Alergias</label><span>${sol.alergias}</span></div>`:''}
+          ${sol.telefono?`<div class="rv-field"><label>Teléfono</label><span>${sol.telefono}</span></div>`:''}
+          ${sol.correo?`<div class="rv-field"><label>Correo</label><span>${sol.correo}</span></div>`:''}
+          ${sol.notas?`<div class="rv-field" style="grid-column:span 2"><label>Notas</label><span>${sol.notas}</span></div>`:''}
+        </div>
+        <div class="rv-actions" style="margin-top:.75rem">
+          <button class="btn btn-primary" onclick="autorizarSolicitud(${sol.id}, '${(sol.nombre||'').replace(/'/g,"\\'")}')">✅ Autorizar</button>
+          <button class="btn" style="background:#fef2f2;color:#991b1b;border-color:#fecaca" onclick="toggleDenegarForm(${sol.id})">❌ Denegar</button>
+        </div>
+        <div id="denegar-form-${sol.id}" style="display:none;margin-top:.75rem;padding:.75rem;background:#fef2f2;border:1px solid #fecaca;border-radius:var(--radius)">
+          <div class="field-group" style="margin-bottom:.5rem">
+            <label>Motivo de denegación (requerido)</label>
+            <textarea id="denegar-motivo-${sol.id}" rows="2" placeholder="Ej. Precio incorrecto, fecha no disponible..."></textarea>
+          </div>
+          <div style="display:flex;gap:.5rem">
+            <button class="btn btn-danger" onclick="denegarSolicitud(${sol.id}, '${(sol.nombre||'').replace(/'/g,"\\'")}')">Confirmar denegación</button>
+            <button class="btn btn-ghost" onclick="toggleDenegarForm(${sol.id})">Cancelar</button>
+          </div>
+        </div>
+      </div>`).join('');
+  } catch {
+    wrap.innerHTML = '<div style="color:#991b1b;font-size:.85rem">Error al cargar solicitudes.</div>';
+  }
+}
+
+async function autorizarSolicitud(id, nombre) {
+  if (!confirm(`¿Autorizar el link para ${nombre}?\n\nSe creará el checkout en Recurrente y Ventas podrá copiarlo.`)) return;
+  const card = document.getElementById(`sol-card-${id}`);
+  const btn = card ? card.querySelector('.btn-primary') : null;
+  if (btn) { btn.disabled = true; btn.textContent = 'Autorizando...'; }
+
+  try {
+    const res = await fetch(`${BACKEND}/api/solicitudes-link/${id}/autorizar`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ autorizado_por: authUser()?.nombre || 'Admin' })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Error');
+
+    if (card) card.innerHTML = `
+      <div style="padding:.75rem;background:var(--success-light);border:1px solid #bbf7d0;border-radius:var(--radius)">
+        <div style="color:var(--success);font-weight:600;margin-bottom:.4rem">✅ Autorizado — Link creado</div>
+        <div style="font-size:.82rem;word-break:break-all;color:#166534;margin-bottom:.4rem">${data.checkout_url}</div>
+        <button class="btn btn-ghost" style="font-size:.78rem" onclick="navigator.clipboard.writeText('${data.checkout_url}').then(()=>this.textContent='✓ Copiado').catch(()=>{})">Copiar link</button>
+      </div>`;
+    cargarSolicitudes();
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = '✅ Autorizar'; }
+    alert(`Error al autorizar: ${e.message}`);
+  }
+}
+
+function toggleDenegarForm(id) {
+  const form = document.getElementById(`denegar-form-${id}`);
+  if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+async function denegarSolicitud(id, nombre) {
+  const motivo = (document.getElementById(`denegar-motivo-${id}`)?.value || '').trim();
+  if (!motivo) { alert('El motivo de denegación es requerido.'); return; }
+  if (!confirm(`¿Denegar la solicitud de ${nombre}?\n\nMotivo: ${motivo}`)) return;
+
+  try {
+    const res = await fetch(`${BACKEND}/api/solicitudes-link/${id}/denegar`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ motivo, denegado_por: authUser()?.nombre || 'Admin' })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Error');
+
+    const card = document.getElementById(`sol-card-${id}`);
+    if (card) card.innerHTML = `
+      <div style="padding:.75rem;background:var(--danger-light);border:1px solid #fecaca;border-radius:var(--radius)">
+        <div style="color:var(--danger);font-weight:600;margin-bottom:.25rem">❌ Solicitud denegada</div>
+        <div style="font-size:.82rem;color:#991b1b">Motivo: ${motivo}</div>
+      </div>`;
+    cargarSolicitudes();
+  } catch(e) { alert(`Error: ${e.message}`); }
+}
+
+/* _toggleNav y _toggleBell se definen en nav.js */
+
+// ── Init ─────────────────────────────────────────────────────────
+(function init() {
+  const u = authGuard('gestion');
+  if (!u) return;
+  authNav(u);
+  initNotifBell();
+  // Cargar solicitudes pendientes al inicio y mostrar badge
+  fetch(`${BACKEND}/api/solicitudes-link?estado=Pendiente`)
+    .then(r => r.json()).then(rows => {
+      const badge = document.getElementById('sol-badge');
+      if (badge && rows.length > 0) { badge.textContent = rows.length; badge.style.display = 'inline'; }
+      window.setConnDot&&setConnDot(true);
+    }).catch(() => { window.setConnDot&&setConnDot(false); });
+})();
+</script>
+</body>
+</html>

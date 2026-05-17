@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wolfs — Generación de Links</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icon-192.png" type="image/png">
+<meta name="theme-color" content="#111111">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="/auth.js"></script>
+<script src="/update.js"></script>
+<script src="/notif.js"></script>
+<style>
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2.5rem;width:100%;max-width:380px;text-align:center}
+.login-icon{font-size:40px;margin-bottom:1rem}
+.login-title{font-family:'DM Serif Display',serif;font-size:24px;margin-bottom:.5rem}
+.login-sub{font-size:13px;color:var(--text3);margin-bottom:2rem}
+.login-card input{width:100%;padding:10px 14px;font-size:15px;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);text-align:center;letter-spacing:.1em;margin-bottom:12px}
+.login-card input:focus{outline:none;border-color:var(--accent);background:#fff}
+.login-err{font-size:13px;color:var(--danger);margin-bottom:10px;display:none}
+.app{display:none}
+</style>
+<style>
+:root{
+  --bg:#f7f7f7;--surface:#fff;--surface2:#eeeeee;--border:#e0e0e0;
+  --text:#111111;--text2:#555555;--text3:#888888;
+  --accent:#111111;--accent-light:#f0f0f0;
+  --warn:#b45309;--warn-light:#fef3c7;
+  --danger:#991b1b;--danger-light:#fef2f2;
+  --success:#166534;--success-light:#f0fdf4;
+  --radius:10px;--radius-lg:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+/* ── Nav ── */
+.nav{background:#111;color:#fff;display:flex;align-items:center;gap:.5rem;padding:.65rem 1.25rem;position:sticky;top:0;z-index:100}
+.nav-logo{font-family:'DM Serif Display',serif;font-size:1.05rem;color:#fff;text-decoration:none;white-space:nowrap}
+.nav-links{display:flex;align-items:center;gap:.25rem;flex:1;flex-wrap:wrap}
+.nav-link{color:#ccc;text-decoration:none;font-size:.85rem;padding:.35rem .65rem;border-radius:6px;white-space:nowrap;transition:background .15s}
+.nav-link:hover,.nav-link.active{background:#2a2a2a;color:#fff}
+.dropdown{position:relative}
+.dropdown-btn{background:none;border:none;color:#ccc;font-size:.85rem;cursor:pointer;padding:.35rem .65rem;border-radius:6px;font-family:inherit;white-space:nowrap;transition:background .15s}
+.dropdown-btn:hover{background:#2a2a2a;color:#fff}
+.dropdown-content{display:none;position:absolute;top:calc(100% + 4px);left:0;background:#1a1a1a;border:1px solid #333;border-radius:8px;min-width:180px;z-index:200;overflow:hidden}
+.dropdown:hover .dropdown-content,.dropdown.open .dropdown-content{display:block}
+.dropdown-content a{display:block;padding:.55rem 1rem;color:#ccc;text-decoration:none;font-size:.83rem}
+.dropdown-content a:hover{background:#2a2a2a;color:#fff}
+.nav-spacer{flex:1}
+.nav-hamburger{display:none;background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;padding:.2rem .4rem;margin-left:auto;line-height:1;border-radius:6px}
+.nav-hamburger:hover{background:#2a2a2a}
+.nav-logout{background:none;border:1px solid #444;color:#ccc;font-size:.82rem;cursor:pointer;padding:.32rem .75rem;border-radius:6px;font-family:inherit;transition:all .15s;white-space:nowrap}
+.nav-logout:hover{background:#2a2a2a;color:#fff}
+.notif-bell-wrap{position:relative}
+#notif-bell-btn{background:none;border:none;cursor:pointer;font-size:1.1rem;padding:.3rem .5rem;border-radius:6px;color:#ccc;position:relative;display:flex;align-items:center;gap:4px}
+#notif-bell-btn:hover{background:#2a2a2a;color:#fff}
+#notif-badge{background:#ef4444;color:#fff;font-size:.65rem;font-weight:700;border-radius:999px;min-width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px}
+#notif-panel{position:absolute;top:calc(100% + 8px);right:0;width:320px;background:#fff;border:1px solid #e0e0e0;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:300;max-height:420px;overflow-y:auto}
+.notif-panel-title{padding:.75rem 1rem;font-weight:600;font-size:.85rem;border-bottom:1px solid #e0e0e0;background:#f9f9f9;border-radius:12px 12px 0 0}
+.notif-item{padding:.65rem 1rem;border-bottom:1px solid #f0f0f0;font-size:.82rem;color:#333;line-height:1.4}
+.notif-item:last-child{border-bottom:none}
+.notif-empty{padding:1.2rem;text-align:center;color:#888;font-size:.82rem}
+.main{max-width:900px;margin:0 auto;padding:1.75rem 1.5rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.25rem}
+.card-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);margin-bottom:1.25rem}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:13px;margin-bottom:13px}
+@media(max-width:600px){.fg2,.fg3{grid-template-columns:1fr}}
+label{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px}
+input,select,textarea{width:100%;padding:9px 11px;font-size:14px;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);transition:border-color .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);background:#fff}
+input:disabled,select:disabled{opacity:.45;cursor:not-allowed}
+.hint{font-size:12px;margin-top:4px}
+.hint.ok{color:var(--success)}.hint.warn{color:var(--warn)}.hint.err{color:var(--danger)}
+.field-error{display:block;font-size:11px;color:var(--danger);margin-top:3px;min-height:0}
+.field-error:empty{display:none}
+input.input-err,select.input-err{border-color:var(--danger)!important}
+.check-row{display:flex;align-items:center;gap:8px;padding:8px 0;cursor:pointer}
+.check-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+.check-row span{font-size:14px;color:var(--text)}
+.btn{padding:9px 18px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;border-radius:var(--radius);cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--text);transition:all .15s}
+.btn:hover{background:var(--surface2)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;font-size:15px;padding:11px 28px}
+.btn-primary:hover{background:#000000}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed}
+.btn-sm{padding:6px 14px;font-size:13px;border-radius:7px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif}
+.btn-sm:hover{background:var(--surface2)}
+.alert{padding:12px 16px;border-radius:var(--radius);font-size:14px;margin-bottom:1rem;display:none}
+.alert.ok{background:var(--success-light);color:var(--success);border:1px solid #bbf7d0}
+.alert.err{background:var(--danger-light);color:var(--danger);border:1px solid #fecaca}
+
+/* Disponibilidad */
+.disp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.25rem}
+.disp-card{border-radius:var(--radius);padding:.85rem 1rem;border:1.5px solid var(--border);text-align:center;transition:all .2s}
+.disp-card.ok{background:var(--success-light);border-color:#86efac}
+.disp-card.warn{background:var(--warn-light);border-color:#fde68a}
+.disp-card.full{background:var(--danger-light);border-color:#fca5a5}
+.disp-name{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:4px}
+.disp-val{font-size:17px;font-weight:700}
+.disp-card.ok .disp-val{color:var(--success)}
+.disp-card.warn .disp-val{color:var(--warn)}
+.disp-card.full .disp-val{color:var(--danger)}
+
+/* Resultado link */
+.link-result{background:var(--success-light);border:1.5px solid #86efac;border-radius:var(--radius-lg);padding:1.5rem;margin-top:1.25rem;display:none}
+.link-result-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--success);margin-bottom:1rem}
+.link-box{background:#fff;border:1.5px solid #86efac;border-radius:var(--radius);padding:12px 14px;font-family:'DM Mono',monospace;font-size:13px;word-break:break-all;margin-bottom:1rem;color:var(--text)}
+.copy-btn{background:var(--accent);border:none;border-radius:var(--radius);padding:10px 20px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%}
+.copy-btn:hover{background:#000000}
+.copy-btn.copied{background:var(--success)}
+
+/* Acordeón y Badges */
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;white-space:nowrap}
+.b-esperando{background:var(--warn-light);color:var(--warn)}
+.b-pagado{background:var(--success-light);color:var(--success)}
+.b-cancelado{background:#f3f4f6;color:#6b7280}
+.b-mixta{background:#dbeafe;color:#1e40af}
+.b-privada{background:var(--accent-light);color:var(--accent)}
+.b-familiar{background:#fce7f3;color:#9d174d}
+.b-expirado{background:var(--danger-light);color:var(--danger);border:1px solid #fca5a5}
+
+.resv-card{border:1.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:14px;overflow:hidden;transition:border-color .2s}
+.resv-card.expirado{border-color:#fca5a5}
+.resv-header{padding:1rem 1.25rem;background:var(--bg);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;cursor:pointer;user-select:none}
+.resv-header:hover{background:var(--surface2)}
+.resv-header-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.resv-nombre{font-weight:700;font-size:15px}
+.resv-body{padding:1.25rem;display:none;border-top:1px solid var(--border)}
+.resv-body.open{display:block}
+
+.datos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:1.25rem}
+.dato{background:var(--bg);border-radius:var(--radius);padding:.75rem 1rem}
+.dato-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:3px}
+.dato-val{font-size:14px;font-weight:500;color:var(--text)}
+
+.alert-banner{padding:12px 16px;border-radius:var(--radius);font-size:14px;margin-bottom:1rem;display:none;align-items:center;gap:8px;font-weight:600}
+.alert-banner.warn{background:var(--danger-light);color:var(--danger);border:1px solid #fca5a5;display:flex}
+
+.empty{text-align:center;padding:2.5rem;color:var(--text3);font-size:14px}
+.section-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px}
+.section-row .card-title{margin-bottom:0}
+
+/* ── Responsive móvil/tablet ── */
+@media(max-width:768px){
+  .nav-hamburger{display:flex;align-items:center;justify-content:center}
+  .nav-links{display:none;width:100%;flex-direction:column;align-items:stretch;gap:0;padding:.5rem 0;border-top:1px solid #2a2a2a;margin-top:.4rem}
+  .nav-links.open{display:flex}
+  .nav-link{padding:.7rem .9rem;border-radius:4px}
+  .dropdown-btn{width:100%;text-align:left;padding:.7rem .9rem;border-radius:4px}
+  .dropdown-content{position:static;border:none;border-radius:0;box-shadow:none;background:#161616;padding-left:1rem}
+  .dropdown:hover .dropdown-content{display:none}
+  .dropdown.open .dropdown-content{display:block}
+  .nav-spacer{display:none}
+  .nav-logout{margin:.4rem .9rem;width:calc(100% - 1.8rem);padding:.7rem;text-align:center}
+  .notif-bell-wrap{width:100%;padding:0 .9rem}
+  #notif-bell-btn{width:100%;justify-content:flex-start;padding:.7rem 0}
+  #notif-panel{position:fixed;top:0;left:0;right:0;width:100%;border-radius:0;max-height:60vh;border-top:none}
+}
+@media(max-width:768px){
+  .container,.main{padding:1rem .75rem !important}
+  .card{padding:1rem}
+  .page-title{font-size:1.3rem}
+  .search-row{flex-direction:column}
+  .search-row input,.search-row select,.search-row button{width:100%}
+  .btn{min-height:40px}
+  .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;padding-bottom:2px}
+  .tab-btn{white-space:nowrap;font-size:.82rem;padding:.5rem .8rem}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{min-width:500px}
+  .rv-grid{grid-template-columns:1fr 1fr !important}
+  .rv-actions{flex-wrap:wrap}
+  input,select,textarea{font-size:16px !important}
+}
+@media(max-width:480px){
+  .rv-grid{grid-template-columns:1fr !important}
+  .rv-actions button,.rv-actions a{width:100%}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="login-wrap">
+  <div class="login-card">
+    <div class="login-icon">🔗</div>
+    <div class="login-title">Generación de Links</div>
+    <div class="login-sub">Ingresá tu contraseña para continuar</div>
+    <div id="login-err" class="login-err">Contraseña incorrecta. Intentá de nuevo.</div>
+    <input type="password" id="pwd-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')verificarPwd()" />
+    <button class="btn btn-primary" style="width:100%;padding:11px" onclick="verificarPwd()">Entrar</button>
+    <div style="margin-top:1.25rem;font-size:11px;color:#bbb;font-family:'DM Mono',monospace">
+      v5 · 8364cb3 · facturacion-obligatoria
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+
+<nav class="nav"></nav>
+<script src="/nav.js"></script>
+
+<div class="main">
+
+  <!-- Formulario -->
+  <div class="card">
+    <div class="card-title">Nuevo link de pago</div>
+    <div id="alert" class="alert"></div>
+
+    <div class="fg2">
+      <div>
+        <label>Nombre del cliente</label>
+        <input id="f-nombre" placeholder="Ej. María García" oninput="_clearErrL('f-nombre')" />
+        <span class="field-error" id="err-f-nombre"></span>
+      </div>
+      <div>
+        <label>Fecha de ascenso</label>
+        <input id="f-fecha" type="date" oninput="cargarDisponibilidad();_clearErrL('f-fecha')" />
+        <span class="field-error" id="err-f-fecha"></span>
+      </div>
+    </div>
+
+    <div class="fg3">
+      <div>
+        <label>Teléfono</label>
+        <input id="f-telefono" placeholder="Ej. +502 1234 5678" />
+      </div>
+      <div>
+        <label>Correo electrónico</label>
+        <input id="f-correo" type="email" placeholder="Ej. cliente@correo.com" oninput="_clearErrL('f-correo')" />
+        <span class="field-error" id="err-f-correo"></span>
+      </div>
+      <div>
+        <label>Tipo de identificación</label>
+        <select id="f-tipo-id" onchange="onTipoIdChangeL()">
+          <option value="CF">Consumidor Final (CF)</option>
+          <option value="NIT">NIT</option>
+          <option value="CUI">CUI / DPI</option>
+          <option value="EXT">Pasaporte (Extranjero)</option>
+        </select>
+      </div>
+      <div id="wrap-codigo-id" style="display:none">
+        <label>Número de identificación</label>
+        <div style="display:flex;gap:6px;align-items:flex-start">
+          <input id="f-identificacion" placeholder="Ej. 1234 56789 0101" style="flex:1" oninput="resetValidacionIdL()" />
+          <button type="button" id="btn-validar-id" onclick="validarIdentificacionL()" style="white-space:nowrap;padding:0 14px;height:38px">Validar</button>
+        </div>
+        <span class="field-error" id="err-f-id"></span>
+      </div>
+      <div id="wrap-nombre-fiscal" style="display:none">
+        <label>Nombre fiscal</label>
+        <input id="f-nombre-fiscal" placeholder="Se autocompleta al validar" readonly style="background:var(--surface2,#1a1a1a);cursor:default" />
+      </div>
+    </div>
+
+    <!-- Disponibilidad -->
+    <div id="disp-wrap" style="display:none;margin-bottom:13px">
+      <label style="margin-bottom:8px">Disponibilidad para la fecha seleccionada</label>
+      <div class="disp-grid" id="disp-cards"></div>
+    </div>
+
+    <div class="fg3">
+      <div>
+        <label>Tipo de cabaña</label>
+        <select id="f-cabana" onchange="onCabanaChange();_clearErrL('f-cabana')">
+          <option value="">Seleccionar...</option>
+          <option value="Mixta">Mixta (por persona)</option>
+          <option value="Privada">Privada (por cabaña)</option>
+          <option value="Familiar">Familiar (por cabaña)</option>
+        </select>
+        <div id="hint-cabana" class="hint"></div>
+        <span class="field-error" id="err-f-cabana"></span>
+      </div>
+      <div id="wrap-personas" style="display:none">
+        <label>Número de personas</label>
+        <input id="f-personas" type="number" min="1" max="22" placeholder="Máx. 22" oninput="_clearErrL('f-personas')" />
+        <div id="hint-personas" class="hint"></div>
+        <span class="field-error" id="err-f-personas"></span>
+      </div>
+      <div>
+        <label>Precio (Q)</label>
+        <input id="f-precio" type="number" placeholder="0.00" min="0" step="0.01" oninput="_clearErrL('f-precio')" />
+        <span class="field-error" id="err-f-precio"></span>
+      </div>
+    </div>
+
+    <div class="fg3">
+      <div>
+        <label>Agencia</label>
+        <select id="f-agencia" onchange="cargarDisponibilidad()">
+          <option value="">Seleccionar...</option>
+          <option value="Wolfs Acatenango">Wolfs Acatenango</option>
+          <option value="Ixcanul">Ixcanul</option>
+          <option value="Balam">Balam</option>
+        </select>
+      </div>
+      <div>
+        <label>Paquete <span style="color:#e53e3e">*</span></label>
+        <select id="f-paquete" required>
+          <option value="">— Seleccionar paquete —</option>
+          <option value="Trekking">🥾 Trekking</option>
+          <option value="4x4">🚙 4x4</option>
+        </select>
+      </div>
+      <div>
+        <label>Notas</label>
+        <input id="f-notas" placeholder="Observaciones..." />
+      </div>
+    </div>
+
+    <!-- Cantidades dietéticas -->
+    <div class="fg3" style="margin-bottom:1.5rem">
+      <div>
+        <label>Alergias / restricciones alimentarias</label>
+        <input id="f-alergias" placeholder="Ej. maní, gluten... (dejar vacío si no hay)" />
+      </div>
+      <div>
+        <label>🌱 Cantidad veganos</label>
+        <input id="f-veganos-num" type="number" min="0" max="50" placeholder="0" />
+      </div>
+      <div>
+        <label>🥦 Cantidad vegetarianos</label>
+        <input id="f-vegetarianos-num" type="number" min="0" max="50" placeholder="0" />
+      </div>
+    </div>
+    <div style="margin-bottom:1.5rem">
+      <label class="check-row">
+        <input type="checkbox" id="f-cumple" />
+        <span>🎂 Celebración de cumpleaños</span>
+      </label>
+    </div>
+
+    <div style="display:flex;justify-content:center">
+      <button class="btn btn-primary" id="btn-generar" onclick="generarLink()">
+        Generar link de pago ↗
+      </button>
+    </div>
+
+    <!-- Estado de solicitud (solo ventas) -->
+    <div id="solicitud-estado" style="display:none;margin-top:1.25rem"></div>
+
+    <!-- Resultado -->
+    <div class="link-result" id="link-result">
+      <div class="link-result-title">✓ Link generado exitosamente</div>
+      <div class="link-box" id="link-url"></div>
+      <button class="copy-btn" id="copy-btn" onclick="copiarLink()">Copiar link para WhatsApp</button>
+      <div style="margin-top:12px;font-size:12px;color:var(--success)">
+        La reservación se registrará automáticamente cuando el cliente complete el pago.
+      </div>
+    </div>
+  </div>
+
+  <!-- Mis solicitudes (solo ventas) -->
+  <div class="card" id="seccion-mis-solicitudes" style="display:none">
+    <div class="section-row">
+      <div class="card-title">Mis solicitudes</div>
+      <button class="btn-sm" onclick="cargarMisSolicitudes()">↺ Actualizar</button>
+    </div>
+    <div id="lista-mis-solicitudes"><div class="empty">Sin solicitudes aún.</div></div>
+  </div>
+
+  <!-- Links pendientes -->
+  <div class="card" id="seccion-pendientes">
+    <div class="section-row">
+      <div class="card-title">Links enviados — esperando pago</div>
+      <button class="btn-sm" onclick="cargarPendientes()">↺ Actualizar</button>
+    </div>
+    <div id="notif-6h"></div>
+    <div id="lista-pendientes">
+      <div class="empty">Cargando...</div>
+    </div>
+  </div>
+
+</div>
+</div><!-- /app -->
+
+<script>
+const BACKEND = '';      // mismo origen
+const BACKEND_URL = '';  // alias usado por felplex
+let dispActual = null;
+let _esVentas = false;
+let _pollInterval = null;
+
+async function cargarDisponibilidad() {
+  const fecha   = document.getElementById('f-fecha').value;
+  const agencia = document.getElementById('f-agencia').value;
+  const wrap    = document.getElementById('disp-wrap');
+  if (!fecha) { wrap.style.display='none'; return; }
+
+  const agParam = agencia ? `?agencia=${encodeURIComponent(agencia)}` : '';
+  try {
+    const res  = await fetch(`${BACKEND}/disponibilidad/${fecha}${agParam}`);
+    dispActual = await res.json();
+    wrap.style.display = 'block';
+    renderDisponibilidad();
+    onCabanaChange();
+  } catch(e) {
+    wrap.style.display = 'none';
+  }
+}
+
+function renderDisponibilidad() {
+  if (!dispActual) return;
+  const d = dispActual;
+  const cls = (libre, total) => libre === 0 ? 'full' : libre < total ? 'warn' : 'ok';
+  document.getElementById('disp-cards').innerHTML = `
+    <div class="disp-card ${cls(d.Mixta.libre, d.Mixta.total)}">
+      <div class="disp-name">Mixta (personas)</div>
+      <div class="disp-val">${d.Mixta.libre} / ${d.Mixta.total}</div>
+    </div>
+    <div class="disp-card ${cls(d.Privada.libre, d.Privada.total)}">
+      <div class="disp-name">Privada (cabañas)</div>
+      <div class="disp-val">${d.Privada.libre} / ${d.Privada.total}</div>
+    </div>
+    <div class="disp-card ${cls(d.Familiar.libre, d.Familiar.total)}">
+      <div class="disp-name">Familiar</div>
+      <div class="disp-val">${d.Familiar.libre} / ${d.Familiar.total}</div>
+    </div>`;
+}
+
+function onCabanaChange() {
+  const cab   = document.getElementById('f-cabana').value;
+  const wrap  = document.getElementById('wrap-personas');
+  const hint  = document.getElementById('hint-cabana');
+  wrap.style.display = cab === 'Mixta' ? 'block' : 'none';
+
+  if (!dispActual || !cab) { hint.textContent = ''; return; }
+  const d = dispActual[cab];
+  if (!d) return;
+  if (d.libre === 0) {
+    hint.textContent = '⛔ Sin disponibilidad para esta fecha.';
+    hint.className   = 'hint err';
+  } else {
+    hint.textContent = `✓ ${d.libre} de ${d.total} disponibles`;
+    hint.className   = 'hint ok';
+  }
+}
+
+function showAlert(txt, tipo) {
+  const el = document.getElementById('alert');
+  el.textContent = txt; el.className = 'alert ' + tipo; el.style.display = 'block';
+  clearTimeout(el._t); el._t = setTimeout(() => el.style.display = 'none', 5000);
+}
+
+// ── Validación inline ──────────────────────────────────────────────────────
+const _EMAIL_RE_LNK = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+const _TIPOS_CABANA_LNK = new Set(['Mixta','Privada','Familiar']);
+
+function _setErrL(id, msg) {
+  const input = document.getElementById(id);
+  const errEl = document.getElementById('err-' + id);
+  if (input) input.classList.toggle('input-err', !!msg);
+  if (errEl) errEl.textContent = msg || '';
+}
+function _clearErrL(id) { _setErrL(id, ''); }
+
+function validarFormularioLink() {
+  let ok = true;
+
+  const nombre = document.getElementById('f-nombre').value.trim();
+  if (!nombre) { _setErrL('f-nombre', 'El nombre es obligatorio.'); ok = false; }
+  else { _clearErrL('f-nombre'); }
+
+  const fechaVal = document.getElementById('f-fecha').value;
+  if (!fechaVal) {
+    _setErrL('f-fecha', 'La fecha de ascenso es obligatoria.'); ok = false;
+  } else {
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    const fa = new Date(fechaVal + 'T00:00:00');
+    if (isNaN(fa.getTime())) { _setErrL('f-fecha', 'Fecha inválida.'); ok = false; }
+    else if (fa < hoy) { _setErrL('f-fecha', 'La fecha debe ser hoy o futura.'); ok = false; }
+    else { _clearErrL('f-fecha'); }
+  }
+
+  const cabana = document.getElementById('f-cabana').value;
+  if (!cabana) { _setErrL('f-cabana', 'Seleccioná el tipo de cabaña.'); ok = false; }
+  else if (!_TIPOS_CABANA_LNK.has(cabana)) { _setErrL('f-cabana', 'Tipo de cabaña inválido.'); ok = false; }
+  else { _clearErrL('f-cabana'); }
+
+  const personasRaw = document.getElementById('f-personas').value;
+  if (personasRaw !== '' && personasRaw !== null) {
+    const p = parseInt(personasRaw);
+    if (isNaN(p) || p < 1 || p > 50) { _setErrL('f-personas', 'Debe ser entre 1 y 50.'); ok = false; }
+    else { _clearErrL('f-personas'); }
+  } else { _clearErrL('f-personas'); }
+
+  const correoRaw = document.getElementById('f-correo').value.trim();
+  if (correoRaw && !_EMAIL_RE_LNK.test(correoRaw)) {
+    _setErrL('f-correo', 'Correo inválido. Formato: usuario@dominio.tld'); ok = false;
+  } else { _clearErrL('f-correo'); }
+
+  const precioRaw = document.getElementById('f-precio').value;
+  const precio = parseFloat(precioRaw);
+  if (precioRaw === '' || isNaN(precio)) { _setErrL('f-precio', 'El precio es obligatorio.'); ok = false; }
+  else if (precio < 0) { _setErrL('f-precio', 'El precio no puede ser negativo.'); ok = false; }
+  else { _clearErrL('f-precio'); }
+
+  return ok;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function generarLink() {
+  if (!validarFormularioLink()) return;
+  const nombre   = document.getElementById('f-nombre').value.trim();
+  const fecha    = document.getElementById('f-fecha').value;
+  const cabana   = document.getElementById('f-cabana').value;
+  const precio   = parseFloat(document.getElementById('f-precio').value);
+  const agencia  = document.getElementById('f-agencia').value;
+  const personas = parseInt(document.getElementById('f-personas').value) || null;
+  const paquete  = document.getElementById('f-paquete').value;
+  const notas    = document.getElementById('f-notas').value.trim() || null;
+  const alergias = document.getElementById('f-alergias').value.trim() || null;
+  const telefono = document.getElementById('f-telefono').value.trim() || null;
+  const correo   = document.getElementById('f-correo').value.trim() || null;
+  const tipoId = document.getElementById('f-tipo-id').value || 'CF';
+  const identificacion = tipoId !== 'CF' ? (document.getElementById('f-identificacion').value.trim() || null) : null;
+  const nombreFiscal = document.getElementById('f-nombre-fiscal').value.trim() || null;
+  const cantVeganos  = parseInt(document.getElementById('f-veganos-num').value) || 0;
+  const cantVegetarianos = parseInt(document.getElementById('f-vegetarianos-num').value) || 0;
+  const cumple   = document.getElementById('f-cumple').checked;
+
+  if (!nombre || !fecha || !cabana || isNaN(precio) || !agencia) {
+    showAlert('Completá nombre, fecha, cabaña, precio y agencia.', 'err'); return;
+  }
+  if (!paquete) {
+    showAlert('Seleccioná el paquete: Trekking o 4x4.', 'err'); return;
+  }
+  if (cabana === 'Mixta' && !personas) {
+    showAlert('Indicá el número de personas para la cabaña mixta.', 'err'); return;
+  }
+
+  // Validación 4x4: mínimo 48 horas antes del ascenso
+  if (paquete === '4x4') {
+    const ahoraGT = new Date(new Date().toLocaleString('en-US', {timeZone: 'America/Guatemala'}));
+    const ascenso = new Date(fecha + 'T07:00:00');
+    const diffHoras = (ascenso - ahoraGT) / (1000 * 60 * 60);
+    if (diffHoras < 48) {
+      const horasRestantes = Math.max(0, Math.ceil(diffHoras));
+      showAlert(`El paquete 4x4 requiere reservar con mínimo 48 horas de anticipación. Faltan ${horasRestantes}h para esa fecha.`, 'err');
+      return;
+    }
+  }
+
+  // ── Si es ventas → solicitar autorización en vez de generar directo ──
+  if (_esVentas) {
+    await solicitarLink({ nombre, fecha, cabana, precio, agencia, personas, paquete, notas, alergias, telefono, correo, identificacion, tipoId, nombreFiscal, cantVeganos, cantVegetarianos, cumple });
+    return;
+  }
+
+  const btn = document.getElementById('btn-generar');
+  btn.disabled = true; btn.textContent = 'Generando...';
+  document.getElementById('link-result').style.display = 'none';
+
+  try {
+    const res = await fetch('/crear-link-pago', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nombre, fecha_ascenso: fecha, tipo_cabana: cabana,
+        no_personas: personas, precio, agencia, paquete, notas,
+        alergias, cantidad_veganos: cantVeganos, cantidad_vegetarianos: cantVegetarianos, es_cumpleanos: cumple,
+        telefono, correo, identificacion,
+        nit: identificacion, tipo_identificacion: tipoId, nombre_fiscal: nombreFiscal,
+        generado_por: authUser()?.nombre || null
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Error del servidor');
+
+    document.getElementById('link-url').textContent = data.checkout_url;
+    document.getElementById('link-result').style.display = 'block';
+    document.getElementById('copy-btn').textContent = 'Copiar link para WhatsApp';
+    document.getElementById('copy-btn').className = 'copy-btn';
+    limpiarForm();
+    cargarPendientes();
+  } catch(e) {
+    showAlert('Error: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Generar link de pago ↗';
+  }
+}
+
+// ── Flujo ventas: solicitar autorización ──────────────────────────
+async function solicitarLink(d) {
+  const btn = document.getElementById('btn-generar');
+  btn.disabled = true; btn.textContent = 'Enviando solicitud...';
+  document.getElementById('solicitud-estado').style.display = 'none';
+
+  try {
+    const res = await fetch('/api/solicitudes-link', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        nombre: d.nombre, fecha_ascenso: d.fecha, tipo_cabana: d.cabana,
+        no_personas: d.personas, precio: d.precio, agencia: d.agencia,
+        paquete: d.paquete, notas: d.notas, alergias: d.alergias,
+        cantidad_veganos: d.cantVeganos, cantidad_vegetarianos: d.cantVegetarianos,
+        es_cumpleanos: d.cumple, telefono: d.telefono, correo: d.correo,
+        identificacion: d.identificacion, nit: d.identificacion, tipo_identificacion: d.tipoId, nombre_fiscal: d.nombreFiscal,
+        solicitado_por: authUser()?.nombre || 'Ventas'
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Error al enviar');
+
+    const estadoDiv = document.getElementById('solicitud-estado');
+    estadoDiv.style.display = 'block';
+    estadoDiv.innerHTML = `
+      <div style="text-align:center;padding:1.5rem;background:#fffbeb;border:1.5px solid #fde68a;border-radius:var(--radius-lg)">
+        <div style="font-size:2rem;margin-bottom:.5rem">⏳</div>
+        <div style="font-size:15px;font-weight:600;color:#92400e;margin-bottom:.4rem">Esperando autorización...</div>
+        <div style="font-size:12px;color:#b45309">Solicitud #${data.id} enviada. Se notificó a los jefes.<br>Esta pantalla se actualizará automáticamente cada 8 segundos.</div>
+      </div>`;
+
+    limpiarForm();
+    cargarMisSolicitudes();
+
+    if (_pollInterval) clearInterval(_pollInterval);
+    _pollInterval = setInterval(() => pollSolicitudEstado(data.id), 8000);
+
+  } catch(e) {
+    showAlert('Error: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Solicitar autorización →';
+  }
+}
+
+async function pollSolicitudEstado(id) {
+  try {
+    const res = await fetch(`/api/solicitudes-link/${id}`);
+    if (!res.ok) return;
+    const sol = await res.json();
+    const div = document.getElementById('solicitud-estado');
+    if (!div) return;
+
+    if (sol.estado === 'Autorizado' && sol.checkout_url) {
+      clearInterval(_pollInterval); _pollInterval = null;
+      div.innerHTML = `
+        <div style="background:var(--success-light);border:1.5px solid #86efac;border-radius:var(--radius-lg);padding:1.5rem">
+          <div style="color:var(--success);font-size:16px;font-weight:700;margin-bottom:.75rem">✅ ¡Link autorizado!</div>
+          <div style="background:#fff;border:1.5px solid #86efac;border-radius:var(--radius);padding:12px;font-family:'DM Mono',monospace;font-size:13px;word-break:break-all;margin-bottom:.75rem">${sol.checkout_url}</div>
+          <button class="copy-btn" id="copy-sol-btn" onclick="copiarSolicitudLink('${sol.checkout_url}')">Copiar link para WhatsApp</button>
+          <div style="margin-top:.5rem;font-size:12px;color:var(--success)">Autorizado por: ${sol.autorizado_por||'—'}</div>
+        </div>`;
+      cargarMisSolicitudes();
+
+    } else if (sol.estado === 'Denegado') {
+      clearInterval(_pollInterval); _pollInterval = null;
+      div.innerHTML = `
+        <div style="background:var(--danger-light);border:1.5px solid #fca5a5;border-radius:var(--radius-lg);padding:1.5rem">
+          <div style="color:var(--danger);font-size:16px;font-weight:700;margin-bottom:.5rem">❌ Solicitud denegada</div>
+          <div style="font-size:13px;color:#991b1b;margin-bottom:.5rem">Motivo: <strong>${sol.motivo_denegacion||'No especificado'}</strong></div>
+          <div style="font-size:12px;color:var(--text3)">Podés hacer modificaciones y enviar una nueva solicitud.</div>
+        </div>`;
+      cargarMisSolicitudes();
+    }
+  } catch(e) { /* silencioso */ }
+}
+
+function copiarSolicitudLink(url) {
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('copy-sol-btn');
+    if (btn) { btn.textContent = '✓ Copiado!'; btn.style.background = 'var(--success)';
+      setTimeout(() => { btn.textContent = 'Copiar link para WhatsApp'; btn.style.background = ''; }, 2500); }
+  });
+}
+
+async function cargarMisSolicitudes() {
+  if (!_esVentas) return;
+  const user = authUser(); if (!user) return;
+  const wrap = document.getElementById('lista-mis-solicitudes');
+  try {
+    const res = await fetch(`/api/solicitudes-link?solicitado_por=${encodeURIComponent(user.nombre)}`);
+    const rows = res.ok ? await res.json() : [];
+    if (!rows.length) { wrap.innerHTML = '<div class="empty">Sin solicitudes aún.</div>'; return; }
+
+    const bc = c => c==='Mixta'?'b-mixta':c==='Privada'?'b-privada':'b-familiar';
+    const badgeCls = {Pendiente:'b-esperando', Autorizado:'b-pagado', Denegado:'b-cancelado'};
+    const iconMap  = {Pendiente:'⏳', Autorizado:'✅', Denegado:'❌'};
+
+    wrap.innerHTML = rows.map(s => `
+      <div class="resv-card" id="card-link-msol-${s.id}" style="border-color:${s.estado==='Autorizado'?'#86efac':s.estado==='Denegado'?'#fca5a5':'#fde68a'}">
+        <div class="resv-header" onclick="toggleCardLink('msol-${s.id}')">
+          <div class="resv-header-left">
+            <span class="resv-nombre">${s.nombre||'—'}</span>
+            <span class="badge ${bc(s.tipo_cabana)}">${s.tipo_cabana||'—'}</span>
+            <span style="font-weight:600;font-size:13px">Q${Number(s.precio||0).toFixed(2)}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="badge ${badgeCls[s.estado]||''}">${iconMap[s.estado]||''} ${s.estado}</span>
+            <span style="color:var(--text3);font-size:18px" id="chevron-link-msol-${s.id}">▾</span>
+          </div>
+        </div>
+        <div class="resv-body" id="body-link-msol-${s.id}">
+          <div class="datos-grid">
+            <div class="dato"><div class="dato-label">Fecha ascenso</div><div class="dato-val">${fmt(s.fecha_ascenso)}</div></div>
+            <div class="dato"><div class="dato-label">Agencia</div><div class="dato-val">${s.agencia||'—'}</div></div>
+            <div class="dato"><div class="dato-label">Enviada</div><div class="dato-val">${s.creado_en?new Date(s.creado_en).toLocaleString('es-GT'):'—'}</div></div>
+            ${s.estado==='Autorizado'&&s.checkout_url?`
+              <div class="dato" style="grid-column:span 3">
+                <div class="dato-label">Link de pago</div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                  <div style="font-family:monospace;font-size:12px;word-break:break-all;flex:1">${s.checkout_url}</div>
+                  <button class="btn-sm" style="background:var(--accent);color:#fff;border-color:var(--accent)" onclick="navigator.clipboard.writeText('${s.checkout_url}').then(()=>this.textContent='✓ Copiado!')">Copiar</button>
+                </div>
+              </div>`:''}
+            ${s.estado==='Denegado'?`
+              <div class="dato" style="grid-column:span 3">
+                <div class="dato-label">Motivo de denegación</div>
+                <div class="dato-val" style="color:var(--danger)">${s.motivo_denegacion||'No especificado'}</div>
+              </div>`:''}
+          </div>
+        </div>
+      </div>`).join('');
+  } catch { wrap.innerHTML = '<div class="empty">Error al cargar solicitudes.</div>'; }
+}
+
+function copiarLink() {
+  const url = document.getElementById('link-url').textContent;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✓ Copiado!';
+    btn.className = 'copy-btn copied';
+    setTimeout(() => {
+      btn.textContent = 'Copiar link para WhatsApp';
+      btn.className = 'copy-btn';
+    }, 2500);
+  });
+}
+
+function limpiarForm() {
+  ['f-nombre','f-fecha','f-cabana','f-precio','f-agencia',
+   'f-paquete','f-notas','f-alergias','f-personas',
+   'f-telefono','f-correo','f-identificacion','f-nombre-fiscal',
+   'f-veganos-num','f-vegetarianos-num'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  ['f-cumple'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.checked = false;
+  });
+  document.getElementById('f-tipo-id').value = 'CF';
+  document.getElementById('wrap-codigo-id').style.display = 'none';
+  document.getElementById('wrap-nombre-fiscal').style.display = 'none';
+  document.getElementById('wrap-personas').style.display = 'none';
+  document.getElementById('disp-wrap').style.display = 'none';
+  document.getElementById('hint-cabana').textContent = '';
+  dispActual = null;
+}
+
+function onTipoIdChangeL() {
+  const tipo = document.getElementById('f-tipo-id').value;
+  document.getElementById('wrap-codigo-id').style.display = tipo === 'CF' ? 'none' : 'block';
+  document.getElementById('wrap-nombre-fiscal').style.display = 'none';
+  document.getElementById('f-identificacion').value = '';
+  document.getElementById('f-nombre-fiscal').value = '';
+  document.getElementById('err-f-id').textContent = '';
+}
+
+function resetValidacionIdL() {
+  document.getElementById('f-nombre-fiscal').value = '';
+  document.getElementById('wrap-nombre-fiscal').style.display = 'none';
+  document.getElementById('err-f-id').textContent = '';
+}
+
+async function validarIdentificacionL() {
+  const tipo = document.getElementById('f-tipo-id').value;
+  const codigo = document.getElementById('f-identificacion').value.trim();
+  const errEl = document.getElementById('err-f-id');
+  const btn = document.getElementById('btn-validar-id');
+  if (!codigo) { errEl.textContent = 'Ingresa el número de identificación.'; return; }
+  btn.textContent = 'Validando...'; btn.disabled = true;
+  try {
+    const r = await fetch(`${BACKEND_URL}/api/felplex/validar/${tipo}/${encodeURIComponent(codigo)}`);
+    const d = await r.json();
+    if (d.valido) {
+      document.getElementById('f-nombre-fiscal').value = d.nombre || '';
+      document.getElementById('wrap-nombre-fiscal').style.display = 'block';
+      errEl.textContent = '';
+    } else {
+      errEl.textContent = 'Identificación no válida o no encontrada.';
+      document.getElementById('wrap-nombre-fiscal').style.display = 'none';
+    }
+  } catch(e) { errEl.textContent = 'Error al validar. Intenta de nuevo.'; }
+  finally { btn.textContent = 'Validar'; btn.disabled = false; }
+}
+
+async function cancelarLink(id) {
+  if (!confirm('¿Cancelar este link? El link de pago quedará inactivo y el cliente no podrá usarlo.')) return;
+  try {
+    const res = await fetch(`/cancelar-link/${id}`, { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Error del servidor');
+    const msg = data.producto_borrado
+      ? 'Link cancelado y desactivado en Recurrente ✓'
+      : 'Link cancelado. Si el cliente intenta pagar, el pago será ignorado.';
+    showAlert(msg, 'ok');
+    cargarPendientes();
+  } catch(e) { showAlert('Error: ' + e.message, 'err'); }
+}
+
+async function cargarPendientes() {
+  try {
+    const sbKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpbXltbnpsYWd6aGZwYnBqcnZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NzcwNzEsImV4cCI6MjA5MjU1MzA3MX0.7p8ob8zr2dYkAvCV-8p_Mmp65laYlsG5KwCuyj7MdLc';
+    const sbHdrs = {'apikey':sbKey,'Authorization':'Bearer '+sbKey,'Content-Type':'application/json'};
+    const res = await fetch(`https://vimymnzlagzhfpbpjrvl.supabase.co/rest/v1/links_pendientes?select=*&order=creado_at.desc`, {headers:sbHdrs});
+    const data = await res.json();
+
+    const resResv = await fetch(`https://vimymnzlagzhfpbpjrvl.supabase.co/rest/v1/reservaciones?select=creado_at,link_pago&tipo_pago=eq.Recurrente`, {headers:sbHdrs});
+    const dataResv = resResv.ok ? await resResv.json() : [];
+    
+    renderPendientes(data, dataResv);
+    window.setConnDot&&setConnDot(true);
+  } catch(e) {
+    window.setConnDot&&setConnDot(false);
+  }
+}
+
+function fmt(f) {
+  if (!f) return '—';
+  const [y,m,d] = f.split('-'); return `${d}/${m}/${y}`;
+}
+
+function renderPendientes(data, dataResv = []) {
+  const cont = document.getElementById('lista-pendientes');
+  const notif = document.getElementById('notif-6h');
+  
+  if (!data.length) {
+    cont.innerHTML = '<div class="empty">Sin links enviados aún.</div>';
+    notif.innerHTML = '';
+    return;
+  }
+  
+  const bc = c => c==='Mixta'?'b-mixta':c==='Privada'?'b-privada':'b-familiar';
+  const bs = s => s==='Pagado'?'b-pagado':s==='Cancelado'?'b-cancelado':'b-esperando';
+  
+  let expirados = [];
+  let comprasExpiradas = [];
+  const now = Date.now();
+
+  cont.innerHTML = data.map((r,i) => {
+    let isExpirado = false;
+    let isCompraAtrasada = false;
+    
+    if (r.estado === 'Esperando pago' && r.creado_at) {
+      if (now - new Date(r.creado_at).getTime() > 21600000) { // 6 hours
+        isExpirado = true;
+        expirados.push(r);
+      }
+    } else if (r.estado === 'Pagado' && r.creado_at) {
+      const resv = dataResv.find(rv => rv.link_pago === r.checkout_url);
+      if (resv && resv.creado_at) {
+        if (new Date(resv.creado_at).getTime() - new Date(r.creado_at).getTime() > 21600000) {
+          isCompraAtrasada = true;
+          comprasExpiradas.push(r);
+        }
+      }
+    }
+
+    const cardCls = isExpirado ? 'expirado' : (isCompraAtrasada ? 'expirado' : '');
+    const stateBadge = isExpirado 
+      ? '<span class="badge b-expirado">⚠️ Expirado (>6h)</span>'
+      : (isCompraAtrasada ? '<span class="badge b-pagado">⚠️ Pagado tarde (>6h)</span>' : `<span class="badge ${bs(r.estado)}">${r.estado}</span>`);
+
+    return `<div class="resv-card ${cardCls}" id="card-link-${r.id}">
+      <div class="resv-header" onclick="toggleCardLink(${r.id})">
+        <div class="resv-header-left">
+          <span class="resv-nombre">${r.nombre}</span>
+          <span class="badge ${bc(r.tipo_cabana)}">${r.tipo_cabana}</span>
+          <span style="font-weight:600;font-size:13px">Q ${Number(r.precio).toFixed(2)}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${stateBadge}
+          <span style="color:var(--text3);font-size:18px" id="chevron-link-${r.id}">▾</span>
+        </div>
+      </div>
+      <div class="resv-body" id="body-link-${r.id}">
+        <div class="datos-grid">
+          <div class="dato"><div class="dato-label">Fecha ascenso</div><div class="dato-val">${fmt(r.fecha_ascenso)}</div></div>
+          <div class="dato"><div class="dato-label">Agencia</div><div class="dato-val">${r.agencia||'—'}</div></div>
+          <div class="dato"><div class="dato-label">Creado</div><div class="dato-val">${new Date(r.creado_at).toLocaleString('es-GT')}</div></div>
+          ${r.alergias?`<div class="dato" style="grid-column:span 2"><div class="dato-label">Alergias</div><div class="dato-val">${r.alergias}</div></div>`:''}
+          ${r.es_vegano||r.es_cumpleanos?`<div class="dato"><div class="dato-label">Extras</div><div class="dato-val">${r.es_vegano?'🌱 Vegano ':''}${r.es_cumpleanos?'🎂 Cumple':''}</div></div>`:''}
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:1rem;flex-wrap:wrap">
+          ${r.estado==='Esperando pago'?`
+            <button class="btn-sm" style="background:var(--accent);color:#fff;border-color:var(--accent)" onclick="navigator.clipboard.writeText('${r.checkout_url}')">🔗 Copiar link para WhatsApp</button>
+            <button class="btn-sm" style="color:var(--danger);border-color:#fca5a5" onclick="cancelarLink(${r.id})">✗ Cancelar link</button>
+          `: r.estado==='Pagado'?'<span style="color:var(--success);font-size:13px;font-weight:600">✓ Pago completado</span>':
+          '<span style="color:var(--text3);font-size:13px">Link inactivo/cancelado</span>'}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const nBadge = document.getElementById('notif-badge');
+  const nList = document.getElementById('notif-list');
+  const totalNotif = expirados.length + comprasExpiradas.length;
+  
+  if (totalNotif > 0) {
+    nBadge.style.display = 'inline-block';
+    nBadge.textContent = totalNotif;
+    let html = '';
+    comprasExpiradas.forEach(r => {
+      html += `<div class="notif-item">🚨 <b>${r.nombre}</b> <br><span style="color:var(--danger);font-size:11px">Compra expirada (Pagó tarde)</span></div>`;
+    });
+    expirados.forEach(r => {
+      html += `<div class="notif-item">⚠️ <b>${r.nombre}</b> <br><span style="color:var(--text3);font-size:11px">Hace >6h (Sin pagar)</span></div>`;
+    });
+    nList.innerHTML = html;
+    notif.innerHTML = '';
+  } else {
+    nBadge.style.display = 'none';
+    nList.innerHTML = '<div class="notif-empty">Todo al día.</div>';
+    notif.innerHTML = '';
+  }
+
+}
+
+function toggleCardLink(id) {
+  const body = document.getElementById('body-link-'+id);
+  const chev = document.getElementById('chevron-link-'+id);
+  const open = body.classList.toggle('open');
+  chev.textContent = open ? '▴' : '▾';
+}
+
+function mostrarApp(user) {
+  document.getElementById('login-wrap').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('header-user').textContent = user.nombre;
+  authNav(user);
+  document.getElementById('f-fecha').value = new Date().toISOString().slice(0,10);
+
+  _esVentas = user.rol === 'ventas';
+  if (_esVentas) {
+    document.getElementById('btn-generar').textContent = 'Solicitar autorización →';
+    document.getElementById('seccion-pendientes').style.display = 'none';
+    document.getElementById('seccion-mis-solicitudes').style.display = 'block';
+    cargarMisSolicitudes();
+  } else {
+    cargarPendientes();
+    setInterval(cargarPendientes, 30000);
+  }
+
+  if(typeof initNotifBell==='function') initNotifBell();
+}
+
+function verificarPwd() {
+  const user = authLogin(document.getElementById('pwd-input').value);
+  if (user && user.acceso.includes('links')) {
+    mostrarApp(user);
+  } else {
+    document.getElementById('login-err').style.display = 'block';
+    document.getElementById('pwd-input').value = '';
+    document.getElementById('pwd-input').focus();
+  }
+}
+
+/* _toggleNav, _toggleBell y listener de click se definen en nav.js */
+
+(function(){
+  const user = authGuard('links');
+  if (user) mostrarApp(user);
+})();
+</script>
+</body>
+</html>

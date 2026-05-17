@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wolfs — Jefes</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icon-192.png" type="image/png">
+<meta name="theme-color" content="#111111">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="/auth.js"></script>
+<script src="/update.js"></script>
+<style>
+:root{
+  --bg:#f7f7f7;--surface:#fff;--surface2:#eeeeee;--border:#e0e0e0;
+  --text:#111111;--text2:#555555;--text3:#888888;
+  --accent:#111111;--accent-light:#f0f0f0;
+  --warn:#b45309;--warn-light:#fef3c7;
+  --danger:#991b1b;--danger-light:#fef2f2;
+  --success:#166534;--success-light:#f0fdf4;
+  --radius:10px;--radius-lg:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* Login */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2.5rem;width:100%;max-width:380px;text-align:center}
+.login-icon{font-size:40px;margin-bottom:1rem}
+.login-title{font-family:'DM Serif Display',serif;font-size:24px;margin-bottom:.5rem}
+.login-sub{font-size:13px;color:var(--text3);margin-bottom:2rem}
+.login-card input{width:100%;padding:10px 14px;font-size:15px;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);text-align:center;letter-spacing:.15em;margin-bottom:12px}
+.login-card input:focus{outline:none;border-color:var(--accent);background:#fff}
+.login-err{font-size:13px;color:var(--danger);margin-bottom:10px;display:none}
+
+/* App */
+.app{display:none}
+/* ── Nav ── */
+.nav{background:#111;color:#fff;display:flex;align-items:center;gap:.5rem;padding:.65rem 1.25rem;position:sticky;top:0;z-index:100}
+.nav-logo{font-family:'DM Serif Display',serif;font-size:1.05rem;color:#fff;text-decoration:none;white-space:nowrap}
+.nav-links{display:flex;align-items:center;gap:.25rem;flex:1;flex-wrap:wrap}
+.nav-link{color:#ccc;text-decoration:none;font-size:.85rem;padding:.35rem .65rem;border-radius:6px;white-space:nowrap;transition:background .15s}
+.nav-link:hover,.nav-link.active{background:#2a2a2a;color:#fff}
+.dropdown{position:relative}
+.dropdown-btn{background:none;border:none;color:#ccc;font-size:.85rem;cursor:pointer;padding:.35rem .65rem;border-radius:6px;font-family:inherit;white-space:nowrap;transition:background .15s}
+.dropdown-btn:hover{background:#2a2a2a;color:#fff}
+.dropdown-content{display:none;position:absolute;top:calc(100% + 4px);left:0;background:#1a1a1a;border:1px solid #333;border-radius:8px;min-width:180px;z-index:200;overflow:hidden}
+.dropdown:hover .dropdown-content,.dropdown.open .dropdown-content{display:block}
+.dropdown-content a{display:block;padding:.55rem 1rem;color:#ccc;text-decoration:none;font-size:.83rem}
+.dropdown-content a:hover{background:#2a2a2a;color:#fff}
+.nav-spacer{flex:1}
+.nav-hamburger{display:none;background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;padding:.2rem .4rem;margin-left:auto;line-height:1;border-radius:6px}
+.nav-hamburger:hover{background:#2a2a2a}
+.nav-logout{background:none;border:1px solid #444;color:#ccc;font-size:.82rem;cursor:pointer;padding:.32rem .75rem;border-radius:6px;font-family:inherit;transition:all .15s;white-space:nowrap}
+.nav-logout:hover{background:#2a2a2a;color:#fff}
+.notif-bell-wrap{position:relative}
+#notif-bell-btn{background:none;border:none;cursor:pointer;font-size:1.1rem;padding:.3rem .5rem;border-radius:6px;color:#ccc;position:relative;display:flex;align-items:center;gap:4px}
+#notif-bell-btn:hover{background:#2a2a2a;color:#fff}
+#notif-badge{background:#ef4444;color:#fff;font-size:.65rem;font-weight:700;border-radius:999px;min-width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px}
+#notif-panel{position:absolute;top:calc(100% + 8px);right:0;width:320px;background:#fff;border:1px solid #e0e0e0;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:300;max-height:420px;overflow-y:auto}
+
+.main{max-width:1200px;margin:0 auto;padding:1.75rem 1.5rem}
+
+/* Métricas */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:1.5rem}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem}
+.metric-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-weight:600;margin-bottom:5px}
+.metric-value{font-family:'DM Serif Display',serif;font-size:26px;color:var(--text);line-height:1}
+
+/* Card */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.25rem}
+.card-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);margin-bottom:1.25rem}
+.section-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px}
+.section-row .card-title{margin-bottom:0}
+
+/* Selector de fecha */
+.date-selector{display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;flex-wrap:wrap}
+.date-selector input[type=date]{padding:9px 14px;font-size:14px;font-family:'DM Mono',monospace;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);cursor:pointer}
+.date-selector input[type=date]:focus{outline:none;border-color:var(--accent)}
+.date-nav{display:flex;gap:6px}
+
+/* Botones */
+.btn{padding:9px 18px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;border-radius:var(--radius);cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--text);transition:all .15s}
+.btn:hover{background:var(--surface2)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-primary:hover{background:#000000}
+.btn-sm{padding:6px 13px;font-size:12px;border-radius:7px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;transition:all .15s}
+.btn-sm:hover{background:var(--surface2)}
+.btn-aprobar{background:var(--success-light);border-color:#86efac;color:var(--success)}
+.btn-aprobar:hover{background:#dcfce7}
+.btn-rechazar{background:var(--danger-light);border-color:#fca5a5;color:var(--danger)}
+.btn-rechazar:hover{background:#fee2e2}
+
+/* Badges */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+.b-mixta{background:#dbeafe;color:#1e40af}
+.b-privada{background:var(--accent-light);color:var(--accent)}
+.b-familiar{background:#fce7f3;color:#9d174d}
+.b-completado{background:var(--success-light);color:var(--success)}
+.b-pendiente{background:var(--warn-light);color:var(--warn)}
+.b-cancelado{background:#f3f4f6;color:#6b7280}
+.b-pago{background:#ede9fe;color:#5b21b6}
+.b-aprobado{background:var(--success-light);color:var(--success);border:1px solid #86efac}
+.b-rechazado{background:var(--danger-light);color:var(--danger);border:1px solid #fca5a5}
+.b-aud-pendiente{background:var(--warn-light);color:var(--warn);border:1px solid #fde68a}
+
+/* Tarjeta de reservación para auditoría */
+.resv-card{border:1.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:14px;overflow:hidden;transition:border-color .2s}
+.resv-card.aprobado{border-color:#86efac}
+.resv-card.rechazado{border-color:#fca5a5}
+.resv-card.pendiente-aud{border-color:#fde68a}
+.resv-header{padding:1rem 1.25rem;background:var(--bg);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;cursor:pointer;user-select:none}
+.resv-header:hover{background:var(--surface2)}
+.resv-header-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.resv-nombre{font-weight:700;font-size:15px}
+.resv-body{padding:1.25rem;display:none;border-top:1px solid var(--border)}
+.resv-body.open{display:block}
+
+/* Grid de datos */
+.datos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:1.25rem}
+.dato{background:var(--bg);border-radius:var(--radius);padding:.75rem 1rem}
+.dato-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:3px}
+.dato-val{font-size:14px;font-weight:500;color:var(--text)}
+
+/* Comprobante */
+.comprobante-wrap{margin-bottom:1.25rem}
+.comprobante-img{max-height:200px;border-radius:var(--radius);border:1.5px solid var(--border);cursor:pointer;object-fit:contain;display:block}
+.comprobante-img:hover{opacity:.9}
+.link-pago-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--accent);text-decoration:none;padding:6px 12px;border:1px solid var(--accent-light);border-radius:7px;background:var(--accent-light);transition:all .15s}
+.link-pago-btn:hover{background:var(--accent);color:#fff}
+
+/* Panel de auditoría */
+.audit-panel{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem}
+.audit-panel.aprobado{background:var(--success-light);border-color:#86efac}
+.audit-panel.rechazado{background:var(--danger-light);border-color:#fca5a5}
+.audit-panel-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:.75rem}
+.audit-actions{display:flex;gap:8px;margin-bottom:.75rem;flex-wrap:wrap}
+.audit-comentario{width:100%;padding:8px 11px;font-size:13px;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);resize:vertical;min-height:60px;margin-bottom:.75rem}
+.audit-comentario:focus{outline:none;border-color:var(--accent);background:#fff}
+.audit-meta{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace}
+.audit-guardado{font-size:12px;padding:6px 10px;border-radius:6px;display:none;margin-top:8px}
+.audit-guardado.ok{background:var(--success-light);color:var(--success)}
+.audit-guardado.err{background:var(--danger-light);color:var(--danger)}
+
+/* Resumen del día */
+.resumen-dia{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:1.5rem}
+.res-card{border-radius:var(--radius);padding:.8rem 1rem;border:1px solid var(--border);background:var(--surface);text-align:center}
+.res-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:4px}
+.res-val{font-size:22px;font-family:'DM Serif Display',serif;color:var(--text)}
+.res-card.ok-card{background:var(--success-light);border-color:#bbf7d0}
+.res-card.ok-card .res-val{color:var(--success)}
+.res-card.warn-card{background:var(--warn-light);border-color:#fde68a}
+.res-card.warn-card .res-val{color:var(--warn)}
+.res-card.err-card{background:var(--danger-light);border-color:#fecaca}
+.res-card.err-card .res-val{color:var(--danger)}
+
+.empty{text-align:center;padding:3rem;color:var(--text3);font-size:14px}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Modal imagen */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:1000;display:none;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.open{display:flex}
+.modal-img{max-width:90vw;max-height:90vh;border-radius:var(--radius);object-fit:contain}
+.modal-close{position:fixed;top:1rem;right:1.5rem;font-size:28px;color:#fff;cursor:pointer;z-index:1001;line-height:1}
+
+/* ── Responsive móvil/tablet ── */
+@media(max-width:768px){
+  .nav-hamburger{display:flex;align-items:center;justify-content:center}
+  .nav-links{display:none;width:100%;flex-direction:column;align-items:stretch;gap:0;padding:.5rem 0;border-top:1px solid #2a2a2a;margin-top:.4rem}
+  .nav-links.open{display:flex}
+  .nav-link{padding:.7rem .9rem;border-radius:4px}
+  .dropdown-btn{width:100%;text-align:left;padding:.7rem .9rem;border-radius:4px}
+  .dropdown-content{position:static;border:none;border-radius:0;box-shadow:none;background:#161616;padding-left:1rem}
+  .dropdown:hover .dropdown-content{display:none}
+  .dropdown.open .dropdown-content{display:block}
+  .nav-spacer{display:none}
+  .nav-logout{margin:.4rem .9rem;width:calc(100% - 1.8rem);padding:.7rem;text-align:center}
+  .notif-bell-wrap{width:100%;padding:0 .9rem}
+  #notif-bell-btn{width:100%;justify-content:flex-start;padding:.7rem 0}
+  #notif-panel{position:fixed;top:0;left:0;right:0;width:100%;border-radius:0;max-height:60vh;border-top:none}
+}
+@media(max-width:768px){
+  .container,.main{padding:1rem .75rem !important}
+  .card{padding:1rem}
+  .page-title{font-size:1.3rem}
+  .search-row{flex-direction:column}
+  .search-row input,.search-row select,.search-row button{width:100%}
+  .btn{min-height:40px}
+  .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;padding-bottom:2px}
+  .tab-btn{white-space:nowrap;font-size:.82rem;padding:.5rem .8rem}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{min-width:500px}
+  .rv-grid{grid-template-columns:1fr 1fr !important}
+  .rv-actions{flex-wrap:wrap}
+  input,select,textarea{font-size:16px !important}
+}
+@media(max-width:480px){
+  .rv-grid{grid-template-columns:1fr !important}
+  .rv-actions button,.rv-actions a{width:100%}
+}
+</style>
+</head>
+<body>
+
+<!-- Modal imagen -->
+<div class="modal-overlay" id="modal-overlay" onclick="cerrarModal()">
+  <span class="modal-close" onclick="cerrarModal()">×</span>
+  <img class="modal-img" id="modal-img" />
+</div>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="login-wrap">
+  <div class="login-card">
+    <div class="login-icon">🔐</div>
+    <div class="login-title">Vista de Jefes</div>
+    <div class="login-sub">Ingresá la contraseña para acceder al panel de auditoría</div>
+    <div id="login-err" class="login-err">Contraseña incorrecta. Intentá de nuevo.</div>
+    <input type="password" id="pwd-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')verificarPwd()" />
+    <button class="btn btn-primary" style="width:100%;padding:11px" onclick="verificarPwd()">Entrar</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+  <nav class="nav"></nav>
+  <script src="/nav.js"></script>
+
+  <div class="main">
+
+    <!-- Métricas globales -->
+    <div class="metrics" id="metrics-global">
+      <div class="metric"><div class="metric-label">Total reservas</div><div class="metric-value">—</div></div>
+      <div class="metric"><div class="metric-label">Aprobadas</div><div class="metric-value">—</div></div>
+      <div class="metric"><div class="metric-label">Rechazadas</div><div class="metric-value">—</div></div>
+      <div class="metric"><div class="metric-label">Sin revisar</div><div class="metric-value">—</div></div>
+    </div>
+
+    <!-- Selector de fecha -->
+    <div class="card">
+      <div class="section-row">
+        <div class="card-title">Revisión por día</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-sm" onclick="cargarDatos()">↺ Actualizar</button>
+          <button class="btn btn-sm" onclick="exportarExcelDia()">Exportar Excel del día</button>
+        </div>
+      </div>
+      <div class="date-selector">
+        <div class="date-nav">
+          <button class="btn btn-sm" onclick="diaAnterior()">← Día anterior</button>
+          <button class="btn btn-sm" onclick="diaSiguiente()">Día siguiente →</button>
+        </div>
+        <input type="date" id="fecha-sel" onchange="renderDia()" />
+        <button class="btn btn-sm btn-primary" onclick="irHoy()">Hoy</button>
+      </div>
+
+      <!-- Resumen del día -->
+      <div class="resumen-dia" id="resumen-dia"></div>
+
+      <!-- Tarjetas de reservaciones -->
+      <div id="lista-dia">
+        <div class="empty"><span class="spinner"></span>Cargando...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ── CONFIGURACIÓN ──────────────────────────────────────────
+const SB_URL='https://vimymnzlagzhfpbpjrvl.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpbXltbnpsYWd6aGZwYnBqcnZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NzcwNzEsImV4cCI6MjA5MjU1MzA3MX0.7p8ob8zr2dYkAvCV-8p_Mmp65laYlsG5KwCuyj7MdLc';
+// ───────────────────────────────────────────────────────────
+
+const HDR={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation'};
+let datos=[];
+
+// ── LOGIN ──
+function mostrarApp(user){
+  document.getElementById('login-wrap').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('header-user').textContent=user.nombre;
+  authNav(user);
+  iniciarApp();
+}
+
+function verificarPwd(){
+  const user=authLogin(document.getElementById('pwd-input').value);
+  if(user&&user.acceso.includes('jefes')){
+    mostrarApp(user);
+  } else {
+    document.getElementById('login-err').style.display='block';
+    document.getElementById('pwd-input').value='';
+    document.getElementById('pwd-input').focus();
+  }
+}
+
+function cerrarSesion(){ authLogout(); }
+
+// ── API ──
+async function api(path,opts={}){
+  const res=await fetch(SB_URL+'/rest/v1/'+path,{...opts,headers:{...HDR,...(opts.headers||{})}});
+  if(!res.ok){const e=await res.text();throw new Error(e);}
+  const t=await res.text();return t?JSON.parse(t):[];
+}
+
+function setConn(ok){ window.setConnDot&&setConnDot(ok); }
+
+async function cargarDatos(){
+  try{
+    datos=await api('reservaciones?select=*&order=fecha_ascenso.desc,creado_at.desc');
+    renderMetricasGlobales();
+    renderDia();
+    setConn(true);
+  }catch(e){
+    setConn(false);
+    document.getElementById('lista-dia').innerHTML='<div class="empty">Error al cargar. Verificá conexión.</div>';
+  }
+}
+
+function iniciarApp(){
+  document.getElementById('fecha-sel').value=hoy();
+  cargarDatos();
+  setInterval(cargarDatos,30000);
+}
+
+function hoy(){return new Date().toISOString().slice(0,10);}
+function fmt(f){if(!f)return'—';const[y,m,d]=f.split('-');return`${d}/${m}/${y}`;}
+
+function diaAnterior(){
+  const d=new Date(document.getElementById('fecha-sel').value);
+  d.setDate(d.getDate()-1);
+  document.getElementById('fecha-sel').value=d.toISOString().slice(0,10);
+  renderDia();
+}
+function diaSiguiente(){
+  const d=new Date(document.getElementById('fecha-sel').value);
+  d.setDate(d.getDate()+1);
+  document.getElementById('fecha-sel').value=d.toISOString().slice(0,10);
+  renderDia();
+}
+function irHoy(){
+  document.getElementById('fecha-sel').value=hoy();
+  renderDia();
+}
+
+// ── MÉTRICAS GLOBALES ──
+function renderMetricasGlobales(){
+  const total=datos.length;
+  const aprobadas=datos.filter(r=>r.auditoria_estado==='Aprobado').length;
+  const rechazadas=datos.filter(r=>r.auditoria_estado==='Rechazado').length;
+  const sinRevisar=datos.filter(r=>!r.auditoria_estado||r.auditoria_estado==='Pendiente').length;
+  document.getElementById('metrics-global').innerHTML=`
+    <div class="metric"><div class="metric-label">Total reservas</div><div class="metric-value">${total}</div></div>
+    <div class="metric" style="border-color:#bbf7d0"><div class="metric-label">Aprobadas</div><div class="metric-value" style="color:var(--success)">${aprobadas}</div></div>
+    <div class="metric" style="border-color:#fecaca"><div class="metric-label">Rechazadas</div><div class="metric-value" style="color:var(--danger)">${rechazadas}</div></div>
+    <div class="metric" style="border-color:#fde68a"><div class="metric-label">Sin revisar</div><div class="metric-value" style="color:var(--warn)">${sinRevisar}</div></div>`;
+}
+
+// ── RENDER DÍA ──
+function renderDia(){
+  const fecha=document.getElementById('fecha-sel').value;
+  if(!fecha) return;
+  const del_dia=datos.filter(r=>r.fecha_ascenso===fecha);
+
+  // Resumen
+  const aprobadas=del_dia.filter(r=>r.auditoria_estado==='Aprobado').length;
+  const rechazadas=del_dia.filter(r=>r.auditoria_estado==='Rechazado').length;
+  const pendientes=del_dia.filter(r=>!r.auditoria_estado||r.auditoria_estado==='Pendiente').length;
+  const ingresos=del_dia.filter(r=>r.estado_pago!=='Cancelado').reduce((s,r)=>s+Number(r.precio),0);
+  const mixtaOcup=del_dia.filter(r=>r.tipo_cabana==='Mixta'&&r.estado_pago!=='Cancelado').reduce((s,r)=>s+Number(r.no_personas||1),0);
+
+  document.getElementById('resumen-dia').innerHTML=del_dia.length===0?'':`
+    <div class="res-card"><div class="res-label">Reservaciones</div><div class="res-val">${del_dia.length}</div></div>
+    <div class="res-card"><div class="res-label">Ingresos del día</div><div class="res-val" style="font-size:18px">Q ${ingresos.toLocaleString('es-GT',{minimumFractionDigits:2})}</div></div>
+    <div class="res-card"><div class="res-label">Mixta ocupada</div><div class="res-val">${mixtaOcup}/22</div></div>
+    <div class="res-card ${aprobadas>0&&pendientes===0&&rechazadas===0?'ok-card':''}" ><div class="res-label">Aprobadas</div><div class="res-val">${aprobadas}</div></div>
+    <div class="res-card ${pendientes>0?'warn-card':''}"><div class="res-label">Sin revisar</div><div class="res-val">${pendientes}</div></div>
+    <div class="res-card ${rechazadas>0?'err-card':''}"><div class="res-label">Rechazadas</div><div class="res-val">${rechazadas}</div></div>`;
+
+  const cont=document.getElementById('lista-dia');
+  if(!del_dia.length){
+    cont.innerHTML=`<div class="empty">No hay reservaciones para el ${fmt(fecha)}.</div>`;
+    return;
+  }
+
+  cont.innerHTML=del_dia.map(r=>renderResvCard(r)).join('');
+}
+
+function renderResvCard(r){
+  const aud=r.auditoria_estado||'Pendiente';
+  const audCls=aud==='Aprobado'?'aprobado':aud==='Rechazado'?'rechazado':'pendiente-aud';
+  const bc=r.tipo_cabana==='Mixta'?'b-mixta':r.tipo_cabana==='Privada'?'b-privada':'b-familiar';
+  const bst=r.estado_pago==='Completado'?'b-completado':r.estado_pago==='Pendiente'?'b-pendiente':'b-cancelado';
+  const baudge=aud==='Aprobado'?'b-aprobado':aud==='Rechazado'?'b-rechazado':'b-aud-pendiente';
+  const audIcon=aud==='Aprobado'?'✓ Aprobado':aud==='Rechazado'?'✗ Rechazado':'⏳ Sin revisar';
+
+  return`<div class="resv-card ${audCls}" id="card-${r.id}">
+    <div class="resv-header" onclick="toggleCard(${r.id})">
+      <div class="resv-header-left">
+        <span class="resv-nombre">${r.nombre}</span>
+        <span class="badge ${bc}">${r.tipo_cabana}</span>
+        <span style="font-size:13px;color:var(--text3);font-family:'DM Mono',monospace">🎫 ${r.ticket||'Sin ticket'}</span>
+        <span style="font-size:13px;font-weight:600">Q ${Number(r.precio).toFixed(2)}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="badge ${baudge}">${audIcon}</span>
+        <span style="color:var(--text3);font-size:18px" id="chevron-${r.id}">▾</span>
+      </div>
+    </div>
+    <div class="resv-body" id="body-${r.id}">
+
+      <!-- Datos de la reservación -->
+      <div class="datos-grid">
+        <div class="dato"><div class="dato-label">Fecha pago</div><div class="dato-val">${fmt(r.fecha_pago)}</div></div>
+        <div class="dato"><div class="dato-label">Fecha ascenso</div><div class="dato-val">${fmt(r.fecha_ascenso)}</div></div>
+        <div class="dato"><div class="dato-label">Agencia</div><div class="dato-val">${r.agencia||'—'}</div></div>
+        <div class="dato"><div class="dato-label">No. personas</div><div class="dato-val">${r.no_personas||'—'}</div></div>
+        <div class="dato"><div class="dato-label">Tipo pago</div><div class="dato-val"><span class="badge b-pago">${r.tipo_pago}</span></div></div>
+        <div class="dato"><div class="dato-label">Método pago</div><div class="dato-val">${r.metodo_pago||'—'}</div></div>
+        <div class="dato"><div class="dato-label">Estado pago</div><div class="dato-val"><span class="badge ${bst}">${r.estado_pago}</span></div></div>
+        <div class="dato"><div class="dato-label">Paquete</div><div class="dato-val">${r.paquete||'—'}</div></div>
+        ${r.fecha_prometida_pago?`<div class="dato"><div class="dato-label">Fecha prometida</div><div class="dato-val">${fmt(r.fecha_prometida_pago)}</div></div>`:''}
+        ${r.notas?`<div class="dato" style="grid-column:span 2"><div class="dato-label">Notas</div><div class="dato-val">${r.notas}</div></div>`:''}
+      </div>
+
+      <!-- Link de pago y comprobante -->
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:1.25rem;align-items:flex-start">
+        ${r.link_pago?`<div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:6px">Link de pago</div><a href="${r.link_pago}" target="_blank" class="link-pago-btn">🔗 Ver link enviado al cliente ↗</a></div>`:''}
+        ${r.comprobante_url?`<div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:6px">Comprobante</div><img src="${r.comprobante_url}" class="comprobante-img" onclick="abrirModal('${r.comprobante_url}')" title="Click para ampliar" /></div>`:'<div style="font-size:13px;color:var(--text3);padding:.75rem 1rem;background:var(--bg);border-radius:var(--radius);border:1px dashed var(--border)">Sin comprobante adjunto</div>'}
+      </div>
+
+      <!-- Panel de auditoría -->
+      <div class="audit-panel ${aud==='Aprobado'?'aprobado':aud==='Rechazado'?'rechazado':''}" id="audit-panel-${r.id}">
+        <div class="audit-panel-title">Revisión del jefe</div>
+        <div class="audit-actions">
+          <button class="btn-sm btn-aprobar" onclick="auditarReservacion(${r.id},'Aprobado')">✓ Aprobar</button>
+          <button class="btn-sm btn-rechazar" onclick="auditarReservacion(${r.id},'Rechazado')">✗ Rechazar</button>
+        </div>
+        <textarea class="audit-comentario" id="comentario-${r.id}" placeholder="Comentario opcional (ej: comprobante no coincide con el monto, fecha incorrecta...)">${r.auditoria_comentario||''}</textarea>
+        ${r.auditoria_fecha?`<div class="audit-meta">Revisado el ${new Date(r.auditoria_fecha).toLocaleString('es-GT')} · por ${r.auditoria_por||'—'}</div>`:'<div class="audit-meta">Sin revisar aún</div>'}
+        <div class="audit-guardado" id="saved-${r.id}"></div>
+      </div>
+
+    </div>
+  </div>`;
+}
+
+function toggleCard(id){
+  const body=document.getElementById('body-'+id);
+  const chev=document.getElementById('chevron-'+id);
+  const open=body.classList.toggle('open');
+  chev.textContent=open?'▴':'▾';
+}
+
+async function auditarReservacion(id,estado){
+  const comentario=document.getElementById('comentario-'+id).value.trim()||null;
+  const savedEl=document.getElementById('saved-'+id);
+  try{
+    await api('reservaciones?id=eq.'+id,{
+      method:'PATCH',
+      headers:{'Prefer':'return=minimal'},
+      body:JSON.stringify({
+        auditoria_estado:estado,
+        auditoria_comentario:comentario,
+        auditoria_fecha:new Date().toISOString(),
+        auditoria_por:authUser()?.nombre
+      })
+    });
+    // Actualizar local
+    const idx=datos.findIndex(r=>r.id===id);
+    if(idx>-1){
+      datos[idx].auditoria_estado=estado;
+      datos[idx].auditoria_comentario=comentario;
+      datos[idx].auditoria_fecha=new Date().toISOString();
+    }
+    // Actualizar visual de la card
+    const card=document.getElementById('card-'+id);
+    card.className='resv-card '+(estado==='Aprobado'?'aprobado':'rechazado');
+    const panel=document.getElementById('audit-panel-'+id);
+    panel.className='audit-panel '+(estado==='Aprobado'?'aprobado':'rechazado');
+    savedEl.textContent=estado==='Aprobado'?'✓ Marcado como aprobado':'✗ Marcado como rechazado';
+    savedEl.className='audit-guardado ok';
+    savedEl.style.display='block';
+    clearTimeout(savedEl._t);
+    savedEl._t=setTimeout(()=>savedEl.style.display='none',3000);
+    renderMetricasGlobales();
+    // Actualizar badge del header de la card
+    renderDia();
+  }catch(e){
+    savedEl.textContent='Error al guardar: '+e.message;
+    savedEl.className='audit-guardado err';
+    savedEl.style.display='block';
+  }
+}
+
+// ── EXPORTAR EXCEL ──
+function exportarExcelDia(){
+  const fecha=document.getElementById('fecha-sel').value;
+  const del_dia=datos.filter(r=>r.fecha_ascenso===fecha);
+  if(!del_dia.length){alert('No hay reservaciones para esta fecha.');return;}
+  const rows=del_dia.map((r,i)=>({
+    '#':i+1,
+    'Fecha de pago':fmt(r.fecha_pago),
+    'Fecha de ascenso':fmt(r.fecha_ascenso),
+    'Nombre':r.nombre,
+    'No de personas':r.no_personas||'',
+    'Metodo de pago':r.metodo_pago||'',
+    'Tipo de pago':r.tipo_pago,
+    'Ticket':r.ticket||'',
+    'Precio':Number(r.precio).toFixed(2),
+    'Tipo de cabaña':r.tipo_cabana,
+    'Agencia':r.agencia||'',
+    'Paquete':r.paquete||'',
+    'Notas':r.notas||'',
+    'Estado pago':r.estado_pago,
+    'Auditoría':r.auditoria_estado||'Pendiente',
+    'Comentario jefe':r.auditoria_comentario||'',
+    'Fecha revisión':r.auditoria_fecha?new Date(r.auditoria_fecha).toLocaleString('es-GT'):''
+  }));
+  const ws=XLSX.utils.json_to_sheet(rows);
+  ws['!cols']=[{wch:4},{wch:14},{wch:16},{wch:22},{wch:12},{wch:16},{wch:12},{wch:12},{wch:10},{wch:14},{wch:16},{wch:16},{wch:25},{wch:13},{wch:12},{wch:28},{wch:20}];
+
+  // Colorear filas según auditoría (verde/rojo)
+  const range=XLSX.utils.decode_range(ws['!ref']);
+  for(let R=range.s.r+1;R<=range.e.r;R++){
+    const cell=ws[XLSX.utils.encode_cell({r:R,c:14})];
+    if(cell){
+      const fill=cell.v==='Aprobado'?{fgColor:{rgb:'D1FAE5'}}:cell.v==='Rechazado'?{fgColor:{rgb:'FEE2E2'}}:{fgColor:{rgb:'FEF3C7'}};
+      for(let C=range.s.c;C<=range.e.c;C++){
+        const addr=XLSX.utils.encode_cell({r:R,c:C});
+        if(!ws[addr]) ws[addr]={t:'z'};
+        ws[addr].s={fill};
+      }
+    }
+  }
+
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,'Auditoría',ws);
+  XLSX.writeFile(wb,`auditoria_${fecha}.xlsx`);
+}
+
+// ── MODAL IMAGEN ──
+function abrirModal(src){
+  document.getElementById('modal-img').src=src;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function cerrarModal(){
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.getElementById('modal-img').src='';
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')cerrarModal();});
+
+/* _toggleNav, _toggleBell y listener de click se definen en nav.js */
+
+// ── INIT ──
+(function(){
+  const user=authGuard('jefes');
+  if(user) mostrarApp(user);
+})();
+</script>
+</body>
+</html>

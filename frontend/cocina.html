@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wolfs — Cocina</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icon-192.png" type="image/png">
+<meta name="theme-color" content="#111111">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="/auth.js"></script>
+<script src="/update.js"></script>
+<style>
+:root{--bg:#f7f7f7;--surface:#fff;--surface2:#eeeeee;--border:#e0e0e0;--text:#111111;--text2:#555555;--text3:#888888;--accent:#111111;--warn:#b45309;--warn-light:#fef3c7;--danger:#991b1b;--danger-light:#fef2f2;--success:#166534;--success-light:#f0fdf4;--veg:#065f46;--veg-light:#d1fae5;--radius:10px;--radius-lg:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2.5rem;width:100%;max-width:380px;text-align:center}
+.login-icon{font-size:40px;margin-bottom:1rem}
+.login-title{font-family:'DM Serif Display',serif;font-size:24px;margin-bottom:.5rem}
+.login-sub{font-size:13px;color:var(--text3);margin-bottom:2rem}
+.login-card input{width:100%;padding:10px 14px;font-size:15px;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);text-align:center;letter-spacing:.1em;margin-bottom:12px}
+.login-card input:focus{outline:none;border-color:var(--accent);background:#fff}
+.login-err{font-size:13px;color:var(--danger);margin-bottom:10px;display:none}
+.app{display:none}
+/* ── Nav ── */
+.nav{background:#111;color:#fff;display:flex;align-items:center;gap:.5rem;padding:.65rem 1.25rem;position:sticky;top:0;z-index:100}
+.nav-logo{font-family:'DM Serif Display',serif;font-size:1.05rem;color:#fff;text-decoration:none;white-space:nowrap}
+.nav-links{display:flex;align-items:center;gap:.25rem;flex:1;flex-wrap:wrap}
+.nav-link{color:#ccc;text-decoration:none;font-size:.85rem;padding:.35rem .65rem;border-radius:6px;white-space:nowrap;transition:background .15s}
+.nav-link:hover,.nav-link.active{background:#2a2a2a;color:#fff}
+.dropdown{position:relative}
+.dropdown-btn{background:none;border:none;color:#ccc;font-size:.85rem;cursor:pointer;padding:.35rem .65rem;border-radius:6px;font-family:inherit;white-space:nowrap;transition:background .15s}
+.dropdown-btn:hover{background:#2a2a2a;color:#fff}
+.dropdown-content{display:none;position:absolute;top:calc(100% + 4px);left:0;background:#1a1a1a;border:1px solid #333;border-radius:8px;min-width:180px;z-index:200;overflow:hidden}
+.dropdown:hover .dropdown-content,.dropdown.open .dropdown-content{display:block}
+.dropdown-content a{display:block;padding:.55rem 1rem;color:#ccc;text-decoration:none;font-size:.83rem}
+.dropdown-content a:hover{background:#2a2a2a;color:#fff}
+.nav-spacer{flex:1}
+.nav-hamburger{display:none;background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;padding:.2rem .4rem;margin-left:auto;line-height:1;border-radius:6px}
+.nav-hamburger:hover{background:#2a2a2a}
+.nav-logout{background:none;border:1px solid #444;color:#ccc;font-size:.82rem;cursor:pointer;padding:.32rem .75rem;border-radius:6px;font-family:inherit;transition:all .15s;white-space:nowrap}
+.nav-logout:hover{background:#2a2a2a;color:#fff}
+.notif-bell-wrap{position:relative}
+#notif-bell-btn{background:none;border:none;cursor:pointer;font-size:1.1rem;padding:.3rem .5rem;border-radius:6px;color:#ccc;position:relative;display:flex;align-items:center;gap:4px}
+#notif-bell-btn:hover{background:#2a2a2a;color:#fff}
+#notif-badge{background:#ef4444;color:#fff;font-size:.65rem;font-weight:700;border-radius:999px;min-width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px}
+#notif-panel{position:absolute;top:calc(100% + 8px);right:0;width:320px;background:#fff;border:1px solid #e0e0e0;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:300;max-height:420px;overflow-y:auto}
+.main{max-width:1100px;margin:0 auto;padding:1.75rem 1.5rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.25rem}
+.card-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);margin-bottom:1.25rem}
+.section-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px}
+.section-row .card-title{margin-bottom:0}
+.btn{padding:9px 18px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;border-radius:var(--radius);cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--text);transition:all .15s}
+.btn:hover{background:var(--surface2)}
+.btn-sm{padding:5px 11px;font-size:12px;border-radius:6px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif}
+.btn-verde{background:#065f46;border-color:#065f46;color:#fff}
+.btn-verde:hover{background:#047857}
+
+/* Resumen del día */
+.resumen-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:1.5rem}
+.res-card{border-radius:var(--radius);padding:1rem 1.2rem;border:2px solid;text-align:center}
+.res-card.normal{background:#f0fdf4;border-color:#86efac}
+.res-card.vegano{background:#ecfdf5;border-color:#34d399}
+.res-card.vegetariano{background:#f0fdf4;border-color:#6ee7b7}
+.res-card.alergia{background:#fef2f2;border-color:#fca5a5}
+.res-card.total{background:#f8fafc;border-color:#cbd5e1}
+.res-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:4px}
+.res-val{font-size:30px;font-family:'DM Serif Display',serif;color:var(--text);line-height:1}
+.res-card.alergia .res-val{color:var(--danger)}
+
+/* Tarjetas de grupos */
+.grupos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.grupo-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;transition:box-shadow .2s}
+.grupo-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.grupo-card.con-alergia{border-color:#fca5a5;background:#fffbfb}
+.grupo-card.con-alergia .grupo-header{background:#fef2f2}
+.grupo-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem;padding:.6rem .8rem;border-radius:8px;background:var(--bg)}
+.grupo-nombre{font-weight:700;font-size:15px}
+.grupo-cabana{font-size:12px;color:var(--text3);margin-top:2px}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+.b-mixta{background:#dbeafe;color:#1e40af}
+.b-privada{background:#f0f0f0;color:#111}
+.b-familiar{background:#fce7f3;color:#9d174d}
+.dieta-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
+.dieta-row:last-child{border-bottom:none}
+.dieta-label{color:var(--text2)}
+.dieta-val{font-weight:700;font-size:16px}
+.dieta-val.verde{color:var(--veg)}
+.dieta-val.normal{color:#475569}
+.dieta-val.rojo{color:var(--danger)}
+.alergia-box{background:var(--danger-light);border:1px solid #fecaca;border-radius:8px;padding:.6rem .8rem;margin-top:.8rem}
+.alergia-title{font-size:11px;font-weight:700;color:var(--danger);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.alergia-text{font-size:13px;color:#7f1d1d;font-weight:600}
+.cumple-box{background:#fdf4ff;border:1px solid #e9d5ff;border-radius:8px;padding:.5rem .8rem;margin-top:.6rem;font-size:13px;color:#6b21a8;font-weight:600}
+.date-nav{display:flex;align-items:center;gap:12px}
+.date-display{font-family:'DM Serif Display',serif;font-size:18px;color:var(--text)}
+.empty{text-align:center;padding:3rem;color:var(--text3);font-size:14px}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:#065f46;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Responsive móvil/tablet ── */
+@media(max-width:768px){
+  .nav-hamburger{display:flex;align-items:center;justify-content:center}
+  .nav-links{display:none;width:100%;flex-direction:column;align-items:stretch;gap:0;padding:.5rem 0;border-top:1px solid #2a2a2a;margin-top:.4rem}
+  .nav-links.open{display:flex}
+  .nav-link{padding:.7rem .9rem;border-radius:4px}
+  .dropdown-btn{width:100%;text-align:left;padding:.7rem .9rem;border-radius:4px}
+  .dropdown-content{position:static;border:none;border-radius:0;box-shadow:none;background:#161616;padding-left:1rem}
+  .dropdown:hover .dropdown-content{display:none}
+  .dropdown.open .dropdown-content{display:block}
+  .nav-spacer{display:none}
+  .nav-logout{margin:.4rem .9rem;width:calc(100% - 1.8rem);padding:.7rem;text-align:center}
+  .notif-bell-wrap{width:100%;padding:0 .9rem}
+  #notif-bell-btn{width:100%;justify-content:flex-start;padding:.7rem 0}
+  #notif-panel{position:fixed;top:0;left:0;right:0;width:100%;border-radius:0;max-height:60vh;border-top:none}
+}
+@media(max-width:768px){
+  .container,.main{padding:1rem .75rem !important}
+  .card{padding:1rem}
+  .page-title{font-size:1.3rem}
+  .search-row{flex-direction:column}
+  .search-row input,.search-row select,.search-row button{width:100%}
+  .btn{min-height:40px}
+  .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;padding-bottom:2px}
+  .tab-btn{white-space:nowrap;font-size:.82rem;padding:.5rem .8rem}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{min-width:500px}
+  .rv-grid{grid-template-columns:1fr 1fr !important}
+  .rv-actions{flex-wrap:wrap}
+  input,select,textarea{font-size:16px !important}
+}
+@media(max-width:480px){
+  .rv-grid{grid-template-columns:1fr !important}
+  .rv-actions button,.rv-actions a{width:100%}
+}
+</style>
+</head>
+<body>
+
+<div class="login-wrap" id="login-wrap">
+  <div class="login-card">
+    <div class="login-icon">🍳</div>
+    <div class="login-title">Módulo Cocina</div>
+    <div class="login-sub">Ingresá tu contraseña para acceder</div>
+    <div id="login-err" class="login-err">Contraseña incorrecta.</div>
+    <input type="password" id="pwd-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')verificarPwd()" />
+    <button class="btn btn-verde" style="width:100%;padding:11px" onclick="verificarPwd()">Entrar</button>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <nav class="nav"></nav>
+  <script src="/nav.js"></script>
+
+  <div class="main">
+    <!-- Selector de fecha -->
+    <div class="card">
+      <div class="section-row">
+        <div class="card-title" style="margin-bottom:0">Seleccionar fecha</div>
+        <div class="date-nav">
+          <button class="btn btn-sm" onclick="cambiarFecha(-1)">← Anterior</button>
+          <div class="date-display" id="fecha-display">—</div>
+          <button class="btn btn-sm" onclick="cambiarFecha(1)">Siguiente →</button>
+          <input type="date" id="fecha-input" onchange="fechaSeleccionada(this.value)" style="padding:7px 10px;font-size:13px;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--bg)" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumen del día -->
+    <div id="resumen-dia" class="resumen-grid" style="display:none"></div>
+
+    <!-- Grupos / Reservaciones -->
+    <div id="grupos-container">
+      <div class="empty"><span class="spinner"></span>Cargando...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL='https://vimymnzlagzhfpbpjrvl.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpbXltbnpsYWd6aGZwYnBqcnZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NzcwNzEsImV4cCI6MjA5MjU1MzA3MX0.7p8ob8zr2dYkAvCV-8p_Mmp65laYlsG5KwCuyj7MdLc';
+const HDR={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+
+const MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const DIAS_SEMANA=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+
+let fechaActual=new Date().toISOString().slice(0,10);
+let datosDia=[];
+
+function verificarPwd(){
+  const pw=document.getElementById('pwd-input').value;
+  const user=authLogin(pw);
+  if(!user||!user.acceso.includes('cocina')){
+    document.getElementById('login-err').style.display='block';
+    document.getElementById('pwd-input').value='';return;
+  }
+  document.getElementById('login-wrap').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('header-user').textContent=user.nombre;
+  authNav(user);
+  iniciar();
+}
+
+function iniciar(){
+  document.getElementById('fecha-input').value=fechaActual;
+  actualizarFechaDisplay();
+  cargarDia();
+}
+
+function cambiarFecha(dir){
+  const d=new Date(fechaActual+'T12:00:00');
+  d.setDate(d.getDate()+dir);
+  fechaActual=d.toISOString().slice(0,10);
+  document.getElementById('fecha-input').value=fechaActual;
+  actualizarFechaDisplay();
+  cargarDia();
+}
+
+function fechaSeleccionada(val){
+  fechaActual=val;
+  actualizarFechaDisplay();
+  cargarDia();
+}
+
+function actualizarFechaDisplay(){
+  const[y,m,d]=fechaActual.split('-');
+  const dt=new Date(fechaActual+'T12:00:00');
+  const diaSemana=DIAS_SEMANA[dt.getDay()];
+  const hoy=new Date().toISOString().slice(0,10);
+  const label=fechaActual===hoy?' (HOY)':fechaActual===new Date(new Date().setDate(new Date().getDate()+1)).toISOString().slice(0,10)?' (MAÑANA)':'';
+  document.getElementById('fecha-display').textContent=`${diaSemana} ${parseInt(d)} de ${MESES[parseInt(m)-1]} ${y}${label}`;
+}
+
+async function cargarDia(){
+  document.getElementById('grupos-container').innerHTML='<div class="empty"><span class="spinner"></span>Cargando...</div>';
+  document.getElementById('resumen-dia').style.display='none';
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/reservaciones?fecha_ascenso=eq.${fechaActual}&estado_pago=neq.Cancelado&select=*&order=tipo_cabana.asc`,{headers:HDR});
+    datosDia=await r.json();
+    renderDia();
+    window.setConnDot&&setConnDot(true);
+  }catch(e){
+    window.setConnDot&&setConnDot(false);
+    document.getElementById('grupos-container').innerHTML=`<div class="empty">Error al cargar datos: ${e.message}</div>`;
+  }
+}
+
+function calcDietas(r){
+  const total=Number(r.no_personas||1);
+  // Primero intentar los campos numéricos nuevos
+  let veganos=Number(r.cantidad_veganos||0);
+  let vegetarianos=Number(r.cantidad_vegetarianos||0);
+  // Fallback a booleanos viejos
+  if(!veganos&&r.es_vegano)veganos=1;
+  if(!vegetarianos&&r.es_vegetariano)vegetarianos=1;
+  const normales=Math.max(0,total-veganos-vegetarianos);
+  return{total,veganos,vegetarianos,normales};
+}
+
+function renderDia(){
+  if(!datosDia.length){
+    document.getElementById('grupos-container').innerHTML=`
+      <div class="card"><div class="empty">🎉 Sin reservaciones para este día.<br><span style="font-size:12px;color:var(--text3)">No hay grupos confirmados para preparar comida.</span></div></div>`;
+    document.getElementById('resumen-dia').style.display='none';
+    return;
+  }
+
+  // Calcular totales del día
+  let totalPersonas=0,totalVeganos=0,totalVegetarianos=0,totalNormales=0,gruposConAlergia=0;
+  datosDia.forEach(r=>{
+    const d=calcDietas(r);
+    totalPersonas+=d.total;
+    totalVeganos+=d.veganos;
+    totalVegetarianos+=d.vegetarianos;
+    totalNormales+=d.normales;
+    if(r.alergias)gruposConAlergia++;
+  });
+
+  // Resumen del día
+  const resDiv=document.getElementById('resumen-dia');
+  resDiv.style.display='grid';
+  resDiv.innerHTML=`
+    <div class="res-card total"><div class="res-label">Total personas</div><div class="res-val">${totalPersonas}</div></div>
+    <div class="res-card normal"><div class="res-label">🍽 Normales</div><div class="res-val">${totalNormales}</div></div>
+    <div class="res-card vegano"><div class="res-label">🌱 Veganos</div><div class="res-val">${totalVeganos}</div></div>
+    <div class="res-card vegetariano"><div class="res-label">🥦 Vegetarianos</div><div class="res-val">${totalVegetarianos}</div></div>
+    ${gruposConAlergia>0?`<div class="res-card alergia"><div class="res-label">⚠ Grupos con Alergias</div><div class="res-val">${gruposConAlergia}</div></div>`:''}
+  `;
+
+  // Tarjetas de grupos
+  const bc=c=>c==='Mixta'?'b-mixta':c==='Privada'?'b-privada':'b-familiar';
+  const html=datosDia.map(r=>{
+    const d=calcDietas(r);
+    const tieneAlergia=!!r.alergias;
+    const tieneCumple=r.es_cumpleanos;
+    return`
+    <div class="grupo-card ${tieneAlergia?'con-alergia':''}">
+      <div class="grupo-header">
+        <div>
+          <div class="grupo-nombre">${r.nombre}</div>
+          <div class="grupo-cabana"><span class="badge ${bc(r.tipo_cabana)}">${r.tipo_cabana}</span></div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:22px;font-family:'DM Serif Display',serif;font-weight:700">${d.total}</div>
+          <div style="font-size:11px;color:var(--text3)">personas</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:.5rem">
+        <div class="dieta-row">
+          <span class="dieta-label">🍽 Menú normal</span>
+          <span class="dieta-val normal">${d.normales}</span>
+        </div>
+        ${d.veganos>0?`<div class="dieta-row">
+          <span class="dieta-label">🌱 Veganos</span>
+          <span class="dieta-val verde">${d.veganos}</span>
+        </div>`:''}
+        ${d.vegetarianos>0?`<div class="dieta-row">
+          <span class="dieta-label">🥦 Vegetarianos</span>
+          <span class="dieta-val verde">${d.vegetarianos}</span>
+        </div>`:''}
+      </div>
+
+      ${tieneAlergia?`<div class="alergia-box">
+        <div class="alergia-title">⚠ Alerta de alergia</div>
+        <div class="alergia-text">${r.alergias}</div>
+      </div>`:''}
+
+      ${tieneCumple?`<div class="cumple-box">🎂 Celebración de cumpleaños en este grupo</div>`:''}
+
+      ${r.notas?`<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.6rem .8rem;margin-top:.6rem">
+        <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">📝 Notas del grupo</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.5">${r.notas}</div>
+      </div>`:''}
+    </div>`;
+  }).join('');
+
+  document.getElementById('grupos-container').innerHTML=`<div class="grupos-grid">${html}</div>`;
+}
+
+/* _toggleNav, _toggleBell y listener de click se definen en nav.js */
+
+(function(){
+  const u=authUser();
+  if(u&&u.acceso.includes('cocina')){
+    document.getElementById('login-wrap').style.display='none';
+    document.getElementById('app').style.display='block';
+    document.getElementById('header-user').textContent=u.nombre;
+    authNav(u);
+    iniciar();
+  }
+})();
+</script>
+</body>
+</html>

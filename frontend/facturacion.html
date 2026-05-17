@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wolfs — Facturación</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icon-192.png" type="image/png">
+<meta name="theme-color" content="#111111">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="/auth.js"></script>
+<script src="/update.js"></script>
+<style>
+:root{--bg:#f7f7f7;--surface:#fff;--surface2:#eeeeee;--border:#e0e0e0;--text:#111111;--text2:#555555;--text3:#888888;--accent:#111111;--accent-light:#f0f0f0;--warn:#b45309;--warn-light:#fef3c7;--danger:#991b1b;--danger-light:#fef2f2;--success:#166534;--success-light:#f0fdf4;--radius:10px;--radius-lg:16px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2.5rem;width:100%;max-width:380px;text-align:center}
+.login-icon{font-size:40px;margin-bottom:1rem}
+.login-title{font-family:'DM Serif Display',serif;font-size:24px;margin-bottom:.5rem}
+.login-sub{font-size:13px;color:var(--text3);margin-bottom:2rem}
+.login-card input{width:100%;padding:10px 14px;font-size:15px;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);text-align:center;letter-spacing:.1em;margin-bottom:12px}
+.login-card input:focus{outline:none;border-color:var(--accent);background:#fff}
+.login-err{font-size:13px;color:var(--danger);margin-bottom:10px;display:none}
+.app{display:none}
+/* ── Nav ── */
+.nav{background:#111;color:#fff;display:flex;align-items:center;gap:.5rem;padding:.65rem 1.25rem;position:sticky;top:0;z-index:100}
+.nav-logo{font-family:'DM Serif Display',serif;font-size:1.05rem;color:#fff;text-decoration:none;white-space:nowrap}
+.nav-links{display:flex;align-items:center;gap:.25rem;flex:1;flex-wrap:wrap}
+.nav-link{color:#ccc;text-decoration:none;font-size:.85rem;padding:.35rem .65rem;border-radius:6px;white-space:nowrap;transition:background .15s}
+.nav-link:hover,.nav-link.active{background:#2a2a2a;color:#fff}
+.dropdown{position:relative}
+.dropdown-btn{background:none;border:none;color:#ccc;font-size:.85rem;cursor:pointer;padding:.35rem .65rem;border-radius:6px;font-family:inherit;white-space:nowrap;transition:background .15s}
+.dropdown-btn:hover{background:#2a2a2a;color:#fff}
+.dropdown-content{display:none;position:absolute;top:calc(100% + 4px);left:0;background:#1a1a1a;border:1px solid #333;border-radius:8px;min-width:180px;z-index:200;overflow:hidden}
+.dropdown:hover .dropdown-content,.dropdown.open .dropdown-content{display:block}
+.dropdown-content a{display:block;padding:.55rem 1rem;color:#ccc;text-decoration:none;font-size:.83rem}
+.dropdown-content a:hover{background:#2a2a2a;color:#fff}
+.nav-spacer{flex:1}
+.nav-hamburger{display:none;background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;padding:.2rem .4rem;margin-left:auto;line-height:1;border-radius:6px}
+.nav-hamburger:hover{background:#2a2a2a}
+.nav-logout{background:none;border:1px solid #444;color:#ccc;font-size:.82rem;cursor:pointer;padding:.32rem .75rem;border-radius:6px;font-family:inherit;transition:all .15s;white-space:nowrap}
+.nav-logout:hover{background:#2a2a2a;color:#fff}
+.notif-bell-wrap{position:relative}
+#notif-bell-btn{background:none;border:none;cursor:pointer;font-size:1.1rem;padding:.3rem .5rem;border-radius:6px;color:#ccc;position:relative;display:flex;align-items:center;gap:4px}
+#notif-bell-btn:hover{background:#2a2a2a;color:#fff}
+#notif-badge{background:#ef4444;color:#fff;font-size:.65rem;font-weight:700;border-radius:999px;min-width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px}
+#notif-panel{position:absolute;top:calc(100% + 8px);right:0;width:320px;background:#fff;border:1px solid #e0e0e0;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:300;max-height:420px;overflow-y:auto}
+.main{max-width:1300px;margin:0 auto;padding:1.75rem 1.5rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.25rem}
+.card-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);margin-bottom:1.25rem}
+.section-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px}
+.section-row .card-title{margin-bottom:0}
+.btn{padding:9px 18px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;border-radius:var(--radius);cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--text);transition:all .15s}
+.btn:hover{background:var(--surface2)}
+.btn-sm{padding:5px 11px;font-size:12px;border-radius:6px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-primary:hover{background:#333}
+.filter-row{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:flex-end}
+.filter-row input,.filter-row select{padding:8px 11px;font-size:13px;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:9px 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);border-bottom:1.5px solid var(--border);background:var(--bg);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg)}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+.b-completado{background:var(--success-light);color:var(--success)}
+.b-pendiente{background:var(--warn-light);color:var(--warn)}
+.b-cancelado{background:#f3f4f6;color:#6b7280}
+.b-mixta{background:#dbeafe;color:#1e40af}
+.b-privada{background:var(--accent-light);color:var(--accent)}
+.b-familiar{background:#fce7f3;color:#9d174d}
+.empty{text-align:center;padding:3rem;color:var(--text3);font-size:14px}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:1.5rem}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem}
+.metric-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-weight:600;margin-bottom:5px}
+.metric-value{font-family:'DM Serif Display',serif;font-size:26px;color:var(--text);line-height:1}
+
+/* ── Responsive móvil/tablet ── */
+@media(max-width:768px){
+  .nav-hamburger{display:flex;align-items:center;justify-content:center}
+  .nav-links{display:none;width:100%;flex-direction:column;align-items:stretch;gap:0;padding:.5rem 0;border-top:1px solid #2a2a2a;margin-top:.4rem}
+  .nav-links.open{display:flex}
+  .nav-link{padding:.7rem .9rem;border-radius:4px}
+  .dropdown-btn{width:100%;text-align:left;padding:.7rem .9rem;border-radius:4px}
+  .dropdown-content{position:static;border:none;border-radius:0;box-shadow:none;background:#161616;padding-left:1rem}
+  .dropdown:hover .dropdown-content{display:none}
+  .dropdown.open .dropdown-content{display:block}
+  .nav-spacer{display:none}
+  .nav-logout{margin:.4rem .9rem;width:calc(100% - 1.8rem);padding:.7rem;text-align:center}
+  .notif-bell-wrap{width:100%;padding:0 .9rem}
+  #notif-bell-btn{width:100%;justify-content:flex-start;padding:.7rem 0}
+  #notif-panel{position:fixed;top:0;left:0;right:0;width:100%;border-radius:0;max-height:60vh;border-top:none}
+}
+@media(max-width:768px){
+  .container,.main{padding:1rem .75rem !important}
+  .card{padding:1rem}
+  .page-title{font-size:1.3rem}
+  .search-row{flex-direction:column}
+  .search-row input,.search-row select,.search-row button{width:100%}
+  .btn{min-height:40px}
+  .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;padding-bottom:2px}
+  .tab-btn{white-space:nowrap;font-size:.82rem;padding:.5rem .8rem}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  table{min-width:500px}
+  .rv-grid{grid-template-columns:1fr 1fr !important}
+  .rv-actions{flex-wrap:wrap}
+  input,select,textarea{font-size:16px !important}
+}
+@media(max-width:480px){
+  .rv-grid{grid-template-columns:1fr !important}
+  .rv-actions button,.rv-actions a{width:100%}
+}
+</style>
+</head>
+<body>
+
+<div class="login-wrap" id="login-wrap">
+  <div class="login-card">
+    <div class="login-icon">🧾</div>
+    <div class="login-title">Facturación</div>
+    <div class="login-sub">Ingresá tu contraseña para acceder</div>
+    <div id="login-err" class="login-err">Contraseña incorrecta.</div>
+    <input type="password" id="pwd-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')verificarPwd()" />
+    <button class="btn btn-primary" style="width:100%;padding:11px" onclick="verificarPwd()">Entrar</button>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <nav class="nav"></nav>
+  <script src="/nav.js"></script>
+
+  <div class="main">
+    <div class="metrics" id="metrics-fac"></div>
+
+    <div class="card">
+      <div class="section-row">
+        <div class="card-title">Ingresos por Recurrente</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-sm" onclick="cargarDatos()">↺ Actualizar</button>
+          <button class="btn btn-sm btn-primary" onclick="exportarExcel()">📥 Exportar Excel para Contador</button>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--text3);display:block;margin-bottom:4px">DESDE</label>
+          <input type="date" id="fil-desde" onchange="renderTabla()" />
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--text3);display:block;margin-bottom:4px">HASTA</label>
+          <input type="date" id="fil-hasta" onchange="renderTabla()" />
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--text3);display:block;margin-bottom:4px">AGENCIA</label>
+          <select id="fil-agencia" onchange="renderTabla()">
+            <option value="">Todas</option>
+            <option>Wolfs Acatenango</option><option>Ixcanul</option><option>Balam</option>
+            <option>Sitio Web (Amelia)</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--text3);display:block;margin-bottom:4px">CABAÑA</label>
+          <select id="fil-cabana" onchange="renderTabla()">
+            <option value="">Todas</option>
+            <option>Mixta</option><option>Privada</option><option>Familiar</option>
+          </select>
+        </div>
+        <button class="btn btn-sm" onclick="limpiarFiltros()">✕ Limpiar</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>#</th><th>Fecha Pago</th><th>Nombre</th><th>DPI / Pasaporte</th>
+            <th>Correo</th><th>Teléfono</th><th>F. Ascenso</th><th>Cabaña</th>
+            <th>Personas</th><th>Agencia</th><th>Monto</th><th>No. Ticket</th>
+          </tr></thead>
+          <tbody id="tbody-fac">
+            <tr><td colspan="12"><div class="empty"><span class="spinner"></span>Cargando...</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const SB_URL='https://vimymnzlagzhfpbpjrvl.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpbXltbnpsYWd6aGZwYnBqcnZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NzcwNzEsImV4cCI6MjA5MjU1MzA3MX0.7p8ob8zr2dYkAvCV-8p_Mmp65laYlsG5KwCuyj7MdLc';
+const HDR={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+let datos=[];
+
+function verificarPwd(){
+  const pw=document.getElementById('pwd-input').value;
+  const user=authLogin(pw);
+  if(!user||!user.acceso.includes('facturacion')){
+    document.getElementById('login-err').style.display='block';
+    document.getElementById('pwd-input').value='';return;
+  }
+  document.getElementById('login-wrap').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('header-user').textContent=user.nombre;
+  authNav(user);
+  cargarDatos();
+}
+
+async function cargarDatos(){
+  try{
+    // Reservaciones pagadas por Recurrente
+    const r1=await fetch(`${SB_URL}/rest/v1/reservaciones?tipo_pago=eq.Recurrente&estado_pago=eq.Completado&select=*&order=fecha_pago.desc`,{headers:HDR});
+    const reserv=await r1.json();
+    // Links pagados
+    const r2=await fetch(`${SB_URL}/rest/v1/links_pendientes?estado=eq.Pagado&select=*&order=creado_at.desc`,{headers:HDR});
+    const links=await r2.json();
+    // Combinar: las reservaciones de Amelia web que vienen del webhook
+    const ameliaWeb=await fetch(`${SB_URL}/rest/v1/reservaciones?agencia=eq.Sitio Web (Amelia)&estado_pago=eq.Completado&select=*&order=fecha_pago.desc`,{headers:HDR});
+    const ameliaData=await ameliaWeb.json();
+
+    // Unir reserv + ameliaData sin duplicados (por id)
+    const resIds=new Set(reserv.map(r=>r.id));
+    const todasRes=[...reserv,...ameliaData.filter(r=>!resIds.has(r.id))];
+
+    // Convertir links al mismo formato
+    const linksFormatted=links.map(l=>({
+      _fuente:'link',
+      nombre:l.nombre,fecha_pago:l.creado_at?.slice(0,10),
+      identificacion:null,correo:null,telefono:null,
+      fecha_ascenso:l.fecha_ascenso,tipo_cabana:l.tipo_cabana,
+      no_personas:l.no_personas,agencia:l.agencia,precio:l.precio,ticket:l.checkout_id
+    }));
+
+    datos=[...todasRes.map(r=>({...r,_fuente:'reserva'})),...linksFormatted]
+      .sort((a,b)=>(b.fecha_pago||'').localeCompare(a.fecha_pago||''));
+
+    renderMetrics();
+    renderTabla();
+    window.setConnDot&&setConnDot(true);
+  }catch(e){
+    window.setConnDot&&setConnDot(false);
+    console.error('[cargarDatos]',e);
+  }
+}
+
+function getDatosFiltrados(){
+  const desde=document.getElementById('fil-desde').value;
+  const hasta=document.getElementById('fil-hasta').value;
+  const agencia=document.getElementById('fil-agencia').value;
+  const cabana=document.getElementById('fil-cabana').value;
+  return datos.filter(r=>{
+    if(desde&&(r.fecha_pago||'')< desde)return false;
+    if(hasta&&(r.fecha_pago||'')> hasta)return false;
+    if(agencia&&r.agencia!==agencia)return false;
+    if(cabana&&r.tipo_cabana!==cabana)return false;
+    return true;
+  });
+}
+
+function renderMetrics(){
+  const total=datos.reduce((s,r)=>s+Number(r.precio||0),0);
+  const count=datos.length;
+  document.getElementById('metrics-fac').innerHTML=`
+    <div class="metric"><div class="metric-label">Total registros</div><div class="metric-value">${count}</div></div>
+    <div class="metric"><div class="metric-label">Total facturado</div><div class="metric-value" style="font-size:20px">Q ${total.toLocaleString('es-GT',{minimumFractionDigits:2})}</div></div>
+    <div class="metric"><div class="metric-label">Promedio por reserva</div><div class="metric-value" style="font-size:18px">Q ${count>0?(total/count).toLocaleString('es-GT',{minimumFractionDigits:2}):'0.00'}</div></div>
+  `;
+}
+
+function renderTabla(){
+  const d=getDatosFiltrados();
+  const tbody=document.getElementById('tbody-fac');
+  if(!d.length){tbody.innerHTML='<tr><td colspan="12"><div class="empty">Sin resultados para los filtros seleccionados.</div></td></tr>';return;}
+  const bc=c=>c==='Mixta'?'b-mixta':c==='Privada'?'b-privada':'b-familiar';
+  const fmt=f=>{if(!f)return'—';const[y,m,dd]=f.split('-');return`${dd}/${m}/${y}`;};
+  tbody.innerHTML=d.map((r,i)=>`<tr>
+    <td style="color:var(--text3);font-size:11px">${i+1}</td>
+    <td style="font-family:'DM Mono',monospace;font-size:12px">${fmt(r.fecha_pago)}</td>
+    <td><strong>${r.nombre||'—'}</strong></td>
+    <td style="font-family:'DM Mono',monospace;font-size:12px">${r.identificacion||'—'}</td>
+    <td style="font-size:12px;color:var(--text2)">${r.correo||'—'}</td>
+    <td style="font-size:12px;color:var(--text2)">${r.telefono||'—'}</td>
+    <td style="font-family:'DM Mono',monospace;font-size:12px">${fmt(r.fecha_ascenso)}</td>
+    <td><span class="badge ${bc(r.tipo_cabana)}">${r.tipo_cabana||'—'}</span></td>
+    <td style="text-align:center">${r.no_personas||'—'}</td>
+    <td style="font-size:12px">${r.agencia||'—'}</td>
+    <td style="font-weight:700;color:var(--success)">Q ${Number(r.precio||0).toFixed(2)}</td>
+    <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${r.ticket||r.checkout_id||'—'}</td>
+  </tr>`).join('');
+}
+
+function limpiarFiltros(){
+  ['fil-desde','fil-hasta','fil-agencia','fil-cabana'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  renderTabla();
+}
+
+function exportarExcel(){
+  const d=getDatosFiltrados();
+  const fmt=f=>{if(!f)return'';const[y,m,dd]=f.split('-');return`${dd}/${m}/${y}`;};
+  const rows=d.map(r=>({
+    'Fecha Pago':fmt(r.fecha_pago),
+    'Nombre':r.nombre||'',
+    'DPI / Pasaporte':r.identificacion||'',
+    'Correo':r.correo||'',
+    'Teléfono':r.telefono||'',
+    'Fecha Ascenso':fmt(r.fecha_ascenso),
+    'Tipo de Cabaña':r.tipo_cabana||'',
+    'No. Personas':r.no_personas||'',
+    'Agencia':r.agencia||'',
+    'Monto (Q)':Number(r.precio||0),
+    'No. Ticket/Transacción':r.ticket||r.checkout_id||''
+  }));
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.json_to_sheet(rows);
+  ws['!cols']=[{wch:14},{wch:28},{wch:18},{wch:28},{wch:16},{wch:14},{wch:14},{wch:10},{wch:18},{wch:12},{wch:24}];
+  XLSX.utils.book_append_sheet(wb,ws,'Facturación Recurrente');
+  const fecha=new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb,`Facturacion_Wolfs_${fecha}.xlsx`);
+}
+
+/* _toggleNav, _toggleBell y listener de click se definen en nav.js */
+
+(function(){
+  const u=authUser();
+  if(u&&u.acceso.includes('facturacion')){
+    document.getElementById('login-wrap').style.display='none';
+    document.getElementById('app').style.display='block';
+    document.getElementById('header-user').textContent=u.nombre;
+    authNav(u);
+    cargarDatos();
+  }
+})();
+</script>
+</body>
+</html>
