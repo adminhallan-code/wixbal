@@ -89,58 +89,56 @@ if ($is_cambio && $appointment_id && isset($mapa_estados[$amelia_status])) {
     $nuevo_estado = $mapa_estados[$amelia_status];
     error_log("[WEBHOOK AMELIA] Cambio estado appointment $appointment_id -> $nuevo_estado");
 
-    // 1a) Por amelia_app_{appointment_id}
-    $res = sb_get("reservaciones?link_pago=like.*amelia_app_{$appointment_id}*&select=id,estado_pago,link_pago");
-    $rows = $res['body'] ?? [];
+    // Extraer el booking específico que cambió (viene en body['bookings'])
+    $bookings_root = $body['bookings'] ?? [];
+    $bookings_app  = $app_data['bookings'] ?? [];
+    $bookings_dict = $bookings_root ?: $bookings_app;
+    $primer_b = is_array($bookings_dict)
+        ? (isset($bookings_dict[0]) ? $bookings_dict[0] : ($bookings_dict['0'] ?? []))
+        : [];
+    $booking_id_cs = $primer_b['id'] ?? null;
+    $rows = [];
 
-    // 1b) Por amelia_booking_{bookingId} — usar body['bookings'] primero (solo el booking cambiado)
-    if (empty($rows)) {
-        $bookings_root = $body['bookings'] ?? [];
-        $bookings_app  = $app_data['bookings'] ?? [];
-        $bookings_dict = $bookings_root ?: $bookings_app;
-        $primer_b = is_array($bookings_dict)
-            ? (isset($bookings_dict[0]) ? $bookings_dict[0] : ($bookings_dict['0'] ?? []))
-            : [];
-        $booking_id_cs = $primer_b['id'] ?? null;
-        if ($booking_id_cs) {
-            $res_bk = sb_get("reservaciones?link_pago=eq.amelia_booking_{$booking_id_cs}&select=id,estado_pago,link_pago");
-            $rows = $res_bk['body'] ?? [];
-            if ($rows) error_log("[WEBHOOK AMELIA] Encontrado por amelia_booking_$booking_id_cs");
-        }
+    // 1) Si tenemos booking_id específico, buscar SOLO por ese booking
+    if ($booking_id_cs) {
+        $res_bk = sb_get("reservaciones?link_pago=eq.amelia_booking_{$booking_id_cs}&select=id,estado_pago,link_pago");
+        $rows = $res_bk['body'] ?? [];
+        if ($rows) error_log("[WEBHOOK AMELIA] Encontrado por amelia_booking_$booking_id_cs");
     }
 
-    // 2) Fallback: manual_* pendientes
-    if (empty($rows) && $fecha_ascenso && $tipo_cabana !== 'Desconocida') {
-        $res2 = sb_get(
-            "reservaciones?fecha_ascenso=eq.$fecha_ascenso&tipo_cabana=eq." . urlencode($tipo_cabana)
-            . "&estado_pago=neq.Cancelado&link_pago=like.manual_*&select=id,estado_pago,link_pago"
-        );
-        $rows = $res2['body'] ?? [];
-        error_log("[WEBHOOK AMELIA] Fallback manual_*: " . count($rows) . " encontradas");
+    // 2) Sin booking específico: buscar por appointment o manual_*
+    if (empty($rows) && !$booking_id_cs) {
+        $res = sb_get("reservaciones?link_pago=like.*amelia_app_{$appointment_id}*&select=id,estado_pago,link_pago");
+        $rows = $res['body'] ?? [];
+
+        if (empty($rows) && $fecha_ascenso && $tipo_cabana !== 'Desconocida') {
+            $res2 = sb_get(
+                "reservaciones?fecha_ascenso=eq.$fecha_ascenso&tipo_cabana=eq." . urlencode($tipo_cabana)
+                . "&estado_pago=neq.Cancelado&link_pago=like.manual_*&select=id,estado_pago,link_pago"
+            );
+            $rows = $res2['body'] ?? [];
+            error_log("[WEBHOOK AMELIA] Fallback manual_*: " . count($rows) . " encontradas");
+        }
     }
 
     foreach ($rows as $row) {
         $patch = ['estado_pago' => $nuevo_estado];
         if ($nuevo_estado === 'Completado' && !str_starts_with($row['link_pago'], 'amelia_')) {
-            $patch['link_pago'] = "amelia_app_$appointment_id";
+            $patch['link_pago'] = "amelia_booking_$booking_id_cs";
         }
         sb_patch("reservaciones?id=eq." . $row['id'], $patch);
         error_log("[WEBHOOK AMELIA] Reservacion " . $row['id'] . " -> $nuevo_estado");
     }
 
-    // Si no existe, crear nueva
+    // Si no existe, crear nueva para este booking específico
     if (empty($rows) && $fecha_ascenso && $tipo_cabana !== 'Desconocida') {
-        $bookings_new  = $body['bookings'] ?? $app_data['bookings'] ?? [];
-        $primer_new = is_array($bookings_new)
-            ? (isset($bookings_new[0]) ? $bookings_new[0] : ($bookings_new['0'] ?? []))
-            : [];
-        $booking_id_new = $primer_new['id'] ?? null;
-        $cliente  = $primer_new['customer'] ?? [];
+        $booking_id_new = $booking_id_cs ?? null;
+        $cliente  = $primer_b['customer'] ?? [];
         $nombre   = trim(($cliente['firstName'] ?? '') . ' ' . ($cliente['lastName'] ?? '')) ?: 'Sin nombre';
         $correo   = $cliente['email'] ?? "amelia_{$appointment_id}@wolfsacatenango.com";
         if (str_contains($correo, 'fallback_')) $correo = "amelia_{$appointment_id}@wolfsacatenango.com";
-        $precio   = (float) ($primer_new['price'] ?? 0);
-        $personas = (int) ($primer_new['persons'] ?? 1);
+        $precio   = (float) ($primer_b['price'] ?? 0);
+        $personas = (int) ($primer_b['persons'] ?? 1);
         $link_new = $booking_id_new ? "amelia_booking_$booking_id_new" : "amelia_app_$appointment_id";
 
         $nueva = array_filter([
