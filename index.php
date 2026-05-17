@@ -180,6 +180,11 @@ if ($method === 'GET' && $s0 === 'api' && $s1 === 'cron' && $s2 === 'recordatori
     require __DIR__ . '/api/cron_recordatorios.php';
 }
 
+// GET /api/cron/amelia-sync  (reintenta sincronizaciones fallidas con Amelia)
+if ($method === 'GET' && $s0 === 'api' && $s1 === 'cron' && $s2 === 'amelia-sync') {
+    require __DIR__ . '/api/cron_amelia_sync.php';
+}
+
 // GET /api/amelia-sync-test
 if ($method === 'GET' && $s0 === 'api' && $s1 === 'amelia-sync-test') {
     $ts = time();
