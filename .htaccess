@@ -10,8 +10,9 @@ Header always set Access-Control-Allow-Headers "Content-Type, Authorization, api
 RewriteCond %{REQUEST_METHOD} OPTIONS
 RewriteRule ^ - [R=204,L]
 
-# amelia_bridge.php y robots.txt se sirven directo
+# amelia_bridge.php, deploy.php y robots.txt se sirven directo
 RewriteRule ^amelia_bridge\.php$ - [L]
+RewriteRule ^deploy\.php$ - [L]
 RewriteRule ^robots\.txt$ - [L]
 
 # Todo lo demas va al router
