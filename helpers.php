@@ -62,26 +62,31 @@ function sb_patch(string $path, array $data): array {
 
 // ── Amelia bridge ────────────────────────────────────────────────────────────
 
-function bridge_call(string $action, array $data): array {
+function bridge_call(string $action, array $data, int $max_intentos = 3): array {
     $payload = array_merge(['secret' => AMELIA_SECRET, 'action' => $action], $data);
     foreach (WP_DOMAINS as $domain) {
-        $ch = curl_init($domain . '/amelia_bridge.php');
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => http_build_query($payload),
-            CURLOPT_TIMEOUT        => 20,
-        ]);
-        $body   = curl_exec($ch);
-        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        if ($status === 200) {
-            $parsed = json_decode($body, true) ?? [];
-            if (!isset($parsed['error'])) {
-                error_log("[AMELIA BRIDGE] OK $domain $action: $body");
-                return $parsed;
+        for ($intento = 1; $intento <= $max_intentos; $intento++) {
+            $ch = curl_init($domain . '/amelia_bridge.php');
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST           => true,
+                CURLOPT_POSTFIELDS     => http_build_query($payload),
+                CURLOPT_TIMEOUT        => 20,
+            ]);
+            $body   = curl_exec($ch);
+            $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            if ($status === 200) {
+                $parsed = json_decode($body, true) ?? [];
+                if (!isset($parsed['error'])) {
+                    error_log("[AMELIA BRIDGE] OK $domain $action intento=$intento: $body");
+                    return $parsed;
+                }
+                error_log("[AMELIA BRIDGE] Error $domain $action intento=$intento: $body");
+                break; // respuesta válida con error lógico — no reintentar este dominio
             }
-            error_log("[AMELIA BRIDGE] Error $domain $action: $body");
+            error_log("[AMELIA BRIDGE] HTTP $status $domain $action intento=$intento");
+            if ($intento < $max_intentos) sleep(1);
         }
     }
     return ['error' => 'Todos los dominios fallaron'];
