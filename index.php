@@ -185,6 +185,11 @@ if ($method === 'GET' && $s0 === 'api' && $s1 === 'cron' && $s2 === 'amelia-sync
     require __DIR__ . '/api/cron_amelia_sync.php';
 }
 
+// GET /api/tmp_facturas  (temporal)
+if ($method === 'GET' && $s0 === 'api' && $s1 === 'tmp_facturas') {
+    require __DIR__ . '/api/tmp_facturas.php';
+}
+
 // GET /api/amelia-sync-test
 if ($method === 'GET' && $s0 === 'api' && $s1 === 'amelia-sync-test') {
     $ts = time();
