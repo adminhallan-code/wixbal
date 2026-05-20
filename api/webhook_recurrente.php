@@ -1,13 +1,24 @@
 <?php
 // POST /webhook/recurrente
 $body = get_body();
-error_log('[WEBHOOK RECURRENTE] Payload: ' . substr(json_encode($body), 0, 500));
+error_log('[WEBHOOK RECURRENTE] Payload completo: ' . json_encode($body));
 
 // Extraer checkout_id y status del evento
 $checkout    = $body['data']['object'] ?? $body['checkout'] ?? $body;
 $checkout_id = $checkout['id']     ?? $body['id'] ?? '';
 $status      = $checkout['status'] ?? $body['status'] ?? '';
 $event_type  = $body['type']       ?? '';
+
+// Si el checkout_id no empieza con 'ch_', intentar extraerlo de la URL o de otros campos
+if ($checkout_id && !str_starts_with($checkout_id, 'ch_')) {
+    $possible_url = $checkout['checkout_url'] ?? $checkout['url'] ?? $body['data']['object']['checkout_url'] ?? '';
+    if ($possible_url && preg_match('/ch_[a-z0-9]+/', $possible_url, $m)) {
+        $checkout_id = $m[0];
+    } elseif (!empty($checkout['checkout_id'])) {
+        $checkout_id = $checkout['checkout_id'];
+    }
+}
+error_log("[WEBHOOK RECURRENTE] checkout_id=$checkout_id status=$status event_type=$event_type");
 
 if (str_contains($event_type, 'checkout') && str_contains($event_type, 'created')) {
     json_response(['received' => true]);
