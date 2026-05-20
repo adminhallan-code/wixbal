@@ -83,6 +83,8 @@ if (empty($pendientes)) {
             'estado_pago' => 'Completado',
             'fecha_pago'  => gt_date(),
         ]);
+        // Sincronizar links_pendientes por checkout_url
+        sb_patch("links_pendientes?checkout_url=like.*{$checkout_id}*&estado=eq.Esperando%20pago", ['estado' => 'Pagado']);
         if (es_wolfs($rv['agencia'] ?? '')) {
             $lp = $rv['link_pago'] ?? '';
             if (str_starts_with($lp, 'amelia_booking_')) {
