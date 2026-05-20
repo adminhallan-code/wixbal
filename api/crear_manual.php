@@ -73,14 +73,7 @@
         }
     }
 
-    // ── 3. Factura + email si está Completado ────────────────────────────────────
-    if ($estado_pago === 'Completado' && $nombre && $tipo_cabana && $tipo_pago !== 'Efectivo') {
-        $factura = felplex_emitir_factura(
-            $res_id, $nombre, $correo, $precio, $tipo_cabana, $fecha,
-            $data['nit'] ?? null, $data['tipo_identificacion'] ?? null, $data['nombre_fiscal'] ?? null
-        );
-        if ($correo) enviar_confirmacion_cliente($correo, $nombre, $tipo_cabana, $factura['url'] ?? null);
-    }
+    // Reserva presencial nunca genera factura (solo links de pago la generan)
 
     // ── 4. Notificar al equipo ────────────────────────────────────────────────────
     $no_pers = (int)($data['no_personas'] ?? 1);
