@@ -96,6 +96,14 @@ if (empty($pendientes)) {
         ]);
         // Sincronizar links_pendientes por checkout_url
         sb_patch("links_pendientes?checkout_url=like.*{$checkout_id}*&estado=eq.Esperando%20pago", ['estado' => 'Pagado']);
+        // Factura + email de confirmación
+        $factura = felplex_emitir_factura(
+            $rv['id'], $rv['nombre'], $rv['correo'] ?? null,
+            (float)($rv['precio'] ?? 0), $rv['tipo_cabana'], $rv['fecha_ascenso']
+        );
+        if ($rv['correo'] ?? null) {
+            enviar_confirmacion_cliente($rv['correo'], $rv['nombre'], $rv['tipo_cabana'], $factura['url'] ?? null);
+        }
         if (es_wolfs($rv['agencia'] ?? '')) {
             $lp = $rv['link_pago'] ?? '';
             if (str_starts_with($lp, 'amelia_booking_')) {
@@ -129,21 +137,33 @@ sb_patch("links_pendientes?checkout_id=eq.$checkout_id", [
     'fecha_pago_real'=> gt_date(),
 ]);
 
-// Actualizar reservación a Completado
+// Actualizar reservación a Completado y obtener sus datos para la factura
 sb_patch("reservaciones?link_pago=eq." . urlencode($checkout_url), [
     'estado_pago' => 'Completado',
     'fecha_pago'  => gt_date(),
 ]);
+$rv_data = sb_get("reservaciones?link_pago=eq." . urlencode($checkout_url) . "&select=id,nombre,correo,precio,tipo_cabana,fecha_ascenso,link_pago,agencia,nit,tipo_identificacion,nombre_fiscal");
+$rv_row  = $rv_data['body'][0] ?? [];
+
+// Factura + email de confirmación
+if ($rv_row) {
+    $factura = felplex_emitir_factura(
+        $rv_row['id'], $link['nombre'], $link['correo'] ?? null,
+        (float)($link['precio'] ?? 0), $link['tipo_cabana'], $link['fecha_ascenso'],
+        $link['nit'] ?? null, $link['tipo_identificacion'] ?? null, $link['nombre_fiscal'] ?? null
+    );
+    if ($link['correo'] ?? null) {
+        enviar_confirmacion_cliente($link['correo'], $link['nombre'], $link['tipo_cabana'], $factura['url'] ?? null);
+    }
+}
 
 // Sincronizar Amelia
 if (es_wolfs($agencia)) {
     $cli_fecha  = $fecha_ascenso;
     $cli_cabana = $tipo_cabana;
-    $rv2 = sb_get("reservaciones?link_pago=eq." . urlencode($checkout_url) . "&select=link_pago,fecha_ascenso,tipo_cabana");
-    $rv2_row = $rv2['body'][0] ?? [];
-    if ($rv2_row) {
-        $cli_fecha  = $rv2_row['fecha_ascenso'] ?? $cli_fecha;
-        $cli_cabana = $rv2_row['tipo_cabana']   ?? $cli_cabana;
+    if ($rv_row) {
+        $cli_fecha  = $rv_row['fecha_ascenso'] ?? $cli_fecha;
+        $cli_cabana = $rv_row['tipo_cabana']   ?? $cli_cabana;
     }
     enqueue_sync('update_status', [
         'estado'        => 'approved',
