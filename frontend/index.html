@@ -1087,7 +1087,7 @@ function renderTabla(){
       <td style="color:var(--text3);font-size:11px">${i+1}</td>
       <td style="font-family:'DM Mono',monospace;font-size:12px">${fmt(r.fecha_pago)}</td>
       <td style="font-family:'DM Mono',monospace;font-size:12px">${fmt(r.fecha_ascenso)}</td>
-      <td><strong>${r.nombre}</strong></td>
+      <td><strong>${r.tipo_pago==='Presencial'?'💵 ':''}${r.nombre}</strong></td>
       <td style="font-size:11px;color:var(--text2);line-height:1.2">${r.telefono?`Tel: ${r.telefono}<br>`:''}${r.correo?`Email: ${r.correo}<br>`:''}${r.identificacion?`ID: ${r.identificacion}`:''}</td>
       <td>${r.no_personas||'—'}</td>
       <td style="font-size:12px">${r.metodo_pago||'—'}</td>
@@ -1155,7 +1155,7 @@ function renderPendientes(){
       let dh='';
       if(dias!==null){const cls=dias<0?'dias-late':dias<=2?'dias-warn':'dias-ok';const txt=dias<0?`${Math.abs(dias)} días vencido`:dias===0?'Hoy':dias===1?'Mañana':`En ${dias} días`;dh=`<span class="dias-badge ${cls}">${txt}</span>`;}
       return`<div class="pend-card">
-        <div class="pend-nombre">${r.nombre} ${dh}<span class="badge b-efectivo">Efectivo</span></div>
+        <div class="pend-nombre">💵 ${r.nombre} ${dh}<span class="badge b-efectivo">Efectivo</span></div>
         <div class="pend-info">
           <span>📅 Ascenso: <strong>${fmt(r.fecha_ascenso)}</strong></span>
           <span>🏕 ${r.tipo_cabana}</span>
