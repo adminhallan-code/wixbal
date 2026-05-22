@@ -298,6 +298,10 @@ function felplex_emitir_factura(int $reservacion_id, string $nombre, ?string $co
         $to_cf    = 0;
         $receptor = ['tax_code_type' => 'DPI', 'tax_code' => $nit, 'tax_name' => $nombre_fiscal ?: $nombre,
                      'address' => ['street' => 'Ciudad', 'city' => 'Guatemala', 'state' => 'GU', 'zip' => '01001', 'country' => 'GT']];
+    } elseif ($tipo_id === 'PASAPORTE') {
+        $to_cf    = 0;
+        $receptor = ['tax_code_type' => 'PASAPORTE', 'tax_code' => $nit, 'tax_name' => $nombre_fiscal ?: $nombre,
+                     'address' => ['street' => 'Ciudad', 'city' => 'Guatemala', 'state' => 'GU', 'zip' => '01001', 'country' => 'GT']];
     } else {
         $to_cf    = 0;
         $receptor = ['tax_code_type' => 'EXT', 'tax_code' => $nit, 'tax_name' => $nombre_fiscal ?: $nombre,
