@@ -200,6 +200,11 @@ if ($method === 'GET' && $s0 === 'api' && $s1 === 'tmp_facturas3') {
     require __DIR__ . '/api/tmp_facturas3.php';
 }
 
+// GET /api/tmp_facturas4  (temporal — Domenico Bee 4x4)
+if ($method === 'GET' && $s0 === 'api' && $s1 === 'tmp_facturas4') {
+    require __DIR__ . '/api/tmp_facturas4.php';
+}
+
 
 // GET /api/amelia-sync-test
 if ($method === 'GET' && $s0 === 'api' && $s1 === 'amelia-sync-test') {
