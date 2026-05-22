@@ -10,9 +10,22 @@ if ($secret !== 'WOLFS_CRON_2026') {
     http_response_code(403); exit;
 }
 
+// Datos de identificacion para facturas que fallaron por limite CF
+$ids_extra = [
+    9851 => ['nit' => 'N03954942', 'tipo_identificacion' => 'EXT', 'nombre_fiscal' => 'Hernán Gerardo Rodriguez Rivera'],
+    9854 => ['nit' => 'AT414546',  'tipo_identificacion' => 'EXT', 'nombre_fiscal' => 'María Camila Narváez Gordillo'],
+];
+
 $ids = [9851, 9854, 9855]; // Hernán, María Camila, Ermin
 $res = sb_get("reservaciones?id=in.(" . implode(',', $ids) . ")&select=id,nombre,correo,precio,tipo_cabana,fecha_ascenso,nit,tipo_identificacion,nombre_fiscal,factura_uuid");
 $rows = $res['body'] ?? [];
+// Mezclar datos extra de identificacion
+foreach ($rows as &$rv) {
+    if (isset($ids_extra[$rv['id']])) {
+        $rv = array_merge($rv, $ids_extra[$rv['id']]);
+    }
+}
+unset($rv);
 
 $resultados = [];
 foreach ($rows as $rv) {
