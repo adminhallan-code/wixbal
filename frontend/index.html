@@ -1087,7 +1087,7 @@ function renderTabla(){
       <td style="color:var(--text3);font-size:11px">${i+1}</td>
       <td style="font-family:'DM Mono',monospace;font-size:12px">${fmt(r.fecha_pago)}</td>
       <td style="font-family:'DM Mono',monospace;font-size:12px">${fmt(r.fecha_ascenso)}</td>
-      <td><strong>${r.tipo_pago==='Presencial'?'💵 ':''}${r.nombre}</strong></td>
+      <td><strong>${r.tipo_pago==='Presencial'?'💵 ':(r.link_pago||'').startsWith('amelia_booking_')?'💻 ':''}${r.nombre}</strong></td>
       <td style="font-size:11px;color:var(--text2);line-height:1.2">${r.telefono?`Tel: ${r.telefono}<br>`:''}${r.correo?`Email: ${r.correo}<br>`:''}${r.identificacion?`ID: ${r.identificacion}`:''}</td>
       <td>${r.no_personas||'—'}</td>
       <td style="font-size:12px">${r.metodo_pago||'—'}</td>
