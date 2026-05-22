@@ -4,46 +4,65 @@ require_once __DIR__ . '/../helpers.php';
 
 if (($_GET['secret'] ?? '') !== 'WOLFS_CRON_2026') { http_response_code(403); exit; }
 
-// María Ordóñez Hernández (9868) — G29075089 PASAPORTE guatemalteco
-// Jorge Pantoja Cantú     (9871) — N-23073754 EXT
+// María Ordóñez Hernández (9868) — G29075089 pasaporte mexicano
+$rv_res = sb_get("reservaciones?id=eq.9868&select=id,nombre,correo,precio,tipo_cabana,fecha_ascenso,factura_uuid");
+$rv = $rv_res['body'][0] ?? null;
 
-$casos = [
-    ['id' => 9868, 'nit' => 'G29075089',  'tipo' => 'PASAPORTE', 'nombre_fiscal' => 'María Ordóñez Hernández'],
-    ['id' => 9871, 'nit' => 'N-23073754', 'tipo' => 'EXT',       'nombre_fiscal' => 'Jorge Pantoja Cantú'],
+if (!$rv) { json_response(['error' => 'no encontrada']); }
+if (!empty($rv['factura_uuid'])) { json_response(['resultado' => 'ya tiene factura', 'uuid' => $rv['factura_uuid']]); }
+
+$key    = FELPLEX_API_KEY;
+$total  = round((float)$rv['precio'], 2);
+$iva    = round((float)$rv['precio'] * 12 / 112, 2);
+$gt_now = gmdate('Y-m-d\TH:i:s', time() + GT_OFFSET * 3600);
+$desc   = 'Cabaña Privada Exclusiva: Ascenso al Volcán Acatenango con servicio todo incluido.';
+
+// Probar con PASAPORTE
+$tipo_a_probar = $_GET['tipo'] ?? 'PASAPORTE';
+$nit_a_probar  = $_GET['nit']  ?? 'G29075089';
+
+$payload = [
+    'type'           => 'FACT',
+    'currency'       => 'GTQ',
+    'datetime_issue' => $gt_now,
+    'items'          => [['qty' => 1, 'type' => 'S', 'price' => $total, 'description' => $desc,
+                          'without_iva' => 0, 'discount' => 0, 'is_discount_percentage' => 0]],
+    'total'          => $total,
+    'total_tax'      => $iva,
+    'to_cf'          => 0,
+    'emails'         => $rv['correo'] ? [['email' => $rv['correo']]] : [],
+    'to'             => [
+        'tax_code_type' => $tipo_a_probar,
+        'tax_code'      => $nit_a_probar,
+        'tax_name'      => 'María Ordóñez Hernández',
+        'address'       => ['street' => 'Ciudad', 'city' => 'Guatemala', 'state' => 'GU', 'zip' => '01001', 'country' => 'GT'],
+    ],
 ];
 
-$resultados = [];
-foreach ($casos as $caso) {
-    $rv_res = sb_get("reservaciones?id=eq.{$caso['id']}&select=id,nombre,correo,precio,tipo_cabana,fecha_ascenso,factura_uuid");
-    $rv = $rv_res['body'][0] ?? null;
-    if (!$rv) { $resultados[] = ['id' => $caso['id'], 'resultado' => 'no encontrado']; continue; }
-    if (!empty($rv['factura_uuid'])) {
-        $resultados[] = ['id' => $caso['id'], 'nombre' => $rv['nombre'], 'resultado' => 'ya tiene factura', 'factura_uuid' => $rv['factura_uuid']];
-        continue;
-    }
+$ch = curl_init(FELPLEX_BASE . "/api/entity/" . FELPLEX_EMPRESA . "/invoices/await");
+curl_setopt_array($ch, [
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_POST           => true,
+    CURLOPT_POSTFIELDS     => json_encode($payload),
+    CURLOPT_HTTPHEADER     => ["X-Authorization: $key", "Accept: application/json", "Content-Type: application/json"],
+    CURLOPT_TIMEOUT        => 30,
+]);
+$body   = curl_exec($ch);
+$status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
 
-    // Guardar identificación en la reservación
-    sb_patch("reservaciones?id=eq.{$caso['id']}", [
-        'nit'                 => $caso['nit'],
-        'tipo_identificacion' => $caso['tipo'],
-        'nombre_fiscal'       => $caso['nombre_fiscal'],
+$data = json_decode($body, true) ?? [];
+
+if (!empty($data['valid'])) {
+    $uuid = $data['uuid'];
+    $url  = $data['invoice_url'];
+    $sat  = $data['sat']['authorization'] ?? '';
+    sb_patch("reservaciones?id=eq.9868", [
+        'factura_uuid' => $uuid, 'factura_url' => $url, 'factura_sat_autorizacion' => $sat,
+        'nit' => $nit_a_probar, 'tipo_identificacion' => $tipo_a_probar, 'nombre_fiscal' => 'María Ordóñez Hernández',
     ]);
-
-    $factura = felplex_emitir_factura(
-        $rv['id'], $rv['nombre'], $rv['correo'] ?? null,
-        (float)($rv['precio'] ?? 0), $rv['tipo_cabana'], $rv['fecha_ascenso'],
-        $caso['nit'], $caso['tipo'], $caso['nombre_fiscal']
-    );
-
-    if ($factura && ($rv['correo'] ?? null)) {
-        enviar_confirmacion_cliente($rv['correo'], $rv['nombre'], $rv['tipo_cabana'], $factura['url'] ?? null);
-    }
-
-    $resultados[] = [
-        'id'         => $caso['id'],
-        'nombre'     => $rv['nombre'],
-        'resultado'  => $factura ? 'ok' : 'error_felplex',
-        'factura_url'=> $factura['url'] ?? null,
-    ];
+    enviar_confirmacion_cliente($rv['correo'], $rv['nombre'], $rv['tipo_cabana'], $url);
+    json_response(['resultado' => 'ok', 'factura_url' => $url, 'uuid' => $uuid]);
 }
-json_response(['resultados' => $resultados]);
+
+json_response(['resultado' => 'error', 'http_status' => $status, 'felplex_response' => $data, 'tipo_usado' => $tipo_a_probar, 'nit_usado' => $nit_a_probar]);
