@@ -71,8 +71,14 @@ if ($method === 'POST' && $sol_id && $action === 'autorizar') {
         'agencia'      => $agencia, 'paquete' => $paquete,
         'notas'        => $sol['notas'] ?? null, 'alergias' => $sol['alergias'] ?? null,
         'es_vegano'    => false, 'es_vegetariano' => false, 'es_cumpleanos' => $sol['es_cumpleanos'] ?? false,
-        'telefono'     => $sol['telefono'] ?? null, 'identificacion' => $sol['identificacion'] ?? null,
-        'correo'       => $sol['correo'] ?? null, 'generado_por' => $autorizado_por, 'estado' => 'Esperando pago',
+        'telefono'            => $sol['telefono']            ?? null,
+        'identificacion'      => $sol['identificacion']      ?? null,
+        'nit'                 => $sol['nit']                 ?? $sol['identificacion'] ?? null,
+        'tipo_identificacion' => $sol['tipo_identificacion'] ?? null,
+        'nombre_fiscal'       => $sol['nombre_fiscal']       ?? null,
+        'correo'              => $sol['correo']              ?? null,
+        'generado_por'        => $autorizado_por,
+        'estado'              => 'Esperando pago',
     ], false);
 
     // Crear reservación pendiente
@@ -82,9 +88,17 @@ if ($method === 'POST' && $sol_id && $action === 'autorizar') {
         'agencia'      => $agencia, 'paquete' => $paquete, 'notas' => $sol['notas'] ?? null,
         'alergias'     => $sol['alergias'] ?? null, 'es_cumpleanos' => $sol['es_cumpleanos'] ?? false,
         'cantidad_veganos' => $sol['cantidad_veganos'] ?? 0, 'cantidad_vegetarianos' => $sol['cantidad_vegetarianos'] ?? 0,
-        'telefono'     => $sol['telefono'] ?? null, 'identificacion' => $sol['identificacion'] ?? null,
-        'correo'       => $sol['correo'] ?? null, 'tipo_pago' => 'Recurrente', 'metodo_pago' => 'Tarjeta',
-        'estado_pago'  => 'Pendiente', 'registrado_por' => "Link autorizado por $autorizado_por", 'link_pago' => $checkout_url,
+        'telefono'            => $sol['telefono']            ?? null,
+        'identificacion'      => $sol['identificacion']      ?? null,
+        'nit'                 => $sol['nit']                 ?? $sol['identificacion'] ?? null,
+        'tipo_identificacion' => $sol['tipo_identificacion'] ?? null,
+        'nombre_fiscal'       => $sol['nombre_fiscal']       ?? null,
+        'correo'              => $sol['correo']              ?? null,
+        'tipo_pago'           => 'Recurrente',
+        'metodo_pago'         => 'Tarjeta',
+        'estado_pago'         => 'Pendiente',
+        'registrado_por'      => "Link autorizado por $autorizado_por",
+        'link_pago'           => $checkout_url,
     ], false);
 
     // Actualizar solicitud
@@ -182,8 +196,11 @@ $sol_data = [
     'es_cumpleanos'  => !empty($data['es_cumpleanos']),
     'telefono'       => $data['telefono']       ?? null,
     'correo'         => $data['correo']         ?? null,
-    'identificacion' => $data['identificacion'] ?? null,
-    'solicitado_por' => $data['solicitado_por'] ?? null,
+    'identificacion'      => $data['identificacion']      ?? null,
+    'nit'                 => $data['nit']                 ?? $data['identificacion'] ?? null,
+    'tipo_identificacion' => $data['tipo_identificacion'] ?? null,
+    'nombre_fiscal'       => $data['nombre_fiscal']       ?? null,
+    'solicitado_por'      => $data['solicitado_por']      ?? null,
 ];
 $res = sb_post('solicitudes_link', $sol_data);
 if ($res['status'] >= 300) json_error('Error guardando solicitud: ' . json_encode($res['body']), 500);
