@@ -80,6 +80,11 @@ if ($method === 'POST' && $s0 === 'api' && $s1 === 'reservaciones' && $s2 && $s3
     require __DIR__ . '/api/solicitar_reprogramacion.php';
 }
 
+// POST /api/factura_reintentar
+if ($method === 'POST' && $s0 === 'api' && $s1 === 'factura_reintentar') {
+    require __DIR__ . '/api/factura_reintentar.php';
+}
+
 // GET /api/links-pendientes
 if ($method === 'GET' && $s0 === 'api' && $s1 === 'links-pendientes') {
     require __DIR__ . '/api/links_pendientes.php';

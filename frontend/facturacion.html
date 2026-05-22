@@ -79,6 +79,12 @@ tr:hover td{background:var(--bg)}
 .metric-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);font-weight:600;margin-bottom:5px}
 .metric-value{font-family:'DM Serif Display',serif;font-size:26px;color:var(--text);line-height:1}
 
+/* ── Factura status ── */
+.fac-ok{font-size:1.15rem;text-decoration:none;cursor:pointer;display:inline-block;line-height:1}
+.fac-err{background:none;border:none;font-size:1.15rem;cursor:pointer;padding:0;line-height:1;display:inline-block}
+.fac-err:disabled{opacity:.45;cursor:default}
+.fac-spin{font-size:1rem;display:inline-block;animation:spin .7s linear infinite}
+
 /* ── Responsive móvil/tablet ── */
 @media(max-width:768px){
   .main,.container{padding:.85rem .75rem!important}
@@ -176,9 +182,10 @@ tr:hover td{background:var(--bg)}
             <th>#</th><th>Fecha Pago</th><th>Nombre</th><th>DPI / Pasaporte</th>
             <th>Correo</th><th>Teléfono</th><th>F. Ascenso</th><th>Cabaña</th>
             <th>Personas</th><th>Agencia</th><th>Monto</th><th>No. Ticket</th>
+            <th style="text-align:center">Factura</th>
           </tr></thead>
           <tbody id="tbody-fac">
-            <tr><td colspan="12"><div class="empty"><span class="spinner"></span>Cargando...</div></td></tr>
+            <tr><td colspan="13"><div class="empty"><span class="spinner"></span>Cargando...</div></td></tr>
           </tbody>
         </table>
       </div>
@@ -269,10 +276,19 @@ function renderMetrics(){
   `;
 }
 
+function facturaCell(r) {
+  if (r._fuente !== 'reserva') return '<td style="text-align:center;color:var(--text3)">—</td>';
+  if (r.factura_uuid) {
+    const url = r.factura_url || `https://app.felplex.com/pdf/${r.factura_uuid}`;
+    return `<td style="text-align:center"><a href="${url}" target="_blank" class="fac-ok" title="Ver factura PDF">✅</a></td>`;
+  }
+  return `<td style="text-align:center"><button class="fac-err" title="Sin factura — click para reintentar" onclick="reintentarFactura(${r.id},this)">❌</button></td>`;
+}
+
 function renderTabla(){
   const d=getDatosFiltrados();
   const tbody=document.getElementById('tbody-fac');
-  if(!d.length){tbody.innerHTML='<tr><td colspan="12"><div class="empty">Sin resultados para los filtros seleccionados.</div></td></tr>';return;}
+  if(!d.length){tbody.innerHTML='<tr><td colspan="13"><div class="empty">Sin resultados para los filtros seleccionados.</div></td></tr>';return;}
   const bc=c=>c==='Mixta'?'b-mixta':c==='Privada'?'b-privada':'b-familiar';
   const fmt=f=>{if(!f)return'—';const[y,m,dd]=f.split('-');return`${dd}/${m}/${y}`;};
   tbody.innerHTML=d.map((r,i)=>`<tr>
@@ -288,7 +304,48 @@ function renderTabla(){
     <td style="font-size:12px">${r.agencia||'—'}</td>
     <td style="font-weight:700;color:var(--success)">Q ${Number(r.precio||0).toFixed(2)}</td>
     <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${r.ticket||r.checkout_id||'—'}</td>
+    ${facturaCell(r)}
   </tr>`).join('');
+}
+
+async function reintentarFactura(id, btn) {
+  btn.innerHTML = '<span class="fac-spin">⏳</span>';
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/factura_reintentar', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({id})
+    });
+    const data = await res.json();
+    if (data.ok) {
+      const url = data.url || `https://app.felplex.com/pdf/${data.uuid}`;
+      btn.closest('td').innerHTML = `<a href="${url}" target="_blank" class="fac-ok" title="Ver factura PDF">✅</a>`;
+      const idx = datos.findIndex(x => x.id === id);
+      if (idx >= 0) { datos[idx].factura_uuid = data.uuid; datos[idx].factura_url = url; }
+    } else {
+      btn.innerHTML = '❌';
+      btn.disabled = false;
+      mostrarErrorFactura(id, data);
+    }
+  } catch(e) {
+    btn.innerHTML = '❌';
+    btn.disabled = false;
+    mostrarErrorFactura(id, {messages: e.message});
+  }
+}
+
+function mostrarErrorFactura(id, data) {
+  const codes   = (data.error_codes||[]).join(', ') || '—';
+  const msgs    = data.messages ? (Array.isArray(data.messages) ? data.messages.join('\n') : data.messages) : '—';
+  const raw     = data.felplex_raw ? JSON.stringify(data.felplex_raw, null, 2) : '—';
+  document.getElementById('fac-err-body').innerHTML =
+    `<div class="fac-err-row"><span class="fac-err-label">Reservación ID</span><span>${id}</span></div>` +
+    `<div class="fac-err-row"><span class="fac-err-label">HTTP Status</span><span>${data.http_status||'—'}</span></div>` +
+    `<div class="fac-err-row"><span class="fac-err-label">Códigos SAT</span><code>${codes}</code></div>` +
+    `<div class="fac-err-row"><span class="fac-err-label">Mensajes</span><span style="white-space:pre-wrap">${msgs}</span></div>` +
+    `<div class="fac-err-row" style="flex-direction:column;gap:4px"><span class="fac-err-label">Respuesta FELplex</span><pre class="fac-err-pre">${raw}</pre></div>`;
+  document.getElementById('fac-err-modal').style.display = 'flex';
 }
 
 function limpiarFiltros(){
@@ -334,5 +391,22 @@ function exportarExcel(){
   }
 })();
 </script>
+
+<!-- Modal error factura -->
+<div id="fac-err-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center;padding:1rem" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:#fff;border-radius:14px;padding:1.5rem;max-width:520px;width:100%;max-height:82vh;overflow-y:auto;box-shadow:0 12px 40px rgba(0,0,0,.2)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.1rem">
+      <span style="font-weight:700;font-size:15px">❌ Error al generar factura</span>
+      <button onclick="document.getElementById('fac-err-modal').style.display='none'" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#888;line-height:1;padding:2px 6px;border-radius:6px" title="Cerrar">✕</button>
+    </div>
+    <div id="fac-err-body"></div>
+  </div>
+</div>
+<style>
+.fac-err-row{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid #f0f0f0;font-size:13px;align-items:flex-start}
+.fac-err-row:last-child{border-bottom:none}
+.fac-err-label{font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#888;min-width:120px;padding-top:1px}
+.fac-err-pre{background:#f7f7f7;border:1px solid #e0e0e0;border-radius:6px;padding:8px 10px;font-size:11px;overflow-x:auto;white-space:pre;margin-top:4px;width:100%}
+</style>
 </body>
 </html>
