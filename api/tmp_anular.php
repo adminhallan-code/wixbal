@@ -12,7 +12,8 @@ $ch = curl_init("https://app.felplex.com/api/entity/7107/invoices/$uuid");
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_CUSTOMREQUEST  => 'DELETE',
-    CURLOPT_HTTPHEADER     => ["X-Authorization: $key", "Accept: application/json"],
+    CURLOPT_POSTFIELDS     => json_encode(['reason' => 'Anulación por error: reservación marcada como pagada sin haber recibido el pago.']),
+    CURLOPT_HTTPHEADER     => ["X-Authorization: $key", "Accept: application/json", "Content-Type: application/json"],
     CURLOPT_TIMEOUT        => 20,
 ]);
 $body   = curl_exec($ch);
