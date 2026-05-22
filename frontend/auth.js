@@ -14,6 +14,7 @@ function authLogin(pw) {
   if (!u) return null;
   const s = { nombre: u.nombre, acceso: u.acceso, rol: u.rol || 'aprobador' };
   sessionStorage.setItem(_WOLFS_KEY, JSON.stringify(s));
+  if (typeof window._setNavUser === 'function') window._setNavUser(u.nombre);
   return s;
 }
 

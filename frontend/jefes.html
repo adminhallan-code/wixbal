@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Wolfs — Jefes</title>
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icon-192.png" type="image/png">
@@ -166,36 +166,38 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 /* ── Responsive móvil/tablet ── */
 @media(max-width:768px){
-  .nav-hamburger{display:flex;align-items:center;justify-content:center}
-  .nav-links{display:none;width:100%;flex-direction:column;align-items:stretch;gap:0;padding:.5rem 0;border-top:1px solid #2a2a2a;margin-top:.4rem}
-  .nav-links.open{display:flex}
-  .nav-link{padding:.7rem .9rem;border-radius:4px}
-  .dropdown-btn{width:100%;text-align:left;padding:.7rem .9rem;border-radius:4px}
-  .dropdown-content{position:static;border:none;border-radius:0;box-shadow:none;background:#161616;padding-left:1rem}
-  .dropdown:hover .dropdown-content{display:none}
-  .dropdown.open .dropdown-content{display:block}
-  .nav-spacer{display:none}
-  .nav-logout{margin:.4rem .9rem;width:calc(100% - 1.8rem);padding:.7rem;text-align:center}
-  .notif-bell-wrap{width:100%;padding:0 .9rem}
-  #notif-bell-btn{width:100%;justify-content:flex-start;padding:.7rem 0}
-  #notif-panel{position:fixed;top:0;left:0;right:0;width:100%;border-radius:0;max-height:60vh;border-top:none}
-}
-@media(max-width:768px){
-  .container,.main{padding:1rem .75rem !important}
-  .card{padding:1rem}
-  .page-title{font-size:1.3rem}
-  .search-row{flex-direction:column}
-  .search-row input,.search-row select,.search-row button{width:100%}
-  .btn{min-height:40px}
-  .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;padding-bottom:2px}
-  .tab-btn{white-space:nowrap;font-size:.82rem;padding:.5rem .8rem}
-  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-  table{min-width:500px}
+  .main,.container{padding:.85rem .75rem!important}
+  .card{padding:1rem .9rem}
+  .card-title{font-size:1.05rem}
+  .fg2,.fg3,.fg4{grid-template-columns:1fr!important}
+  .btn{min-height:44px;font-size:.9rem}
+  .btn-sm{min-height:36px}
+  .btn-primary{width:100%}
+  input,select,textarea{font-size:16px!important;min-height:44px;padding:10px 12px}
+  .filter-row{flex-direction:column}
+  .filter-row input,.filter-row select{width:100%;min-height:44px}
+  .section-row{flex-direction:column;align-items:flex-start}
+  .metrics{grid-template-columns:1fr 1fr!important;gap:8px}
+  .metric{padding:.75rem 1rem}
+  .metric-value{font-size:22px}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:8px}
+  table{min-width:480px;font-size:12px}
+  th,td{padding:7px 8px}
+  .pend-info{gap:8px;font-size:12px}
+  .pend-actions{flex-wrap:wrap}
+  .pend-actions .btn-sm{flex:1;min-width:80px;text-align:center;justify-content:center}
+  .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;padding-bottom:4px;gap:4px}
+  .tab-btn{white-space:nowrap;font-size:.8rem;padding:.45rem .75rem;min-height:36px}
+  .alert{font-size:.83rem}
+  .empty{padding:2rem 1rem}
   .rv-grid{grid-template-columns:1fr 1fr !important}
   .rv-actions{flex-wrap:wrap}
-  input,select,textarea{font-size:16px !important}
 }
 @media(max-width:480px){
+  .metrics{grid-template-columns:1fr!important}
+  .btn-primary{width:100%}
+  .pend-actions .btn-sm{flex:1}
+  table{min-width:420px}
   .rv-grid{grid-template-columns:1fr !important}
   .rv-actions button,.rv-actions a{width:100%}
 }
@@ -281,6 +283,7 @@ function mostrarApp(user){
   document.getElementById('login-wrap').style.display='none';
   document.getElementById('app').style.display='block';
   document.getElementById('header-user').textContent=user.nombre;
+  if (typeof window._setNavUser === 'function') window._setNavUser(user.nombre);
   authNav(user);
   iniciarApp();
 }
