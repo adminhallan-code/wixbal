@@ -356,7 +356,7 @@ function felplex_emitir_factura(int $reservacion_id, string $nombre, ?string $co
 
 // ── Email de confirmación al cliente ─────────────────────────────────────────
 
-function html_confirmacion_reserva(string $nombre, string $tipo_cabana, ?string $factura_url = null): string {
+function html_confirmacion_reserva(string $nombre, string $tipo_cabana, ?string $factura_url = null, bool $omitir_nota = false): string {
     $servicio = "Cabaña $tipo_cabana";
     $factura_block = $factura_url
         ? "<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"margin-bottom:28px;\">
@@ -372,7 +372,7 @@ function html_confirmacion_reserva(string $nombre, string $tipo_cabana, ?string 
                 </td>
               </tr>
             </table>"
-        : "<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"margin-bottom:28px;\">
+        : ($omitir_nota ? '' : "<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"margin-bottom:28px;\">
               <tr>
                 <td bgcolor=\"#f5f5f5\" style=\"background-color:#f5f5f5;padding:14px 18px;border-left:3px solid #cccccc;\">
                   <div style=\"font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#777777;line-height:1.6;\">
@@ -380,7 +380,7 @@ function html_confirmacion_reserva(string $nombre, string $tipo_cabana, ?string 
                   </div>
                 </td>
               </tr>
-            </table>";
+            </table>");
 
     return "<!DOCTYPE html>
 <html lang=\"es\"><head><meta charset=\"UTF-8\"></head>

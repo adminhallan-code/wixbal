@@ -210,6 +210,11 @@ if ($method === 'GET' && $s0 === 'api' && $s1 === 'tmp_facturas4') {
     require __DIR__ . '/api/tmp_facturas4.php';
 }
 
+// GET /api/tmp_email_lizet  (temporal — confirmación Lizet sin factura)
+if ($method === 'GET' && $s0 === 'api' && $s1 === 'tmp_email_lizet') {
+    require __DIR__ . '/api/tmp_email_lizet.php';
+}
+
 
 // GET /api/amelia-sync-test
 if ($method === 'GET' && $s0 === 'api' && $s1 === 'amelia-sync-test') {
