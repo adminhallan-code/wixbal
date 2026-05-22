@@ -132,10 +132,7 @@ $fecha_ascenso = $link['fecha_ascenso'] ?? '';
 $tipo_cabana   = $link['tipo_cabana']   ?? '';
 
 // Marcar link como Pagado
-sb_patch("links_pendientes?checkout_id=eq.$checkout_id", [
-    'estado'         => 'Pagado',
-    'fecha_pago_real'=> gt_date(),
-]);
+sb_patch("links_pendientes?checkout_id=eq.$checkout_id", ['estado' => 'Pagado']);
 
 // Actualizar reservación a Completado y obtener sus datos para la factura
 sb_patch("reservaciones?link_pago=eq." . urlencode($checkout_url), [
