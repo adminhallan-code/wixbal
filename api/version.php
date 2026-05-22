@@ -1,3 +1,3 @@
 <?php
 // GET /api/version
-json_response(['v' => '1.0.0-php']);
+json_response(['v' => '1.0.1-php']);
