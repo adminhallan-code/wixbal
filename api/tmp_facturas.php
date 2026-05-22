@@ -45,13 +45,28 @@ foreach ($rows as $rv) {
     ];
     $desc = $descs[$rv['tipo_cabana']] ?? "Ascenso Volcán Acatenango — Cabaña {$rv['tipo_cabana']}";
     $gt_now = gmdate('Y-m-d\TH:i:s', time() + GT_OFFSET * 3600);
+    $nit              = $rv['nit'] ?? null;
+    $tipo_id          = strtoupper($rv['tipo_identificacion'] ?? 'CF');
+    $nombre_fiscal    = $rv['nombre_fiscal'] ?? $rv['nombre'];
+    $to_cf            = (!$nit || $tipo_id === 'CF') ? 1 : 0;
+    $tax_code_type    = match($tipo_id) {
+        'NIT' => 'NIT', 'CUI' => 'DPI', default => 'EXT'
+    };
+    $receptor = $to_cf ? null : [
+        'tax_code_type' => $tax_code_type,
+        'tax_code'      => $nit,
+        'tax_name'      => $nombre_fiscal,
+        'address'       => ['street' => 'Ciudad', 'city' => 'Guatemala', 'state' => 'GU', 'zip' => '01001', 'country' => 'GT'],
+    ];
+
     $payload = [
         'type' => 'FACT', 'currency' => 'GTQ', 'datetime_issue' => $gt_now,
         'items' => [['qty' => 1, 'type' => 'S', 'price' => $total, 'description' => $desc,
                      'without_iva' => 0, 'discount' => 0, 'is_discount_percentage' => 0]],
-        'total' => $total, 'total_tax' => $iva, 'to_cf' => 1,
+        'total' => $total, 'total_tax' => $iva, 'to_cf' => $to_cf,
         'emails' => $rv['correo'] ? [['email' => $rv['correo']]] : [],
     ];
+    if ($receptor) $payload['to'] = $receptor;
     $ch = curl_init('https://app.felplex.com/api/entity/7107/invoices/await');
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
