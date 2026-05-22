@@ -12,7 +12,7 @@ if ($secret !== 'WOLFS_CRON_2026') {
 
 // Datos de identificacion para facturas que fallaron por limite CF
 $ids_extra = [
-    9851 => ['nit' => 'N03954942', 'tipo_identificacion' => 'EXT', 'nombre_fiscal' => 'Hernán Gerardo Rodriguez Rivera'],
+    9851 => ['nit' => '03954942', 'tipo_identificacion' => 'EXT', 'nombre_fiscal' => 'Hernán Gerardo Rodriguez Rivera'],
     9854 => ['nit' => 'AT414546',  'tipo_identificacion' => 'EXT', 'nombre_fiscal' => 'María Camila Narváez Gordillo'],
 ];
 
