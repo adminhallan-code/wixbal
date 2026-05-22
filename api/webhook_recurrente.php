@@ -86,7 +86,7 @@ if (empty($pendientes)) {
 
 if (empty($pendientes)) {
     // Fallback directo en reservaciones
-    $rv_res = sb_get("reservaciones?link_pago=like.*{$checkout_id}*&select=id,estado_pago,link_pago,nombre,correo,tipo_cabana,precio,fecha_ascenso,agencia&limit=5");
+    $rv_res = sb_get("reservaciones?link_pago=like.*{$checkout_id}*&select=id,estado_pago,link_pago,nombre,correo,tipo_cabana,precio,fecha_ascenso,agencia,paquete&limit=5");
     $rv_rows = $rv_res['body'] ?? [];
     foreach ($rv_rows as $rv) {
         if ($rv['estado_pago'] === 'Completado') continue;
@@ -99,7 +99,8 @@ if (empty($pendientes)) {
         // Factura + email de confirmación
         $factura = felplex_emitir_factura(
             $rv['id'], $rv['nombre'], $rv['correo'] ?? null,
-            (float)($rv['precio'] ?? 0), $rv['tipo_cabana'], $rv['fecha_ascenso']
+            (float)($rv['precio'] ?? 0), $rv['tipo_cabana'], $rv['fecha_ascenso'],
+            null, null, null, $rv['paquete'] ?? null
         );
         if ($rv['correo'] ?? null) {
             enviar_confirmacion_cliente($rv['correo'], $rv['nombre'], $rv['tipo_cabana'], $factura['url'] ?? null);
@@ -147,7 +148,8 @@ if ($rv_row) {
     $factura = felplex_emitir_factura(
         $rv_row['id'], $link['nombre'], $link['correo'] ?? null,
         (float)($link['precio'] ?? 0), $link['tipo_cabana'], $link['fecha_ascenso'],
-        $link['nit'] ?? null, $link['tipo_identificacion'] ?? null, $link['nombre_fiscal'] ?? null
+        $link['nit'] ?? null, $link['tipo_identificacion'] ?? null, $link['nombre_fiscal'] ?? null,
+        $link['paquete'] ?? null
     );
     if ($link['correo'] ?? null) {
         enviar_confirmacion_cliente($link['correo'], $link['nombre'], $link['tipo_cabana'], $factura['url'] ?? null);

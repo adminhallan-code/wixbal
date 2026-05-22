@@ -277,7 +277,7 @@ function felplex_validar(string $tipo, string $codigo): array {
 
 function felplex_emitir_factura(int $reservacion_id, string $nombre, ?string $correo, float $precio,
     string $tipo_cabana, string $fecha_ascenso, ?string $nit = null,
-    ?string $tipo_identificacion = null, ?string $nombre_fiscal = null): ?array
+    ?string $tipo_identificacion = null, ?string $nombre_fiscal = null, ?string $paquete = null): ?array
 {
     $key = FELPLEX_API_KEY ?: '';
     if (!$key || $precio <= 0) return null;
@@ -314,6 +314,9 @@ function felplex_emitir_factura(int $reservacion_id, string $nombre, ?string $co
         'Familiar' => 'Cabaña Familiar VIP+: Ascenso al Volcán Acatenango con servicio todo incluido: traslado de ida y vuelta, alimentación durante el recorrido, alojamiento en cabaña familiar, acompañamiento de guías certificados e ingreso a los parques nacionales correspondientes.',
     ];
     $desc = $descs[$tipo_cabana] ?? "Ascenso Volcán Acatenango — Cabaña $tipo_cabana";
+    if (strtolower($paquete ?? '') === '4x4') {
+        $desc .= ' Incluye servicio de transporte 4x4.';
+    }
 
     $gt_now = gmdate('Y-m-d\TH:i:s', time() + GT_OFFSET * 3600);
     $payload = [

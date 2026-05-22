@@ -61,7 +61,8 @@ if ($tipo_cabana === 'Familiar' && $disp['Familiar']['libre'] === 0)           j
 // ── Descripción del link ──────────────────────────────────────────────────────
 $desc_partes = ["Fecha de ascenso: $fecha"];
 if ($tipo_cabana === 'Mixta' && $no_personas) $desc_partes[] = "Personas: $no_personas";
-$desc_partes[] = "Servicio: Cabaña $tipo_cabana";
+$svc_label = "Cabaña $tipo_cabana" . ($paquete === '4x4' ? ' + Servicio 4x4' : '');
+$desc_partes[] = "Servicio: $svc_label";
 if ($notas)    $desc_partes[] = "Notas: $notas";
 if ($alergias) $desc_partes[] = "Alergias: $alergias";
 if ($cantidad_veganos || $es_vegano)        $desc_partes[] = "Menú vegano: " . ($cantidad_veganos ?: 1) . " persona(s)";
