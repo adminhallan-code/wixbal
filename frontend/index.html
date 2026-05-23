@@ -1197,7 +1197,12 @@ function exportarExcel(){
   const colCab = c => c==='Mixta'?'#dbeafe':c==='Privada'?'#fce7f3':'#d1fae5';
   const colTxt = c => c==='Mixta'?'#1e40af':c==='Privada'?'#9d174d':'#065f46';
 
-  const filas = confirmados.map((r,i) => `
+  const filas = confirmados.map((r,i) => {
+    const nVgn=(r.cantidad_veganos||0)+(r.es_vegano?1:0);
+    const nVeg=(r.cantidad_vegetarianos||0)+(r.es_vegetariano?1:0);
+    const menus=[nVgn?`🌿 Vegano x${nVgn}`:'',nVeg?`🥦 Veg. x${nVeg}`:''].filter(Boolean).join(' ');
+    const alergia = r.alergias || '';
+    return `
     <tr>
       <td style="text-align:center">${i+1}</td>
       <td><strong>${r.nombre||'—'}</strong></td>
@@ -1206,8 +1211,11 @@ function exportarExcel(){
       <td style="text-align:center">${r.paquete||'—'}</td>
       <td>${r.agencia||'—'}</td>
       <td style="text-align:center;font-weight:600;color:${r.estado_pago==='Completado'?'#065f46':'#92400e'}">${r.estado_pago||'—'}</td>
+      <td style="font-size:10px;${alergia?'background:#fef3c7;font-weight:700;color:#92400e;':'color:#555;'}">${alergia||'—'}</td>
+      <td style="font-size:10px;color:#166534">${menus||'—'}</td>
       <td style="font-size:10px;color:#555">${r.notas||''}</td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 
   const html = `<!DOCTYPE html>
 <html lang="es">
@@ -1250,7 +1258,7 @@ function exportarExcel(){
     <thead>
       <tr>
         <th>#</th><th>Nombre</th><th>Cabaña</th><th>Personas</th>
-        <th>Paquete</th><th>Agencia</th><th>Estado</th><th>Notas</th>
+        <th>Paquete</th><th>Agencia</th><th>Estado</th><th>Alergias</th><th>Menú especial</th><th>Notas</th>
       </tr>
     </thead>
     <tbody>${filas}</tbody>
