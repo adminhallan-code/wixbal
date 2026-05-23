@@ -123,6 +123,7 @@
     '</div></div>' +
 
     /* ── Links directos ── */
+    '<a href="/cuadros"     class="nav-link' + (act('/cuadros')     ? ' active' : '') + '" data-req="cuadros"     onclick="_closeNav()">Cuadros</a>' +
     '<a href="/links"       class="nav-link' + (act('/links')       ? ' active' : '') + '" data-req="links"       onclick="_closeNav()">Links</a>' +
     '<a href="/jefes"       class="nav-link' + (act('/jefes')       ? ' active' : '') + '" data-req="jefes"       onclick="_closeNav()">Jefes</a>' +
     '<a href="/it"          class="nav-link' + (act('/it')          ? ' active' : '') + '" data-req="it"          onclick="_closeNav()">Panel IT</a>' +

@@ -235,7 +235,7 @@ if ($method === 'GET' && $s0 === 'api' && $s1 === 'amelia-sync-test') {
 }
 
 // Frontend pages (serve from /frontend/ or return 404)
-$frontend_pages = ['', 'index', 'jefes', 'it', 'links', 'facturacion', 'cocina', 'gestion'];
+$frontend_pages = ['', 'index', 'jefes', 'it', 'links', 'facturacion', 'cocina', 'gestion', 'cuadros'];
 if ($method === 'GET' && in_array($s0, $frontend_pages) && !$s1) {
     $page = $s0 ?: 'index';
     $file = __DIR__ . "/frontend/{$page}.html";

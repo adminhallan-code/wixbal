@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Wolfs — Cuadros</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icon-192.png" type="image/png">
+<meta name="theme-color" content="#111111">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="/auth.js"></script>
+<script src="/update.js"></script>
+<style>
+:root{--bg:#f7f7f7;--surface:#fff;--surface2:#eeeeee;--border:#e0e0e0;--text:#111;--text2:#555;--text3:#888;
+  --accent:#111;--radius:10px;--radius-lg:16px;--success:#166534;--success-light:#f0fdf4;
+  --warn:#b45309;--warn-light:#fef3c7;--danger:#991b1b;--danger-light:#fef2f2}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2.5rem;width:100%;max-width:380px;text-align:center}
+.login-icon{font-size:40px;margin-bottom:1rem}
+.login-title{font-family:'DM Serif Display',serif;font-size:24px;margin-bottom:.5rem}
+.login-sub{font-size:13px;color:var(--text3);margin-bottom:2rem}
+.login-card input{width:100%;padding:10px 14px;font-size:15px;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);text-align:center;letter-spacing:.1em;margin-bottom:12px}
+.login-card input:focus{outline:none;border-color:var(--accent);background:#fff}
+.login-err{font-size:13px;color:var(--danger);margin-bottom:10px;display:none}
+.app{display:none}
+.main{max-width:1100px;margin:0 auto;padding:1.75rem 1.5rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.25rem}
+.card-title{font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:1.25rem}
+.btn{padding:9px 18px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;border-radius:var(--radius);cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--text);transition:all .15s}
+.btn:hover{background:var(--surface2)}
+.btn-primary{background:#111;border-color:#111;color:#fff}
+.btn-primary:hover{background:#333}
+.btn-print{background:#166534;border-color:#166534;color:#fff}
+.btn-print:hover{background:#14532d}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:#111;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:3rem;color:var(--text3);font-size:14px}
+
+/* ── Cuadro ── */
+.cuadro-header{text-align:center;margin-bottom:1.25rem}
+.cuadro-titulo{font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:4px}
+.cuadro-sub{font-size:12px;color:var(--text3)}
+.resumen{display:flex;gap:12px;margin-bottom:1.25rem;justify-content:center;flex-wrap:wrap}
+.res{padding:10px 22px;border-radius:10px;text-align:center;border:1px solid #ccc;min-width:100px}
+.res strong{display:block;font-size:24px;font-weight:700;line-height:1}
+.res span{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.res-m{background:#dbeafe;border-color:#93c5fd}
+.res-p{background:#fce7f3;border-color:#f9a8d4}
+.res-f{background:#d1fae5;border-color:#6ee7b7}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#1a1a2e;color:#fff;padding:8px 10px;text-align:left;font-size:11px;font-weight:700;border:1px solid #000;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
+td{padding:7px 10px;border:1px solid #ccc;vertical-align:middle}
+tr:nth-child(even) td{background:#fafafa}
+.alergia-cell{background:#fef3c7!important;font-weight:700;color:#92400e}
+.menu-cell{color:#166534;font-weight:600}
+
+/* ── Print ── */
+@media print{
+  .no-print{display:none!important}
+  .app > nav,.nav{display:none!important}
+  .main{padding:0!important;max-width:100%!important}
+  .card{border:none!important;padding:0!important;margin:0!important;box-shadow:none!important}
+  body{background:#fff!important;font-size:11px}
+  th{background:#1a1a2e!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  td,th{border:1px solid #000!important}
+  .alergia-cell{background:#fef3c7!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+
+/* ── Mobile ── */
+@media(max-width:768px){
+  .main{padding:.85rem .75rem}
+  .card{padding:1rem .9rem}
+  .resumen{gap:8px}
+  .res{padding:8px 14px;min-width:80px}
+  .res strong{font-size:20px}
+  .btn{min-height:44px}
+  input[type=date]{font-size:16px!important;min-height:44px;padding:10px 12px}
+}
+</style>
+</head>
+<body>
+
+<div class="login-wrap" id="login-wrap">
+  <div class="login-card">
+    <div class="login-icon">📋</div>
+    <div class="login-title">Cuadros</div>
+    <div class="login-sub">Ingresá tu contraseña para acceder</div>
+    <div id="login-err" class="login-err">Contraseña incorrecta.</div>
+    <input type="password" id="pwd-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')verificarPwd()">
+    <button class="btn btn-primary" style="width:100%;padding:11px" onclick="verificarPwd()">Entrar</button>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <nav class="nav"></nav>
+  <script src="/nav.js"></script>
+
+  <div class="main">
+    <!-- Selector de fecha -->
+    <div class="card no-print">
+      <div class="card-title">📋 Cuadros de ascenso</div>
+      <div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--text3);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em">Fecha de ascenso</label>
+          <input type="date" id="fecha-cuadro" style="padding:8px 12px;font-size:14px;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text)">
+        </div>
+        <button class="btn btn-primary" onclick="cargarCuadro()">Cargar cuadro</button>
+        <button class="btn btn-print no-print" id="btn-imprimir" style="display:none" onclick="window.print()">🖨️ Imprimir / PDF</button>
+      </div>
+    </div>
+
+    <!-- Cuadro resultado -->
+    <div id="cuadro-resultado" style="display:none">
+      <div class="card">
+        <div class="cuadro-header">
+          <div class="cuadro-titulo">🏔️ Wolfs Acatenango — Ascenso del <span id="cuadro-fecha-leg"></span></div>
+          <div class="cuadro-sub" id="cuadro-generado"></div>
+        </div>
+        <div class="resumen" id="cuadro-resumen"></div>
+        <div class="table-wrap">
+          <table id="cuadro-tabla">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nombre</th>
+                <th>Cabaña</th>
+                <th>Personas</th>
+                <th>Paquete</th>
+                <th>Agencia</th>
+                <th>Estado</th>
+                <th>Notas / Alergias</th>
+                <th>Menú especial</th>
+              </tr>
+            </thead>
+            <tbody id="cuadro-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="cuadro-empty" style="display:none">
+      <div class="card"><div class="empty">Sin reservaciones para esa fecha.</div></div>
+    </div>
+    <div id="cuadro-loading" style="display:none">
+      <div class="card"><div class="empty"><span class="spinner"></span>Cargando...</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB='https://vimymnzlagzhfpbpjrvl.supabase.co';
+const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpbXltbnpsYWd6aGZwYnBqcnZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NzcwNzEsImV4cCI6MjA5MjU1MzA3MX0.7p8ob8zr2dYkAvCV-8p_Mmp65laYlsG5KwCuyj7MdLc';
+const HDR={'apikey':KEY,'Authorization':'Bearer '+KEY};
+
+function fmtFecha(f){if(!f)return'—';const[y,m,d]=f.split('-');return`${d}/${m}/${y}`;}
+function fmtLeg(f){if(!f)return'';const[y,m,d]=f.split('-');
+  const meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  return`${parseInt(d)} de ${meses[parseInt(m)-1]} de ${y}`;}
+
+function mananaGT(){
+  const gt=new Date(Date.now()-6*3600000);
+  const man=new Date(gt.getTime()+86400000);
+  return man.toISOString().slice(0,10);
+}
+
+function verificarPwd(){
+  const pw=document.getElementById('pwd-input').value;
+  const user=authLogin(pw);
+  if(!user||!user.acceso.includes('cuadros')){
+    document.getElementById('login-err').style.display='block';
+    document.getElementById('pwd-input').value='';return;
+  }
+  document.getElementById('login-wrap').style.display='none';
+  document.getElementById('app').style.display='block';
+  if(typeof window._setNavUser==='function') window._setNavUser(user.nombre);
+  authNav(user);
+  document.getElementById('fecha-cuadro').value=mananaGT();
+}
+
+async function cargarCuadro(){
+  const fecha=document.getElementById('fecha-cuadro').value;
+  if(!fecha){alert('Seleccioná una fecha.');return;}
+
+  document.getElementById('cuadro-resultado').style.display='none';
+  document.getElementById('cuadro-empty').style.display='none';
+  document.getElementById('cuadro-loading').style.display='block';
+  document.getElementById('btn-imprimir').style.display='none';
+
+  try{
+    const r=await fetch(`${SB}/rest/v1/reservaciones?fecha_ascenso=eq.${fecha}&estado_pago=neq.Cancelado&select=*&order=tipo_cabana.asc`,{headers:HDR});
+    const raw=await r.json();
+
+    // Ordenar Mixta → Privada → Familiar
+    const orden={Mixta:1,Privada:2,Familiar:3};
+    const datos=raw.sort((a,b)=>(orden[a.tipo_cabana]||4)-(orden[b.tipo_cabana]||4));
+
+    document.getElementById('cuadro-loading').style.display='none';
+
+    if(!datos.length){
+      document.getElementById('cuadro-empty').style.display='block';
+      return;
+    }
+
+    // Resumen
+    const totalMixta=datos.filter(r=>r.tipo_cabana==='Mixta').reduce((s,r)=>s+(r.no_personas||0),0);
+    const totalPrivada=datos.filter(r=>r.tipo_cabana==='Privada').length;
+    const totalFamiliar=datos.filter(r=>r.tipo_cabana==='Familiar').length;
+
+    document.getElementById('cuadro-fecha-leg').textContent=fmtLeg(fecha);
+    document.getElementById('cuadro-generado').textContent=`Generado el ${fmtFecha(new Date().toISOString().slice(0,10))} · ${datos.length} reservación(es)`;
+    document.getElementById('cuadro-resumen').innerHTML=`
+      <div class="res res-m"><strong>${totalMixta}</strong><span>personas Mixta</span></div>
+      <div class="res res-p"><strong>${totalPrivada}</strong><span>cab. Privada</span></div>
+      <div class="res res-f"><strong>${totalFamiliar}</strong><span>cab. Familiar</span></div>`;
+
+    const colCab=c=>c==='Mixta'?'#dbeafe':c==='Privada'?'#fce7f3':'#d1fae5';
+    const colTxt=c=>c==='Mixta'?'#1e40af':c==='Privada'?'#9d174d':'#065f46';
+
+    document.getElementById('cuadro-tbody').innerHTML=datos.map((r,i)=>{
+      const nVgn=(r.cantidad_veganos||0)+(r.es_vegano?1:0);
+      const nVeg=(r.cantidad_vegetarianos||0)+(r.es_vegetariano?1:0);
+      const menus=[nVgn?`🌿 Vegano x${nVgn}`:'',nVeg?`🥦 Veg. x${nVeg}`:''].filter(Boolean).join(' ');
+      const notasAler=[r.alergias,r.notas].filter(Boolean).join(' | ');
+      const estadoColor=r.estado_pago==='Completado'?'#065f46':'#92400e';
+      return`<tr>
+        <td style="text-align:center;color:#888;font-size:11px">${i+1}</td>
+        <td><strong>${r.nombre||'—'}</strong></td>
+        <td style="background:${colCab(r.tipo_cabana)};color:${colTxt(r.tipo_cabana)};font-weight:700;text-align:center;white-space:nowrap">${r.tipo_cabana||'—'}</td>
+        <td style="text-align:center">${r.no_personas||'—'}</td>
+        <td style="text-align:center">${r.paquete||'—'}</td>
+        <td style="font-size:11px">${r.agencia||'—'}</td>
+        <td style="text-align:center;font-weight:600;color:${estadoColor};white-space:nowrap">${r.estado_pago||'—'}</td>
+        <td class="${notasAler?'alergia-cell':''}" style="font-size:11px">${notasAler||'—'}</td>
+        <td class="${menus?'menu-cell':''}" style="font-size:11px">${menus||'—'}</td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('cuadro-resultado').style.display='block';
+    document.getElementById('btn-imprimir').style.display='inline-block';
+
+  }catch(e){
+    document.getElementById('cuadro-loading').style.display='none';
+    alert('Error cargando datos: '+e.message);
+  }
+}
+
+(function(){
+  const u=authUser();
+  if(u&&u.acceso.includes('cuadros')){
+    document.getElementById('login-wrap').style.display='none';
+    document.getElementById('app').style.display='block';
+    if(typeof window._setNavUser==='function') window._setNavUser(u.nombre);
+    authNav(u);
+    document.getElementById('fecha-cuadro').value=mananaGT();
+  }
+})();
+</script>
+</body>
+</html>
