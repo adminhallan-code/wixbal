@@ -503,32 +503,42 @@ function exportarExcelDia(){
   const fecha=document.getElementById('fecha-sel').value;
   const del_dia=datos.filter(r=>r.fecha_ascenso===fecha);
   if(!del_dia.length){alert('No hay reservaciones para esta fecha.');return;}
-  const rows=del_dia.map((r,i)=>({
-    '#':i+1,
-    'Fecha de pago':fmt(r.fecha_pago),
-    'Fecha de ascenso':fmt(r.fecha_ascenso),
-    'Nombre':r.nombre,
-    'No de personas':r.no_personas||'',
-    'Metodo de pago':r.metodo_pago||'',
-    'Tipo de pago':r.tipo_pago,
-    'Ticket':r.ticket||'',
-    'Precio':Number(r.precio).toFixed(2),
-    'Tipo de cabaña':r.tipo_cabana,
-    'Agencia':r.agencia||'',
-    'Paquete':r.paquete||'',
-    'Notas':r.notas||'',
-    'Estado pago':r.estado_pago,
-    'Auditoría':r.auditoria_estado||'Pendiente',
-    'Comentario jefe':r.auditoria_comentario||'',
-    'Fecha revisión':r.auditoria_fecha?new Date(r.auditoria_fecha).toLocaleString('es-GT'):''
-  }));
+  const rows=del_dia.map((r,i)=>{
+    // Menú especial
+    const menus=[];
+    const nVeg=(r.cantidad_vegetarianos||0)+(r.es_vegetariano?1:0);
+    const nVgn=(r.cantidad_veganos||0)+(r.es_vegano?1:0);
+    if(nVgn>0) menus.push(`Vegano x${nVgn}`);
+    if(nVeg>0) menus.push(`Vegetariano x${nVeg}`);
+    return{
+      '#':i+1,
+      'Fecha de pago':fmt(r.fecha_pago),
+      'Fecha de ascenso':fmt(r.fecha_ascenso),
+      'Nombre':r.nombre,
+      'No de personas':r.no_personas||'',
+      'Metodo de pago':r.metodo_pago||'',
+      'Tipo de pago':r.tipo_pago,
+      'Ticket':r.ticket||'',
+      'Precio':Number(r.precio).toFixed(2),
+      'Tipo de cabaña':r.tipo_cabana,
+      'Agencia':r.agencia||'',
+      'Paquete':r.paquete||'',
+      'Alergias':r.alergias||'',
+      'Menú especial':menus.join(' | ')||'',
+      'Notas':r.notas||'',
+      'Estado pago':r.estado_pago,
+      'Auditoría':r.auditoria_estado||'Pendiente',
+      'Comentario jefe':r.auditoria_comentario||'',
+      'Fecha revisión':r.auditoria_fecha?new Date(r.auditoria_fecha).toLocaleString('es-GT'):''
+    };
+  });
   const ws=XLSX.utils.json_to_sheet(rows);
-  ws['!cols']=[{wch:4},{wch:14},{wch:16},{wch:22},{wch:12},{wch:16},{wch:12},{wch:12},{wch:10},{wch:14},{wch:16},{wch:16},{wch:25},{wch:13},{wch:12},{wch:28},{wch:20}];
+  ws['!cols']=[{wch:4},{wch:14},{wch:16},{wch:22},{wch:12},{wch:16},{wch:12},{wch:12},{wch:10},{wch:14},{wch:16},{wch:16},{wch:22},{wch:18},{wch:25},{wch:13},{wch:12},{wch:28},{wch:20}];
 
   // Colorear filas según auditoría (verde/rojo)
   const range=XLSX.utils.decode_range(ws['!ref']);
   for(let R=range.s.r+1;R<=range.e.r;R++){
-    const cell=ws[XLSX.utils.encode_cell({r:R,c:14})];
+    const cell=ws[XLSX.utils.encode_cell({r:R,c:16})];
     if(cell){
       const fill=cell.v==='Aprobado'?{fgColor:{rgb:'D1FAE5'}}:cell.v==='Rechazado'?{fgColor:{rgb:'FEE2E2'}}:{fgColor:{rgb:'FEF3C7'}};
       for(let C=range.s.c;C<=range.e.c;C++){
