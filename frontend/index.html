@@ -1211,9 +1211,8 @@ function exportarExcel(){
       <td style="text-align:center">${r.paquete||'—'}</td>
       <td>${r.agencia||'—'}</td>
       <td style="text-align:center;font-weight:600;color:${r.estado_pago==='Completado'?'#065f46':'#92400e'}">${r.estado_pago||'—'}</td>
-      <td style="font-size:10px;${alergia?'background:#fef3c7;font-weight:700;color:#92400e;':'color:#555;'}">${alergia||'—'}</td>
+      <td style="font-size:10px;${(alergia||r.notas)?'background:#fef3c7;font-weight:700;color:#92400e;':'color:#555;'}">${[alergia,r.notas].filter(Boolean).join(' | ')||'—'}</td>
       <td style="font-size:10px;color:#166534">${menus||'—'}</td>
-      <td style="font-size:10px;color:#555">${r.notas||''}</td>
     </tr>`;
   }).join('');
 
@@ -1258,7 +1257,7 @@ function exportarExcel(){
     <thead>
       <tr>
         <th>#</th><th>Nombre</th><th>Cabaña</th><th>Personas</th>
-        <th>Paquete</th><th>Agencia</th><th>Estado</th><th>Alergias</th><th>Menú especial</th><th>Notas</th>
+        <th>Paquete</th><th>Agencia</th><th>Estado</th><th>Notas / Alergias</th><th>Menú especial</th>
       </tr>
     </thead>
     <tbody>${filas}</tbody>

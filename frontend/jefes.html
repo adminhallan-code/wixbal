@@ -523,9 +523,8 @@ function exportarExcelDia(){
       'Tipo de cabaña':r.tipo_cabana,
       'Agencia':r.agencia||'',
       'Paquete':r.paquete||'',
-      'Alergias':r.alergias||'',
+      'Notas / Alergias':[r.alergias,r.notas].filter(Boolean).join(' | ')||'',
       'Menú especial':menus.join(' | ')||'',
-      'Notas':r.notas||'',
       'Estado pago':r.estado_pago,
       'Auditoría':r.auditoria_estado||'Pendiente',
       'Comentario jefe':r.auditoria_comentario||'',
@@ -533,12 +532,12 @@ function exportarExcelDia(){
     };
   });
   const ws=XLSX.utils.json_to_sheet(rows);
-  ws['!cols']=[{wch:4},{wch:14},{wch:16},{wch:22},{wch:12},{wch:16},{wch:12},{wch:12},{wch:10},{wch:14},{wch:16},{wch:16},{wch:22},{wch:18},{wch:25},{wch:13},{wch:12},{wch:28},{wch:20}];
+  ws['!cols']=[{wch:4},{wch:14},{wch:16},{wch:22},{wch:12},{wch:16},{wch:12},{wch:12},{wch:10},{wch:14},{wch:16},{wch:16},{wch:30},{wch:18},{wch:13},{wch:12},{wch:28},{wch:20}];
 
   // Colorear filas según auditoría (verde/rojo)
   const range=XLSX.utils.decode_range(ws['!ref']);
   for(let R=range.s.r+1;R<=range.e.r;R++){
-    const cell=ws[XLSX.utils.encode_cell({r:R,c:16})];
+    const cell=ws[XLSX.utils.encode_cell({r:R,c:15})];
     if(cell){
       const fill=cell.v==='Aprobado'?{fgColor:{rgb:'D1FAE5'}}:cell.v==='Rechazado'?{fgColor:{rgb:'FEE2E2'}}:{fgColor:{rgb:'FEF3C7'}};
       for(let C=range.s.c;C<=range.e.c;C++){
