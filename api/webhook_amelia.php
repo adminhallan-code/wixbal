@@ -141,6 +141,26 @@ if ($is_cambio && $appointment_id && isset($mapa_estados[$amelia_status])) {
         $personas = (int) ($primer_b['persons'] ?? 1);
         $link_new = $booking_id_new ? "amelia_booking_$booking_id_new" : "amelia_app_$appointment_id";
 
+        // Extraer campos personalizados de Amelia (alergias, notas, etc.)
+        $custom_fields = $primer_b['customFields'] ?? [];
+        $alergias_val  = null;
+        if (!empty($custom_fields)) {
+            $partes = [];
+            foreach ($custom_fields as $cf) {
+                $label = strtolower($cf['label'] ?? '');
+                $val   = trim($cf['value'] ?? '');
+                if ($val === '' || $val === '-' || $val === 'ninguna' || $val === 'no') continue;
+                // Priorizar campos de alergias
+                if (str_contains($label, 'alergi') || str_contains($label, 'restrict') || str_contains($label, 'intoler')) {
+                    array_unshift($partes, $val);
+                } else {
+                    $partes[] = $val;
+                }
+            }
+            if ($partes) $alergias_val = implode(' | ', $partes);
+        }
+        error_log("[WEBHOOK AMELIA] customFields booking $booking_id_new: " . json_encode($custom_fields));
+
         $nueva = array_filter([
             'nombre'         => $nombre,
             'correo'         => $correo,
@@ -155,6 +175,7 @@ if ($is_cambio && $appointment_id && isset($mapa_estados[$amelia_status])) {
             'link_pago'      => $link_new,
             'agencia'        => 'Wolfs Acatenango',
             'registrado_por' => 'Sistema (Amelia)',
+            'alergias'       => $alergias_val,
             'notas'          => "Creado automaticamente desde Amelia (appointment $appointment_id, booking $booking_id_new)",
         ], fn($v) => $v !== null);
 
