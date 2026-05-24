@@ -1,7 +1,7 @@
 const _WOLFS_KEY = 'wolfs_session';
 
 const _USUARIOS = [
-  { pw: 'Ana@@2810',    nombre: 'ANA LAURA VALDEZ LOPEZ',     acceso: ['reservaciones','links','gestion','cuadros'] },
+  { pw: 'Ana@@2810',    nombre: 'ANA LAURA VALDEZ LOPEZ',     acceso: ['reservaciones','links','facturacion','gestion','cuadros'] },
   { pw: 'Ceci@@2726',   nombre: 'ANA CECILIA HERMOSILLA',      acceso: ['reservaciones','links','cuadros'], rol: 'ventas' },
   { pw: 'Alison@@0506', nombre: 'ALLISON STEPHANIA MORALES MONROY', acceso: ['reservaciones','links','gestion','cuadros'], rol: 'ventas' },
   { pw: 'Pancho@@1642', nombre: 'JUAN FRANCISCO VALDEZ LOPEZ', acceso: ['reservaciones','links','jefes','it','facturacion','cocina','gestion','cuadros'] },
