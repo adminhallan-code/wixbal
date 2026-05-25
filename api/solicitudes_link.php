@@ -203,6 +203,14 @@ $sol_data = [
     'solicitado_por'      => $data['solicitado_por']      ?? null,
 ];
 $res = sb_post('solicitudes_link', $sol_data);
+// Si falla por columnas que no existen (cantidad_veganos / cantidad_vegetarianos), reintentar sin ellas
+if ($res['status'] >= 300) {
+    $err_body = json_encode($res['body']);
+    if (str_contains($err_body, 'cantidad_veganos') || str_contains($err_body, 'cantidad_vegetarianos')) {
+        unset($sol_data['cantidad_veganos'], $sol_data['cantidad_vegetarianos']);
+        $res = sb_post('solicitudes_link', $sol_data);
+    }
+}
 if ($res['status'] >= 300) json_error('Error guardando solicitud: ' . json_encode($res['body']), 500);
 $sol    = $res['body'][0] ?? [];
 $sol_id = $sol['id'] ?? 0;

@@ -438,7 +438,8 @@ function onCabanaChange() {
 function showAlert(txt, tipo) {
   const el = document.getElementById('alert');
   el.textContent = txt; el.className = 'alert ' + tipo; el.style.display = 'block';
-  clearTimeout(el._t); el._t = setTimeout(() => el.style.display = 'none', 5000);
+  const dur = tipo === 'err' ? 15000 : 5000;
+  clearTimeout(el._t); el._t = setTimeout(() => el.style.display = 'none', dur);
 }
 
 // ── Validación inline ──────────────────────────────────────────────────────
