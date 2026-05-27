@@ -72,6 +72,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 
 .main{max-width:1150px;margin:0 auto;padding:1.75rem 1.5rem}
+.main.main-dash{padding-bottom:0}
 .page{display:none}.page.active{display:block}
 
 /* Metrics */
@@ -203,32 +204,66 @@ tr:hover td{background:var(--bg)}
 }
 
 /* ── Dashboard ── */
-.dash-accesos{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.25rem}
-.dash-btn{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem .75rem;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;cursor:pointer;
-  text-decoration:none;color:var(--text);transition:all .18s;font-family:'DM Sans',sans-serif}
-.dash-btn:hover{background:#111;color:#fff;border-color:#111;transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.14)}
-.dash-btn-icon{font-size:26px;line-height:1}
-.dash-btn-label{font-size:13px;font-weight:600;text-align:center;line-height:1.2}
-.dash-avail-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
-.dash-avail-card{border:1.5px solid var(--border);border-radius:var(--radius);padding:.85rem .75rem;text-align:center;transition:box-shadow .15s}
-.dash-avail-card:hover{box-shadow:0 2px 10px rgba(0,0,0,.08)}
-.dav-ok{background:var(--success-light);border-color:#bbf7d0}
-.dav-warn{background:var(--warn-light);border-color:#fde68a}
-.dav-full{background:var(--danger-light);border-color:#fecaca}
-.dac-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;color:var(--text3)}
-.dav-ok .dac-label{color:var(--success)}
-.dav-warn .dac-label{color:var(--warn)}
-.dav-full .dac-label{color:var(--danger)}
-.dac-date{font-family:'DM Serif Display',serif;font-size:17px;margin-bottom:8px;color:var(--text)}
-.dac-cabanas{display:flex;flex-direction:column;gap:4px;align-items:flex-start;font-size:11px;color:var(--text2)}
-.dac-cab{display:flex;align-items:center;gap:5px}
-.dash-section-title{font-family:'DM Serif Display',serif;font-size:17px;color:var(--text);margin-bottom:1rem}
-.dash-proxima-row{display:flex;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap}
-.dash-proxima-row:last-child{border-bottom:none}
-@media(max-width:900px){.dash-accesos{grid-template-columns:repeat(2,1fr)}.dash-avail-grid{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:600px){.dash-avail-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:400px){.dash-avail-grid{grid-template-columns:1fr}}
+#page-dashboard{
+  height:calc(100vh - 50px - 1.75rem);
+  display:flex;flex-direction:column;gap:10px;overflow:hidden;
+  /* 50px=nav, 1.75rem=solo padding-top del .main (extendemos hasta el borde) */
+}
+.dash-top-row{
+  flex:0 0 auto;display:flex;align-items:center;gap:10px;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:.6rem 1rem;
+}
+.dash-greet{flex:0 0 auto;min-width:0}
+.dash-saludo-txt{font-family:'DM Serif Display',serif;font-size:17px;line-height:1.1;white-space:nowrap}
+.dash-fecha-txt{font-size:11px;color:var(--text3);margin-top:1px;white-space:nowrap}
+.dash-accesos-row{flex:1;display:flex;gap:7px;justify-content:center;flex-wrap:wrap}
+.dash-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:var(--radius);
+  border:1.5px solid var(--border);background:var(--bg);color:var(--text);
+  font-size:12.5px;font-weight:600;cursor:pointer;text-decoration:none;
+  font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap}
+.dash-btn:hover{background:#111;color:#fff;border-color:#111}
+.dash-btn-icon{font-size:15px;line-height:1}
+.dash-mid-row{
+  flex:1;min-height:0;display:grid;grid-template-columns:1fr 210px;gap:10px;overflow:hidden;
+}
+.dash-panel{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:.75rem .9rem;display:flex;flex-direction:column;overflow:hidden;min-height:0;
+}
+.dash-panel-label{
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--text3);margin-bottom:.55rem;flex-shrink:0;
+}
+.dash-chart-cont{flex:1;min-height:0;position:relative}
+/* Availability rows */
+.dash-avail-row{
+  display:flex;align-items:center;gap:8px;padding:6px 0;
+  border-bottom:1px solid var(--border);font-size:12px;
+}
+.dash-avail-row:last-child{border-bottom:none}
+.dash-avail-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.dot-ok{background:#4ade80}.dot-warn{background:#fbbf24}.dot-full{background:#f87171}
+.dash-avail-day{font-weight:700;min-width:58px;font-size:12px}
+.dash-avail-nums{display:flex;gap:5px;margin-left:auto}
+.dash-avail-num{display:inline-flex;align-items:center;gap:2px;font-size:11px;
+  font-family:'DM Mono',monospace;color:var(--text2)}
+/* Bottom panel */
+.dash-bottom-panel{flex:0 0 150px;min-height:0}
+.dash-proximas-scroll{flex:1;overflow-y:auto;min-height:0}
+.dash-prox-row{
+  display:flex;align-items:center;gap:8px;padding:5px 0;
+  border-bottom:1px solid var(--border);font-size:12px;flex-wrap:nowrap;
+}
+.dash-prox-row:last-child{border-bottom:none}
+/* Mobile: stack vertically, allow scroll */
+@media(max-width:768px){
+  #page-dashboard{height:auto;overflow:visible}
+  .dash-mid-row{grid-template-columns:1fr}
+  .dash-panel{min-height:200px}
+  .dash-chart-cont{height:200px;flex:none}
+  .dash-bottom-panel{flex:none;height:auto}
+}
 </style>
 </head>
 <body>
@@ -260,57 +295,39 @@ tr:hover td{background:var(--bg)}
 <!-- ===== DASHBOARD ===== -->
 <div class="page active" id="page-dashboard">
 
-  <!-- Saludo + fecha -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:8px">
-    <div>
-      <div style="font-family:'DM Serif Display',serif;font-size:26px;line-height:1.1" id="dash-saludo">Bienvenido</div>
-      <div style="font-size:13px;color:var(--text3);margin-top:4px" id="dash-fecha-hoy"></div>
+  <!-- TOP: saludo + accesos rápidos -->
+  <div class="dash-top-row">
+    <div class="dash-greet">
+      <div id="dash-saludo" class="dash-saludo-txt">Bienvenido 👋</div>
+      <div id="dash-fecha-hoy" class="dash-fecha-txt"></div>
     </div>
-    <button class="btn btn-sm" onclick="cargarDatos();renderDashboard()" style="align-self:flex-start">↺ Actualizar</button>
+    <div class="dash-accesos-row">
+      <button class="dash-btn" onclick="cambiarTab('nueva')"><span class="dash-btn-icon">📋</span>Nueva presencial</button>
+      <a href="/links" class="dash-btn"><span class="dash-btn-icon">🔗</span>Generar link</a>
+      <button class="dash-btn" onclick="cambiarTab('disponibilidad')"><span class="dash-btn-icon">📅</span>Disponibilidad</button>
+      <a href="/cuadros" class="dash-btn"><span class="dash-btn-icon">🖨</span>Cuadros</a>
+    </div>
+    <button class="btn btn-sm" onclick="cargarDatos()" title="Actualizar datos" style="flex-shrink:0;padding:6px 10px">↺</button>
   </div>
 
-  <!-- Accesos rápidos -->
-  <div class="dash-accesos">
-    <button class="dash-btn" onclick="cambiarTab('nueva')">
-      <span class="dash-btn-icon">📋</span>
-      <span class="dash-btn-label">Nueva presencial</span>
-    </button>
-    <a href="/links" class="dash-btn">
-      <span class="dash-btn-icon">🔗</span>
-      <span class="dash-btn-label">Generar link</span>
-    </a>
-    <button class="dash-btn" onclick="cambiarTab('disponibilidad')">
-      <span class="dash-btn-icon">📅</span>
-      <span class="dash-btn-label">Disponibilidad</span>
-    </button>
-    <a href="/cuadros" class="dash-btn">
-      <span class="dash-btn-icon">🖨</span>
-      <span class="dash-btn-label">Cuadros</span>
-    </a>
-  </div>
-
-  <!-- Disponibilidad próxima -->
-  <div class="card" style="margin-bottom:1.25rem">
-    <div class="dash-section-title">Disponibilidad — próximos días</div>
-    <div class="dash-avail-grid" id="dash-avail">
-      <div style="grid-column:1/-1;text-align:center;padding:1rem;color:var(--text3);font-size:13px"><span class="spinner"></span>Cargando...</div>
+  <!-- MEDIO: gráfica + disponibilidad -->
+  <div class="dash-mid-row">
+    <!-- Gráfica -->
+    <div class="dash-panel">
+      <div class="dash-panel-label">Reservaciones por mes</div>
+      <div class="dash-chart-cont"><canvas id="dash-chart"></canvas></div>
+    </div>
+    <!-- Disponibilidad -->
+    <div class="dash-panel">
+      <div class="dash-panel-label">Disponibilidad próxima</div>
+      <div id="dash-avail"></div>
     </div>
   </div>
 
-  <!-- Gráfico mensual -->
-  <div class="card" style="margin-bottom:1.25rem">
-    <div class="dash-section-title">Reservaciones por mes</div>
-    <div style="position:relative;height:230px">
-      <canvas id="dash-chart"></canvas>
-    </div>
-  </div>
-
-  <!-- Próximas fechas con reservaciones -->
-  <div class="card">
-    <div class="dash-section-title">Próximas fechas con reservaciones</div>
-    <div id="dash-proximas">
-      <div class="empty" style="font-size:13px"><span class="spinner"></span>Cargando...</div>
-    </div>
+  <!-- FONDO: próximas fechas -->
+  <div class="dash-panel dash-bottom-panel">
+    <div class="dash-panel-label">Próximas fechas con reservaciones</div>
+    <div id="dash-proximas" class="dash-proximas-scroll"></div>
   </div>
 
 </div><!-- end page-dashboard -->
@@ -740,6 +757,9 @@ function cambiarTab(tab){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('main-normal').style.display=tab==='disponibilidad'?'none':'block';
   document.getElementById('main-disponibilidad').style.display=tab==='disponibilidad'?'block':'none';
+  // clase main-dash solo en el dashboard (elimina padding-bottom para que el grid ocupe viewport)
+  const mn=document.getElementById('main-normal');
+  if(mn) mn.classList.toggle('main-dash', tab==='dashboard');
   const pageId=tab==='disponibilidad'?'page-disponibilidad':'page-'+tab;
   document.getElementById(pageId).classList.add('active');
   if(tab==='disponibilidad') renderCalendario();
@@ -1524,24 +1544,22 @@ function _renderDashAvail() {
   const meses_es = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   const dias_es = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
   let html = '';
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 7; i++) {
     const d = new Date();
     d.setDate(d.getDate() + i);
     const fecha = d.toISOString().slice(0, 10);
     const disp = getDisp(fecha);
-    const labelTop = i === 0 ? 'Hoy' : i === 1 ? 'Mañana' : dias_es[d.getDay()];
-    const labelDate = d.getDate() + ' ' + meses_es[d.getMonth()];
-    // Status: full if everything is at 0 or near 0, warn if some, ok otherwise
-    let cls = 'dav-ok';
-    if (disp.Mixta.libre <= 3 && disp.Privada.libre === 0 && disp.Familiar.libre === 0) cls = 'dav-full';
-    else if (disp.Mixta.libre < 8 || disp.Privada.libre === 0 || disp.Familiar.libre === 0) cls = 'dav-warn';
-    html += `<div class="dash-avail-card ${cls}">
-      <div class="dac-label">${labelTop}</div>
-      <div class="dac-date">${labelDate}</div>
-      <div class="dac-cabanas">
-        <div class="dac-cab"><span class="pip pip-mixta"></span><span>Mixta: ${disp.Mixta.libre}/${disp.Mixta.total}</span></div>
-        <div class="dac-cab"><span class="pip pip-privada"></span><span>Privada: ${disp.Privada.libre}/${disp.Privada.total}</span></div>
-        <div class="dac-cab"><span class="pip pip-familiar"></span><span>Familiar: ${disp.Familiar.libre}/${disp.Familiar.total}</span></div>
+    const label = i === 0 ? 'Hoy' : i === 1 ? 'Mañana' : `${dias_es[d.getDay()]} ${d.getDate()}`;
+    let dotCls = 'dot-ok';
+    if (disp.Mixta.libre <= 3 && disp.Privada.libre === 0 && disp.Familiar.libre === 0) dotCls = 'dot-full';
+    else if (disp.Mixta.libre < 8 || disp.Privada.libre === 0 || disp.Familiar.libre === 0) dotCls = 'dot-warn';
+    html += `<div class="dash-avail-row">
+      <div class="dash-avail-dot ${dotCls}"></div>
+      <div class="dash-avail-day">${label}</div>
+      <div class="dash-avail-nums">
+        <span class="dash-avail-num"><span class="pip pip-mixta" style="width:7px;height:7px;border-radius:1px;display:inline-block;flex-shrink:0"></span>${disp.Mixta.libre}</span>
+        <span class="dash-avail-num"><span class="pip pip-privada" style="width:7px;height:7px;border-radius:1px;display:inline-block;flex-shrink:0"></span>${disp.Privada.libre}</span>
+        <span class="dash-avail-num"><span class="pip pip-familiar" style="width:7px;height:7px;border-radius:1px;display:inline-block;flex-shrink:0"></span>${disp.Familiar.libre}</span>
       </div>
     </div>`;
   }
@@ -1630,34 +1648,31 @@ function _renderDashProximas() {
     const privada = resv.filter(r => r.tipo_cabana === 'Privada').length;
     const familiar = resv.filter(r => r.tipo_cabana === 'Familiar').length;
     return { fecha, personas, mixta, privada, familiar };
-  }).sort((a, b) => a.fecha.localeCompare(b.fecha)).slice(0, 12);
+  }).sort((a, b) => a.fecha.localeCompare(b.fecha)).slice(0, 20);
 
   if (!sorted.length) {
-    cont.innerHTML = '<div class="empty" style="font-size:13px;padding:2rem">Sin reservaciones próximas</div>';
+    cont.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:8px 0">Sin reservaciones próximas</div>';
     return;
   }
 
   cont.innerHTML = sorted.map(f => {
     const disp = getDisp(f.fecha);
-    const mxOcup = 22 - disp.Mixta.libre;
-    const pct = Math.round(mxOcup / 22 * 100);
-    let statusColor = '#166534', statusBg = '#f0fdf4';
-    if (pct >= 85 || (disp.Privada.libre === 0 && disp.Familiar.libre === 0)) {
-      statusColor = '#991b1b'; statusBg = '#fef2f2';
-    } else if (pct >= 50 || disp.Privada.libre === 0 || disp.Familiar.libre === 0) {
-      statusColor = '#b45309'; statusBg = '#fef3c7';
-    }
+    const pct = Math.round((22 - disp.Mixta.libre) / 22 * 100);
+    let dotCls = 'dot-ok';
+    if (pct >= 85 || (disp.Privada.libre === 0 && disp.Familiar.libre === 0)) dotCls = 'dot-full';
+    else if (pct >= 50 || disp.Privada.libre === 0 || disp.Familiar.libre === 0) dotCls = 'dot-warn';
     const dias = diasHasta(f.fecha);
-    const diasLabel = dias === 0 ? 'Hoy' : dias === 1 ? 'Mañana' : `En ${dias} días`;
-    return `<div class="dash-proxima-row">
-      <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;min-width:80px">${fmt(f.fecha)}</div>
-      <div style="font-size:11px;color:var(--text3);min-width:75px">${diasLabel}</div>
-      <div style="display:flex;gap:5px;flex-wrap:wrap;flex:1">
-        ${f.mixta ? `<span class="badge b-mixta">${f.mixta} Mixta</span>` : ''}
-        ${f.privada ? `<span class="badge b-privada">${f.privada} Privada</span>` : ''}
-        ${f.familiar ? `<span class="badge b-familiar">${f.familiar} Familiar</span>` : ''}
+    const diasLabel = dias === 0 ? 'Hoy' : dias === 1 ? 'Mañana' : `${dias}d`;
+    return `<div class="dash-prox-row">
+      <div class="dash-avail-dot ${dotCls}" style="flex-shrink:0"></div>
+      <div style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;min-width:72px">${fmt(f.fecha)}</div>
+      <div style="font-size:11px;color:var(--text3);min-width:50px">${diasLabel}</div>
+      <div style="display:flex;gap:4px;flex:1;min-width:0;overflow:hidden">
+        ${f.mixta ? `<span class="badge b-mixta" style="font-size:10px;padding:2px 6px">${f.mixta}M</span>` : ''}
+        ${f.privada ? `<span class="badge b-privada" style="font-size:10px;padding:2px 6px">${f.privada}P</span>` : ''}
+        ${f.familiar ? `<span class="badge b-familiar" style="font-size:10px;padding:2px 6px">${f.familiar}F</span>` : ''}
       </div>
-      <div style="font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px;background:${statusBg};color:${statusColor};white-space:nowrap">${f.personas} pers.</div>
+      <div style="font-size:11px;font-weight:700;color:var(--text2);white-space:nowrap">${f.personas}p</div>
     </div>`;
   }).join('');
 }
