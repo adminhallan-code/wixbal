@@ -1087,7 +1087,7 @@ function renderTabla(){
       <td style="color:var(--text3);font-size:11px">${i+1}</td>
       <td style="font-family:'DM Mono',monospace;font-size:12px">${fmt(r.fecha_pago)}</td>
       <td style="font-family:'DM Mono',monospace;font-size:12px">${fmt(r.fecha_ascenso)}</td>
-      <td><strong><span onclick="abrirNotas(${r.id},'${(r.nombre||'').replace(/'/g,"\\'")}',${JSON.stringify(r.notas||'')})" style="cursor:pointer;border-bottom:1px dashed var(--text3)" title="Click para editar notas">${r.tipo_pago==='Presencial'?'💵 ':(r.link_pago||'').startsWith('amelia_booking_')?'💻 ':''}${r.nombre}</span>${r.notas?` <span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 5px;font-weight:400">📝</span>`:''}</strong></td>
+      <td><strong><span class="nombre-link" data-id="${r.id}" data-nombre="${(r.nombre||'').replace(/"/g,'&quot;')}" data-notas="${(r.notas||'').replace(/"/g,'&quot;')}" style="cursor:pointer;border-bottom:1px dashed var(--text3)" title="Click para editar notas">${r.tipo_pago==='Presencial'?'💵 ':(r.link_pago||'').startsWith('amelia_booking_')?'💻 ':''}${r.nombre}</span>${r.notas?` <span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 5px;font-weight:400">📝</span>`:''}</strong></td>
       <td style="font-size:11px;color:var(--text2);line-height:1.2">${r.telefono?`Tel: ${r.telefono}<br>`:''}${r.correo?`Email: ${r.correo}<br>`:''}${r.identificacion?`ID: ${r.identificacion}`:''}</td>
       <td>${r.no_personas||'—'}</td>
       <td style="font-size:12px">${r.metodo_pago||'—'}</td>
@@ -1402,6 +1402,11 @@ function aplicarActualizacion() {
 }
 
 // ── Notas adicionales ─────────────────────────────────────────────────────────
+document.addEventListener('click', function(e) {
+  const el = e.target.closest('.nombre-link');
+  if (el) abrirNotas(parseInt(el.dataset.id), el.dataset.nombre, el.dataset.notas);
+});
+
 let _notasId = null;
 
 function abrirNotas(id, nombre, notas) {
