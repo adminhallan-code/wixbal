@@ -664,22 +664,36 @@ if ($action === 'get_log') {
 }
 
 if ($action === 'export_all') {
-    log_msg("INFO: Exportando todas las reservaciones futuras de Amelia.");
-    
-    // Obtener appointments futuros (o de hoy en adelante)
-    $today = current_time('Y-m-d 00:00:00');
-    
+    log_msg("INFO: Exportando reservaciones de Amelia.");
+
+    // Desde cuándo exportar (defecto: hace 1 año para capturar todo lo relevante)
+    $desde = !empty($_POST['desde'])
+        ? sanitize_text_field($_POST['desde']) . ' 00:00:00'
+        : date('Y-m-d H:i:s', strtotime('-365 days'));
+
     $query = "
-        SELECT a.id, a.bookingStart, a.serviceId, a.status as app_status, a.internalNotes,
-               c.firstName, c.lastName, cb.persons, cb.price, cb.status as booking_status
+        SELECT a.id as appointment_id,
+               cb.id as booking_id,
+               a.bookingStart,
+               a.serviceId,
+               a.status as app_status,
+               a.internalNotes,
+               cb.persons,
+               cb.price,
+               cb.status as booking_status,
+               c.firstName,
+               c.lastName,
+               c.email,
+               c.phone
         FROM {$wpdb->prefix}amelia_appointments a
         JOIN {$wpdb->prefix}amelia_customer_bookings cb ON a.id = cb.appointmentId
         JOIN {$wpdb->prefix}amelia_users c ON cb.customerId = c.id
         WHERE a.bookingStart >= %s
+        ORDER BY a.bookingStart ASC
     ";
-    
-    $results = $wpdb->get_results($wpdb->prepare($query, $today), ARRAY_A);
-    echo json_encode(['success' => true, 'data' => $results]);
+
+    $results = $wpdb->get_results($wpdb->prepare($query, $desde), ARRAY_A);
+    echo json_encode(['success' => true, 'data' => $results, 'total' => count($results)]);
     exit;
 }
 

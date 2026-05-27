@@ -112,6 +112,11 @@ if ($method === 'GET' && $s0 === 'api' && $s1 === 'amelia-bridge-log') {
     require __DIR__ . '/api/amelia_bridge_log.php';
 }
 
+// GET|POST /api/amelia-sync-full
+if ($s0 === 'api' && $s1 === 'amelia-sync-full') {
+    require __DIR__ . '/api/amelia_sync_full.php';
+}
+
 // POST /api/reservaciones/crear_manual
 if ($method === 'POST' && $s0 === 'api' && $s1 === 'reservaciones' && $s2 === 'crear_manual') {
     require __DIR__ . '/api/crear_manual.php';
