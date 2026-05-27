@@ -203,66 +203,80 @@ tr:hover td{background:var(--bg)}
   .rv-actions button,.rv-actions a{width:100%}
 }
 
-/* ── Dashboard ── */
+/* ── Dashboard bento ── */
 #page-dashboard{
   height:calc(100vh - 50px - 1.75rem);
-  display:flex;flex-direction:column;gap:10px;overflow:hidden;
-  /* 50px=nav, 1.75rem=solo padding-top del .main (extendemos hasta el borde) */
+  display:grid;
+  grid-template-columns:1fr 200px 230px;
+  grid-template-rows:1fr 1fr;
+  gap:10px;
+  overflow:hidden;
 }
-.dash-top-row{
-  flex:0 0 auto;display:flex;align-items:center;gap:10px;
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
-  padding:.6rem 1rem;
-}
-.dash-greet{flex:0 0 auto;min-width:0}
-.dash-saludo-txt{font-family:'DM Serif Display',serif;font-size:17px;line-height:1.1;white-space:nowrap}
-.dash-fecha-txt{font-size:11px;color:var(--text3);margin-top:1px;white-space:nowrap}
-.dash-accesos-row{flex:1;display:flex;gap:7px;justify-content:center;flex-wrap:wrap}
-.dash-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:var(--radius);
-  border:1.5px solid var(--border);background:var(--bg);color:var(--text);
-  font-size:12.5px;font-weight:600;cursor:pointer;text-decoration:none;
-  font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap}
-.dash-btn:hover{background:#111;color:#fff;border-color:#111}
-.dash-btn-icon{font-size:15px;line-height:1}
-.dash-mid-row{
-  flex:1;min-height:0;display:grid;grid-template-columns:1fr 210px;gap:10px;overflow:hidden;
-}
+/* Gráfica: columna 1, ambas filas */
+.dash-bento-chart{grid-column:1;grid-row:1/3}
+/* Disponibilidad: columna 2, ambas filas */
+.dash-bento-avail{grid-column:2;grid-row:1/3}
+/* Accesos rápidos: columna 3 fila 1 */
+.dash-bento-actions{grid-column:3;grid-row:1}
+/* Saludo + próximas: columna 3 fila 2 */
+.dash-bento-info{grid-column:3;grid-row:2}
+
 .dash-panel{
   background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
-  padding:.75rem .9rem;display:flex;flex-direction:column;overflow:hidden;min-height:0;
+  padding:.8rem .9rem;display:flex;flex-direction:column;overflow:hidden;min-height:0;
 }
 .dash-panel-label{
   font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
   color:var(--text3);margin-bottom:.55rem;flex-shrink:0;
 }
 .dash-chart-cont{flex:1;min-height:0;position:relative}
+/* Botones de acceso en 2×2 */
+.bento-actions-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1;min-height:0;
+}
+.bento-btn{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:5px;background:var(--bg);border:1.5px solid var(--border);
+  border-radius:var(--radius);cursor:pointer;text-decoration:none;
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:11px;
+  font-weight:600;text-align:center;transition:all .15s;padding:6px 4px;
+}
+.bento-btn:hover{background:#111;color:#fff;border-color:#111;transform:translateY(-1px)}
+.bento-btn-icon{font-size:19px;line-height:1}
+/* Saludo */
+.dash-saludo-txt{font-family:'DM Serif Display',serif;font-size:16px;line-height:1.1}
+.dash-fecha-txt{font-size:11px;color:var(--text3);margin-top:2px;margin-bottom:.6rem}
 /* Availability rows */
 .dash-avail-row{
-  display:flex;align-items:center;gap:8px;padding:6px 0;
+  display:flex;align-items:center;gap:7px;padding:5px 0;
   border-bottom:1px solid var(--border);font-size:12px;
 }
 .dash-avail-row:last-child{border-bottom:none}
-.dash-avail-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.dash-avail-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .dot-ok{background:#4ade80}.dot-warn{background:#fbbf24}.dot-full{background:#f87171}
-.dash-avail-day{font-weight:700;min-width:58px;font-size:12px}
+.dash-avail-day{font-weight:700;min-width:54px;font-size:11.5px}
 .dash-avail-nums{display:flex;gap:5px;margin-left:auto}
 .dash-avail-num{display:inline-flex;align-items:center;gap:2px;font-size:11px;
   font-family:'DM Mono',monospace;color:var(--text2)}
-/* Bottom panel */
-.dash-bottom-panel{flex:0 0 150px;min-height:0}
+/* Próximas fechas */
 .dash-proximas-scroll{flex:1;overflow-y:auto;min-height:0}
 .dash-prox-row{
-  display:flex;align-items:center;gap:8px;padding:5px 0;
-  border-bottom:1px solid var(--border);font-size:12px;flex-wrap:nowrap;
+  display:flex;align-items:center;gap:6px;padding:4px 0;
+  border-bottom:1px solid var(--border);font-size:11.5px;flex-wrap:nowrap;
 }
 .dash-prox-row:last-child{border-bottom:none}
-/* Mobile: stack vertically, allow scroll */
+/* Mobile */
 @media(max-width:768px){
-  #page-dashboard{height:auto;overflow:visible}
-  .dash-mid-row{grid-template-columns:1fr}
-  .dash-panel{min-height:200px}
-  .dash-chart-cont{height:200px;flex:none}
-  .dash-bottom-panel{flex:none;height:auto}
+  #page-dashboard{
+    height:auto;overflow:visible;
+    grid-template-columns:1fr;
+    grid-template-rows:auto;
+  }
+  .dash-bento-chart,.dash-bento-avail,.dash-bento-actions,.dash-bento-info{
+    grid-column:1;grid-row:auto;
+  }
+  .dash-bento-chart .dash-chart-cont{height:220px;flex:none}
+  .dash-panel{min-height:160px}
 }
 </style>
 </head>
@@ -295,38 +309,47 @@ tr:hover td{background:var(--bg)}
 <!-- ===== DASHBOARD ===== -->
 <div class="page active" id="page-dashboard">
 
-  <!-- TOP: saludo + accesos rápidos -->
-  <div class="dash-top-row">
-    <div class="dash-greet">
-      <div id="dash-saludo" class="dash-saludo-txt">Bienvenido 👋</div>
-      <div id="dash-fecha-hoy" class="dash-fecha-txt"></div>
-    </div>
-    <div class="dash-accesos-row">
-      <button class="dash-btn" onclick="cambiarTab('nueva')"><span class="dash-btn-icon">📋</span>Nueva presencial</button>
-      <a href="/links" class="dash-btn"><span class="dash-btn-icon">🔗</span>Generar link</a>
-      <button class="dash-btn" onclick="cambiarTab('disponibilidad')"><span class="dash-btn-icon">📅</span>Disponibilidad</button>
-      <a href="/cuadros" class="dash-btn"><span class="dash-btn-icon">🖨</span>Cuadros</a>
-    </div>
-    <button class="btn btn-sm" onclick="cargarDatos()" title="Actualizar datos" style="flex-shrink:0;padding:6px 10px">↺</button>
+  <!-- Columna 1: Gráfica -->
+  <div class="dash-panel dash-bento-chart">
+    <div class="dash-panel-label">Reservaciones por mes</div>
+    <div class="dash-chart-cont"><canvas id="dash-chart"></canvas></div>
   </div>
 
-  <!-- MEDIO: gráfica + disponibilidad -->
-  <div class="dash-mid-row">
-    <!-- Gráfica -->
-    <div class="dash-panel">
-      <div class="dash-panel-label">Reservaciones por mes</div>
-      <div class="dash-chart-cont"><canvas id="dash-chart"></canvas></div>
-    </div>
-    <!-- Disponibilidad -->
-    <div class="dash-panel">
-      <div class="dash-panel-label">Disponibilidad próxima</div>
-      <div id="dash-avail"></div>
+  <!-- Columna 2: Disponibilidad -->
+  <div class="dash-panel dash-bento-avail">
+    <div class="dash-panel-label">Disponibilidad próxima</div>
+    <div id="dash-avail"></div>
+  </div>
+
+  <!-- Columna 3 fila 1: Accesos rápidos -->
+  <div class="dash-panel dash-bento-actions">
+    <div class="dash-panel-label">Accesos rápidos</div>
+    <div class="bento-actions-grid">
+      <button class="bento-btn" onclick="cambiarTab('nueva')">
+        <span class="bento-btn-icon">📋</span>Nueva presencial
+      </button>
+      <a href="/links" class="bento-btn">
+        <span class="bento-btn-icon">🔗</span>Generar link
+      </a>
+      <button class="bento-btn" onclick="cambiarTab('disponibilidad')">
+        <span class="bento-btn-icon">📅</span>Disponibilidad
+      </button>
+      <a href="/cuadros" class="bento-btn">
+        <span class="bento-btn-icon">🖨</span>Cuadros
+      </a>
     </div>
   </div>
 
-  <!-- FONDO: próximas fechas -->
-  <div class="dash-panel dash-bottom-panel">
-    <div class="dash-panel-label">Próximas fechas con reservaciones</div>
+  <!-- Columna 3 fila 2: Saludo + próximas fechas -->
+  <div class="dash-panel dash-bento-info">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.1rem">
+      <div>
+        <div id="dash-saludo" class="dash-saludo-txt">Bienvenido 👋</div>
+        <div id="dash-fecha-hoy" class="dash-fecha-txt"></div>
+      </div>
+      <button class="btn btn-sm" onclick="cargarDatos()" title="Actualizar" style="padding:4px 8px;font-size:12px;flex-shrink:0">↺</button>
+    </div>
+    <div class="dash-panel-label" style="margin-top:.5rem">Próximas fechas</div>
     <div id="dash-proximas" class="dash-proximas-scroll"></div>
   </div>
 
