@@ -129,11 +129,13 @@ if (empty($body['importar'])) {
     json_error('Enviá {"importar":true} para confirmar la importación.', 400);
 }
 
+$excluir    = array_map('intval', $body['excluir'] ?? []);
 $importados = [];
 $errores    = [];
 $hoy        = gt_date();
 
 foreach ($faltantes as $f) {
+    if (in_array($f['booking_id'], $excluir)) continue;
     $payload = array_filter([
         'nombre'         => $f['nombre'],
         'correo'         => $f['correo'] ?: null,
