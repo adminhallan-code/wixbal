@@ -1087,7 +1087,7 @@ function renderTabla(){
       <td style="color:var(--text3);font-size:11px">${i+1}</td>
       <td style="font-family:'DM Mono',monospace;font-size:12px">${fmt(r.fecha_pago)}</td>
       <td style="font-family:'DM Mono',monospace;font-size:12px">${fmt(r.fecha_ascenso)}</td>
-      <td><strong>${r.tipo_pago==='Presencial'?'💵 ':(r.link_pago||'').startsWith('amelia_booking_')?'💻 ':''}${r.nombre}</strong></td>
+      <td><strong><span onclick="abrirNotas(${r.id},'${(r.nombre||'').replace(/'/g,"\\'")}',${JSON.stringify(r.notas||'')})" style="cursor:pointer;border-bottom:1px dashed var(--text3)" title="Click para editar notas">${r.tipo_pago==='Presencial'?'💵 ':(r.link_pago||'').startsWith('amelia_booking_')?'💻 ':''}${r.nombre}</span>${r.notas?` <span style="font-size:10px;background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 5px;font-weight:400">📝</span>`:''}</strong></td>
       <td style="font-size:11px;color:var(--text2);line-height:1.2">${r.telefono?`Tel: ${r.telefono}<br>`:''}${r.correo?`Email: ${r.correo}<br>`:''}${r.identificacion?`ID: ${r.identificacion}`:''}</td>
       <td>${r.no_personas||'—'}</td>
       <td style="font-size:12px">${r.metodo_pago||'—'}</td>
@@ -1400,6 +1400,67 @@ function aplicarActualizacion() {
     _swRegistration.waiting.postMessage('SKIP_WAITING');
   }
 }
+
+// ── Notas adicionales ─────────────────────────────────────────────────────────
+let _notasId = null;
+
+function abrirNotas(id, nombre, notas) {
+  _notasId = id;
+  document.getElementById('notas-modal-title').textContent = nombre;
+  document.getElementById('notas-textarea').value = notas || '';
+  document.getElementById('notas-status').textContent = '';
+  document.getElementById('modal-notas').style.display = 'flex';
+  setTimeout(() => document.getElementById('notas-textarea').focus(), 50);
+}
+
+function cerrarNotas() {
+  document.getElementById('modal-notas').style.display = 'none';
+  _notasId = null;
+}
+
+async function guardarNotas() {
+  if (!_notasId) return;
+  const notas = document.getElementById('notas-textarea').value.trim() || null;
+  const btn   = document.getElementById('btn-guardar-notas');
+  const status = document.getElementById('notas-status');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  try {
+    const res = await fetch(`/api/reservaciones/${_notasId}`, {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ notas })
+    });
+    if (!res.ok) throw new Error('Error al guardar');
+    const idx = datos.findIndex(r => r.id === _notasId);
+    if (idx > -1) datos[idx].notas = notas;
+    renderTabla();
+    cerrarNotas();
+  } catch(e) {
+    status.textContent = 'Error al guardar. Intentá de nuevo.';
+    status.style.color = 'var(--danger)';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Guardar';
+  }
+}
 </script>
+
+<!-- Modal notas adicionales -->
+<div id="modal-notas" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#fff;padding:24px;border-radius:12px;width:90%;max-width:420px;box-shadow:0 10px 40px rgba(0,0,0,0.2)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#888;margin-bottom:3px">Notas adicionales</div>
+        <div id="notas-modal-title" style="font-weight:700;font-size:15px;color:#111"></div>
+      </div>
+      <button onclick="cerrarNotas()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;line-height:1;padding:4px">✕</button>
+    </div>
+    <textarea id="notas-textarea" placeholder="Escribe notas para el staff..." style="width:100%;height:110px;padding:10px 12px;font-size:14px;font-family:'DM Sans',sans-serif;border:1.5px solid #e0e0e0;border-radius:8px;resize:vertical;outline:none;color:#111"></textarea>
+    <div id="notas-status" style="font-size:12px;min-height:16px;margin-top:6px"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button id="btn-guardar-notas" onclick="guardarNotas()" style="flex:1;background:#111;color:#fff;border:none;padding:11px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Guardar</button>
+      <button onclick="cerrarNotas()" style="flex:1;background:#fff;color:#111;border:1.5px solid #e0e0e0;padding:11px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Cancelar</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
