@@ -201,6 +201,34 @@ tr:hover td{background:var(--bg)}
   .rv-grid{grid-template-columns:1fr !important}
   .rv-actions button,.rv-actions a{width:100%}
 }
+
+/* ── Dashboard ── */
+.dash-accesos{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.25rem}
+.dash-btn{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem .75rem;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;cursor:pointer;
+  text-decoration:none;color:var(--text);transition:all .18s;font-family:'DM Sans',sans-serif}
+.dash-btn:hover{background:#111;color:#fff;border-color:#111;transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.14)}
+.dash-btn-icon{font-size:26px;line-height:1}
+.dash-btn-label{font-size:13px;font-weight:600;text-align:center;line-height:1.2}
+.dash-avail-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.dash-avail-card{border:1.5px solid var(--border);border-radius:var(--radius);padding:.85rem .75rem;text-align:center;transition:box-shadow .15s}
+.dash-avail-card:hover{box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.dav-ok{background:var(--success-light);border-color:#bbf7d0}
+.dav-warn{background:var(--warn-light);border-color:#fde68a}
+.dav-full{background:var(--danger-light);border-color:#fecaca}
+.dac-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;color:var(--text3)}
+.dav-ok .dac-label{color:var(--success)}
+.dav-warn .dac-label{color:var(--warn)}
+.dav-full .dac-label{color:var(--danger)}
+.dac-date{font-family:'DM Serif Display',serif;font-size:17px;margin-bottom:8px;color:var(--text)}
+.dac-cabanas{display:flex;flex-direction:column;gap:4px;align-items:flex-start;font-size:11px;color:var(--text2)}
+.dac-cab{display:flex;align-items:center;gap:5px}
+.dash-section-title{font-family:'DM Serif Display',serif;font-size:17px;color:var(--text);margin-bottom:1rem}
+.dash-proxima-row{display:flex;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap}
+.dash-proxima-row:last-child{border-bottom:none}
+@media(max-width:900px){.dash-accesos{grid-template-columns:repeat(2,1fr)}.dash-avail-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.dash-avail-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:400px){.dash-avail-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -228,7 +256,66 @@ tr:hover td{background:var(--bg)}
 
 <!-- ===== NUEVA RESERVACIÓN ===== -->
 <div class="main" id="main-normal">
-<div class="page active" id="page-nueva">
+
+<!-- ===== DASHBOARD ===== -->
+<div class="page active" id="page-dashboard">
+
+  <!-- Saludo + fecha -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:8px">
+    <div>
+      <div style="font-family:'DM Serif Display',serif;font-size:26px;line-height:1.1" id="dash-saludo">Bienvenido</div>
+      <div style="font-size:13px;color:var(--text3);margin-top:4px" id="dash-fecha-hoy"></div>
+    </div>
+    <button class="btn btn-sm" onclick="cargarDatos();renderDashboard()" style="align-self:flex-start">↺ Actualizar</button>
+  </div>
+
+  <!-- Accesos rápidos -->
+  <div class="dash-accesos">
+    <button class="dash-btn" onclick="cambiarTab('nueva')">
+      <span class="dash-btn-icon">📋</span>
+      <span class="dash-btn-label">Nueva presencial</span>
+    </button>
+    <a href="/links" class="dash-btn">
+      <span class="dash-btn-icon">🔗</span>
+      <span class="dash-btn-label">Generar link</span>
+    </a>
+    <button class="dash-btn" onclick="cambiarTab('disponibilidad')">
+      <span class="dash-btn-icon">📅</span>
+      <span class="dash-btn-label">Disponibilidad</span>
+    </button>
+    <a href="/cuadros" class="dash-btn">
+      <span class="dash-btn-icon">🖨</span>
+      <span class="dash-btn-label">Cuadros</span>
+    </a>
+  </div>
+
+  <!-- Disponibilidad próxima -->
+  <div class="card" style="margin-bottom:1.25rem">
+    <div class="dash-section-title">Disponibilidad — próximos días</div>
+    <div class="dash-avail-grid" id="dash-avail">
+      <div style="grid-column:1/-1;text-align:center;padding:1rem;color:var(--text3);font-size:13px"><span class="spinner"></span>Cargando...</div>
+    </div>
+  </div>
+
+  <!-- Gráfico mensual -->
+  <div class="card" style="margin-bottom:1.25rem">
+    <div class="dash-section-title">Reservaciones por mes</div>
+    <div style="position:relative;height:230px">
+      <canvas id="dash-chart"></canvas>
+    </div>
+  </div>
+
+  <!-- Próximas fechas con reservaciones -->
+  <div class="card">
+    <div class="dash-section-title">Próximas fechas con reservaciones</div>
+    <div id="dash-proximas">
+      <div class="empty" style="font-size:13px"><span class="spinner"></span>Cargando...</div>
+    </div>
+  </div>
+
+</div><!-- end page-dashboard -->
+
+<div class="page" id="page-nueva">
 
   <div class="metrics" id="metrics">
     <div class="metric"><div class="metric-label">Total reservas</div><div class="metric-value">—</div></div>
@@ -548,6 +635,7 @@ tr:hover td{background:var(--bg)}
 
 </div><!-- end app -->
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 const SB_URL='https://vimymnzlagzhfpbpjrvl.supabase.co';
@@ -598,8 +686,10 @@ function mostrarApp(user){
   const vista = params.get('view') || params.get('filter');
   if(vista && (document.getElementById('page-'+vista) || vista==='disponibilidad')){
     cambiarTab(vista);
+  } else {
+    cambiarTab('dashboard');
   }
-  
+
   cargarDatos();
   setInterval(cargarDatos,30000);
   if(typeof initNotifBell==='function') initNotifBell();
@@ -633,6 +723,7 @@ async function cargarDatos(){
     ));
     renderTabla();renderMetrics();renderPendientes();
     if(document.getElementById('main-disponibilidad').style.display==='block') renderCalendario();
+    if(document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
     setConn(true);
   }catch(e){
     console.error('[cargarDatos] Error:', e.message);
@@ -649,7 +740,8 @@ function cambiarTab(tab){
   document.getElementById('main-disponibilidad').style.display=tab==='disponibilidad'?'block':'none';
   const pageId=tab==='disponibilidad'?'page-disponibilidad':'page-'+tab;
   document.getElementById(pageId).classList.add('active');
-  if(tab==='disponibilidad')renderCalendario();
+  if(tab==='disponibilidad') renderCalendario();
+  if(tab==='dashboard') renderDashboard();
 }
 
 function getDisp(fecha){
@@ -1399,6 +1491,166 @@ function aplicarActualizacion() {
   if (_swRegistration && _swRegistration.waiting) {
     _swRegistration.waiting.postMessage('SKIP_WAITING');
   }
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+
+let _dashChart = null;
+
+function renderDashboard() {
+  _renderDashSaludo();
+  _renderDashAvail();
+  _renderDashChart();
+  _renderDashProximas();
+}
+
+function _renderDashSaludo() {
+  const h = new Date().getHours();
+  const saludo = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+  const meses_es = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const dias_es = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  const now = new Date();
+  const saludoEl = document.getElementById('dash-saludo');
+  const fechaEl = document.getElementById('dash-fecha-hoy');
+  if (saludoEl) saludoEl.textContent = saludo + ' 👋';
+  if (fechaEl) fechaEl.textContent = dias_es[now.getDay()] + ', ' + now.getDate() + ' de ' + meses_es[now.getMonth()] + ' de ' + now.getFullYear();
+}
+
+function _renderDashAvail() {
+  const cont = document.getElementById('dash-avail');
+  if (!cont) return;
+  const meses_es = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const dias_es = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  let html = '';
+  for (let i = 0; i < 5; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    const fecha = d.toISOString().slice(0, 10);
+    const disp = getDisp(fecha);
+    const labelTop = i === 0 ? 'Hoy' : i === 1 ? 'Mañana' : dias_es[d.getDay()];
+    const labelDate = d.getDate() + ' ' + meses_es[d.getMonth()];
+    // Status: full if everything is at 0 or near 0, warn if some, ok otherwise
+    let cls = 'dav-ok';
+    if (disp.Mixta.libre <= 3 && disp.Privada.libre === 0 && disp.Familiar.libre === 0) cls = 'dav-full';
+    else if (disp.Mixta.libre < 8 || disp.Privada.libre === 0 || disp.Familiar.libre === 0) cls = 'dav-warn';
+    html += `<div class="dash-avail-card ${cls}">
+      <div class="dac-label">${labelTop}</div>
+      <div class="dac-date">${labelDate}</div>
+      <div class="dac-cabanas">
+        <div class="dac-cab"><span class="pip pip-mixta"></span><span>Mixta: ${disp.Mixta.libre}/${disp.Mixta.total}</span></div>
+        <div class="dac-cab"><span class="pip pip-privada"></span><span>Privada: ${disp.Privada.libre}/${disp.Privada.total}</span></div>
+        <div class="dac-cab"><span class="pip pip-familiar"></span><span>Familiar: ${disp.Familiar.libre}/${disp.Familiar.total}</span></div>
+      </div>
+    </div>`;
+  }
+  cont.innerHTML = html;
+}
+
+function _renderDashChart() {
+  const canvas = document.getElementById('dash-chart');
+  if (!canvas || typeof Chart === 'undefined') return;
+  const meses_es = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const now = new Date();
+  const labels = [], counts = [], bgColors = [];
+  for (let offset = -5; offset <= 3; offset++) {
+    const d = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+    const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    const label = meses_es[d.getMonth()] + ' \'' + String(d.getFullYear()).slice(2);
+    const count = datos.filter(r => r.fecha_ascenso && r.fecha_ascenso.startsWith(key) && r.estado_pago !== 'Cancelado').length;
+    labels.push(label);
+    counts.push(count);
+    if (offset < 0) bgColors.push('rgba(107,114,128,0.55)');
+    else if (offset === 0) bgColors.push('rgba(17,17,17,0.85)');
+    else bgColors.push('rgba(22,101,52,0.55)');
+  }
+  if (_dashChart) { _dashChart.destroy(); _dashChart = null; }
+  _dashChart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Reservaciones',
+        data: counts,
+        backgroundColor: bgColors,
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.raw} reservación${ctx.raw !== 1 ? 'es' : ''}`
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1, precision: 0, font: { family: 'DM Mono' } },
+          grid: { color: 'rgba(0,0,0,0.06)' }
+        },
+        x: {
+          ticks: { font: { family: 'DM Mono', size: 11 } },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+}
+
+function _renderDashProximas() {
+  const cont = document.getElementById('dash-proximas');
+  if (!cont) return;
+  const hoyStr = hoy();
+  const limite = new Date(); limite.setDate(limite.getDate() + 90);
+  const limStr = limite.toISOString().slice(0, 10);
+
+  const porFecha = {};
+  datos.filter(r => r.fecha_ascenso >= hoyStr && r.fecha_ascenso <= limStr && r.estado_pago !== 'Cancelado')
+    .forEach(r => { (porFecha[r.fecha_ascenso] = porFecha[r.fecha_ascenso] || []).push(r); });
+  datosLinks.filter(l => l.fecha_ascenso >= hoyStr && l.fecha_ascenso <= limStr)
+    .forEach(l => { (porFecha[l.fecha_ascenso] = porFecha[l.fecha_ascenso] || []).push(l); });
+
+  const sorted = Object.entries(porFecha).map(([fecha, resv]) => {
+    const personas = resv.reduce((s, r) => s + Number(r.no_personas || 1), 0);
+    const mixta = resv.filter(r => r.tipo_cabana === 'Mixta').length;
+    const privada = resv.filter(r => r.tipo_cabana === 'Privada').length;
+    const familiar = resv.filter(r => r.tipo_cabana === 'Familiar').length;
+    return { fecha, personas, mixta, privada, familiar };
+  }).sort((a, b) => a.fecha.localeCompare(b.fecha)).slice(0, 12);
+
+  if (!sorted.length) {
+    cont.innerHTML = '<div class="empty" style="font-size:13px;padding:2rem">Sin reservaciones próximas</div>';
+    return;
+  }
+
+  cont.innerHTML = sorted.map(f => {
+    const disp = getDisp(f.fecha);
+    const mxOcup = 22 - disp.Mixta.libre;
+    const pct = Math.round(mxOcup / 22 * 100);
+    let statusColor = '#166534', statusBg = '#f0fdf4';
+    if (pct >= 85 || (disp.Privada.libre === 0 && disp.Familiar.libre === 0)) {
+      statusColor = '#991b1b'; statusBg = '#fef2f2';
+    } else if (pct >= 50 || disp.Privada.libre === 0 || disp.Familiar.libre === 0) {
+      statusColor = '#b45309'; statusBg = '#fef3c7';
+    }
+    const dias = diasHasta(f.fecha);
+    const diasLabel = dias === 0 ? 'Hoy' : dias === 1 ? 'Mañana' : `En ${dias} días`;
+    return `<div class="dash-proxima-row">
+      <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;min-width:80px">${fmt(f.fecha)}</div>
+      <div style="font-size:11px;color:var(--text3);min-width:75px">${diasLabel}</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;flex:1">
+        ${f.mixta ? `<span class="badge b-mixta">${f.mixta} Mixta</span>` : ''}
+        ${f.privada ? `<span class="badge b-privada">${f.privada} Privada</span>` : ''}
+        ${f.familiar ? `<span class="badge b-familiar">${f.familiar} Familiar</span>` : ''}
+      </div>
+      <div style="font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px;background:${statusBg};color:${statusColor};white-space:nowrap">${f.personas} pers.</div>
+    </div>`;
+  }).join('');
 }
 
 // ── Notas adicionales ─────────────────────────────────────────────────────────

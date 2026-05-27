@@ -116,6 +116,7 @@
     '<div class="dropdown" data-req="reservaciones">' +
     '<button class="dropdown-btn' + (act('/') ? ' active' : '') + '" onclick="this.closest(\'.dropdown\').classList.toggle(\'open\')">Reservaciones ▾</button>' +
     '<div class="dropdown-content">' +
+    '<a href="/"                     onclick="_closeNav()">🏠 Inicio</a>' +
     '<a href="/?view=nueva"         onclick="_closeNav()">Nueva reservación</a>' +
     '<a href="/?view=lista"         onclick="_closeNav()">Lista</a>' +
     '<a href="/?view=pendientes"    onclick="_closeNav()">Pendientes <span id="badge-pendientes" class="tab-badge" style="display:none"></span></a>' +
