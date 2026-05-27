@@ -723,7 +723,9 @@ async function cargarDatos(){
     ));
     renderTabla();renderMetrics();renderPendientes();
     if(document.getElementById('main-disponibilidad').style.display==='block') renderCalendario();
-    if(document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
+    if(document.getElementById('page-dashboard').classList.contains('active')){
+      try{renderDashboard();}catch(de){console.error('[dashboard]',de);}
+    }
     setConn(true);
   }catch(e){
     console.error('[cargarDatos] Error:', e.message);
@@ -741,7 +743,7 @@ function cambiarTab(tab){
   const pageId=tab==='disponibilidad'?'page-disponibilidad':'page-'+tab;
   document.getElementById(pageId).classList.add('active');
   if(tab==='disponibilidad') renderCalendario();
-  if(tab==='dashboard') renderDashboard();
+  if(tab==='dashboard') setTimeout(function(){ try{renderDashboard();}catch(de){console.error('[dashboard]',de);} }, 0);
 }
 
 function getDisp(fecha){
@@ -1563,7 +1565,14 @@ function _renderDashChart() {
     else if (offset === 0) bgColors.push('rgba(17,17,17,0.85)');
     else bgColors.push('rgba(22,101,52,0.55)');
   }
-  if (_dashChart) { _dashChart.destroy(); _dashChart = null; }
+  if (_dashChart) {
+    // Actualizar datos en lugar de destruir y recrear (evita bugs de canvas 0px)
+    _dashChart.data.labels = labels;
+    _dashChart.data.datasets[0].data = counts;
+    _dashChart.data.datasets[0].backgroundColor = bgColors;
+    _dashChart.update();
+    return;
+  }
   _dashChart = new Chart(canvas, {
     type: 'bar',
     data: {
