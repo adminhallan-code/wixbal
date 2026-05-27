@@ -214,12 +214,15 @@ tr:hover td{background:var(--bg)}
 }
 /* Gráfica: columna 1, ambas filas */
 .dash-bento-chart{grid-column:1;grid-row:1/3}
-/* Disponibilidad: columna 2, ambas filas */
-.dash-bento-avail{grid-column:2;grid-row:1/3}
+/* Disponibilidad: columna 2 fila 1 */
+.dash-bento-avail{grid-column:2;grid-row:1}
+/* Próximas fechas: columna 2 fila 2 */
+.dash-bento-proximas{grid-column:2;grid-row:2}
 /* Accesos rápidos: columna 3 fila 1 */
 .dash-bento-actions{grid-column:3;grid-row:1}
-/* Saludo + próximas: columna 3 fila 2 */
-.dash-bento-info{grid-column:3;grid-row:2}
+/* Facturación: columna 3 fila 2 */
+.dash-bento-factura{grid-column:3;grid-row:2;cursor:pointer;transition:box-shadow .15s,border-color .15s}
+.dash-bento-factura:hover{box-shadow:0 2px 14px rgba(0,0,0,.1);border-color:#aaa}
 
 .dash-panel{
   background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
@@ -265,13 +268,26 @@ tr:hover td{background:var(--bg)}
 .dai-bar-fill{height:100%;border-radius:2px;transition:width .4s}
 /* Availability dot (keep for prox rows) */
 .dash-avail-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-/* Próximas fechas */
+/* Próximas fechas / Facturación scroll */
 .dash-proximas-scroll{flex:1;overflow-y:auto;min-height:0}
 .dash-prox-row{
   display:flex;align-items:center;gap:6px;padding:4px 0;
   border-bottom:1px solid var(--border);font-size:11.5px;flex-wrap:nowrap;
 }
 .dash-prox-row:last-child{border-bottom:none}
+/* Facturación rows */
+.dash-fact-row{
+  display:flex;align-items:center;gap:7px;padding:5px 0;
+  border-bottom:1px solid var(--border);font-size:12px;
+}
+.dash-fact-row:last-child{border-bottom:none}
+.dash-fact-status{font-size:13px;font-weight:700;flex-shrink:0;width:16px;text-align:center}
+.dash-fact-nombre{flex:1;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dash-fact-fecha{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);white-space:nowrap}
+.dash-fact-badge{font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px;
+  background:var(--warn-light);color:var(--warn);white-space:nowrap;flex-shrink:0}
+.dash-fact-summary{display:flex;gap:10px;margin-bottom:.5rem;flex-shrink:0}
+.dash-fact-stat{font-size:11px;display:flex;align-items:center;gap:4px}
 /* Mobile */
 @media(max-width:768px){
   #page-dashboard{
@@ -279,7 +295,7 @@ tr:hover td{background:var(--bg)}
     grid-template-columns:1fr;
     grid-template-rows:auto;
   }
-  .dash-bento-chart,.dash-bento-avail,.dash-bento-actions,.dash-bento-info{
+  .dash-bento-chart,.dash-bento-avail,.dash-bento-proximas,.dash-bento-actions,.dash-bento-factura{
     grid-column:1;grid-row:auto;
   }
   .dash-bento-chart .dash-chart-cont{height:220px;flex:none}
@@ -316,20 +332,33 @@ tr:hover td{background:var(--bg)}
 <!-- ===== DASHBOARD ===== -->
 <div class="page active" id="page-dashboard">
 
-  <!-- Columna 1: Gráfica -->
+  <!-- Col 1: Gráfica (span ambas filas) -->
   <div class="dash-panel dash-bento-chart">
     <div class="dash-panel-label">Reservaciones por mes</div>
     <div class="dash-chart-cont"><canvas id="dash-chart"></canvas></div>
   </div>
 
-  <!-- Columna 2: Disponibilidad -->
+  <!-- Col 2 fila 1: Disponibilidad -->
   <div class="dash-panel dash-bento-avail">
     <div class="dash-panel-label">Disponibilidad próxima</div>
     <div id="dash-avail"></div>
   </div>
 
-  <!-- Columna 3 fila 1: Accesos rápidos -->
+  <!-- Col 2 fila 2: Próximas fechas -->
+  <div class="dash-panel dash-bento-proximas">
+    <div class="dash-panel-label">Próximas fechas</div>
+    <div id="dash-proximas" class="dash-proximas-scroll"></div>
+  </div>
+
+  <!-- Col 3 fila 1: Saludo + accesos rápidos -->
   <div class="dash-panel dash-bento-actions">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.4rem">
+      <div>
+        <div id="dash-saludo" class="dash-saludo-txt">Bienvenido 👋</div>
+        <div id="dash-fecha-hoy" class="dash-fecha-txt"></div>
+      </div>
+      <button class="btn btn-sm" onclick="cargarDatos()" title="Actualizar" style="padding:3px 8px;font-size:11px;flex-shrink:0">↺</button>
+    </div>
     <div class="dash-panel-label">Accesos rápidos</div>
     <div class="bento-actions-grid">
       <button class="bento-btn" onclick="cambiarTab('nueva')">
@@ -347,17 +376,14 @@ tr:hover td{background:var(--bg)}
     </div>
   </div>
 
-  <!-- Columna 3 fila 2: Saludo + próximas fechas -->
-  <div class="dash-panel dash-bento-info">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.1rem">
-      <div>
-        <div id="dash-saludo" class="dash-saludo-txt">Bienvenido 👋</div>
-        <div id="dash-fecha-hoy" class="dash-fecha-txt"></div>
-      </div>
-      <button class="btn btn-sm" onclick="cargarDatos()" title="Actualizar" style="padding:4px 8px;font-size:12px;flex-shrink:0">↺</button>
+  <!-- Col 3 fila 2: Facturación (clickeable) -->
+  <div class="dash-panel dash-bento-factura" onclick="window.location.href='/facturacion'" title="Ver panel de facturación">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem;flex-shrink:0">
+      <div class="dash-panel-label" style="margin-bottom:0">Facturación reciente</div>
+      <span style="font-size:10px;color:var(--text3)">Ver todo →</span>
     </div>
-    <div class="dash-panel-label" style="margin-top:.5rem">Próximas fechas</div>
-    <div id="dash-proximas" class="dash-proximas-scroll"></div>
+    <div id="dash-fact-summary" class="dash-fact-summary"></div>
+    <div id="dash-facturas" class="dash-proximas-scroll"></div>
   </div>
 
 </div><!-- end page-dashboard -->
@@ -1554,6 +1580,7 @@ function renderDashboard() {
   _renderDashAvail();
   _renderDashChart();
   _renderDashProximas();
+  _renderDashFactura();
 }
 
 function _renderDashSaludo() {
@@ -1711,6 +1738,44 @@ function _renderDashProximas() {
         ${f.familiar ? `<span class="badge b-familiar" style="font-size:10px;padding:2px 6px">${f.familiar}F</span>` : ''}
       </div>
       <div style="font-size:11px;font-weight:700;color:var(--text2);white-space:nowrap">${f.personas}p</div>
+    </div>`;
+  }).join('');
+}
+
+function _renderDashFactura() {
+  const cont   = document.getElementById('dash-facturas');
+  const sumEl  = document.getElementById('dash-fact-summary');
+  if (!cont) return;
+
+  // Últimos 60 días, solo Completado, orden más reciente primero
+  const desde = new Date(); desde.setDate(desde.getDate() - 60);
+  const desdeStr = desde.toISOString().slice(0, 10);
+  const recientes = datos
+    .filter(r => r.estado_pago === 'Completado' && (r.fecha_pago || r.creado_at || '') >= desdeStr)
+    .sort((a, b) => (b.fecha_pago || b.creado_at || '').localeCompare(a.fecha_pago || a.creado_at || ''))
+    .slice(0, 18);
+
+  if (!recientes.length) {
+    if (sumEl) sumEl.innerHTML = '';
+    cont.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:6px 0">Sin reservaciones recientes</div>';
+    return;
+  }
+
+  const conFact  = recientes.filter(r => r.factura_url).length;
+  const sinFact  = recientes.filter(r => !r.factura_url).length;
+
+  if (sumEl) sumEl.innerHTML = `
+    <span class="dash-fact-stat"><span style="color:var(--success);font-weight:700">✓ ${conFact}</span> con factura</span>
+    <span class="dash-fact-stat"><span style="color:var(--warn);font-weight:700">✗ ${sinFact}</span> sin factura</span>`;
+
+  cont.innerHTML = recientes.map(r => {
+    const ok = !!r.factura_url;
+    const nombre = (r.nombre || '').split(' ').slice(0, 2).join(' ');
+    return `<div class="dash-fact-row">
+      <span class="dash-fact-status" style="color:${ok ? 'var(--success)' : 'var(--warn)'}">${ok ? '✓' : '✗'}</span>
+      <span class="dash-fact-nombre">${nombre}</span>
+      <span class="dash-fact-fecha">${fmt(r.fecha_pago || r.fecha_ascenso)}</span>
+      ${!ok ? '<span class="dash-fact-badge">Pendiente</span>' : ''}
     </div>`;
   }).join('');
 }
