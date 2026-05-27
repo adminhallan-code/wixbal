@@ -207,7 +207,7 @@ tr:hover td{background:var(--bg)}
 #page-dashboard{
   height:calc(100vh - 50px - 1.75rem - .75rem);
   display:grid;
-  grid-template-columns:1fr 200px 230px;
+  grid-template-columns:1fr 260px 300px;
   grid-template-rows:1fr 1fr;
   gap:10px;
   overflow:hidden;
@@ -246,18 +246,25 @@ tr:hover td{background:var(--bg)}
 /* Saludo */
 .dash-saludo-txt{font-family:'DM Serif Display',serif;font-size:16px;line-height:1.1}
 .dash-fecha-txt{font-size:11px;color:var(--text3);margin-top:2px;margin-bottom:.6rem}
-/* Availability rows */
-.dash-avail-row{
-  display:flex;align-items:center;gap:7px;padding:5px 0;
-  border-bottom:1px solid var(--border);font-size:12px;
+/* Availability — items fill height evenly */
+.dash-avail-list{display:flex;flex-direction:column;flex:1;min-height:0;gap:0}
+.dash-avail-item{
+  flex:1;display:flex;flex-direction:column;justify-content:center;
+  padding:5px 0;border-bottom:1px solid var(--border);min-height:0;
 }
-.dash-avail-row:last-child{border-bottom:none}
-.dash-avail-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dash-avail-item:last-child{border-bottom:none}
+.dai-head{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.dai-day{font-weight:700;font-size:12px}
+.dai-date{font-size:10px;color:var(--text3);flex:1}
+.dai-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .dot-ok{background:#4ade80}.dot-warn{background:#fbbf24}.dot-full{background:#f87171}
-.dash-avail-day{font-weight:700;min-width:54px;font-size:11.5px}
-.dash-avail-nums{display:flex;gap:5px;margin-left:auto}
-.dash-avail-num{display:inline-flex;align-items:center;gap:2px;font-size:11px;
-  font-family:'DM Mono',monospace;color:var(--text2)}
+.dai-counts{display:flex;gap:10px;margin-bottom:4px}
+.dai-count{display:inline-flex;align-items:center;gap:3px;font-size:12px;font-family:'DM Mono',monospace}
+.dai-count-sub{font-size:10px;color:var(--text3)}
+.dai-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.dai-bar-fill{height:100%;border-radius:2px;transition:width .4s}
+/* Availability dot (keep for prox rows) */
+.dash-avail-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 /* Próximas fechas */
 .dash-proximas-scroll{flex:1;overflow-y:auto;min-height:0}
 .dash-prox-row{
@@ -1566,27 +1573,35 @@ function _renderDashAvail() {
   if (!cont) return;
   const meses_es = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   const dias_es = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-  let html = '';
+  const PIP = (cls) => `<span class="pip ${cls}" style="width:8px;height:8px;border-radius:2px;display:inline-block;flex-shrink:0"></span>`;
+  let items = '';
   for (let i = 0; i < 7; i++) {
     const d = new Date();
     d.setDate(d.getDate() + i);
     const fecha = d.toISOString().slice(0, 10);
     const disp = getDisp(fecha);
-    const label = i === 0 ? 'Hoy' : i === 1 ? 'Mañana' : `${dias_es[d.getDay()]} ${d.getDate()}`;
+    const dayLabel = i === 0 ? 'Hoy' : i === 1 ? 'Mañana' : dias_es[d.getDay()];
+    const dateLabel = `${d.getDate()} ${meses_es[d.getMonth()]}`;
     let dotCls = 'dot-ok';
     if (disp.Mixta.libre <= 3 && disp.Privada.libre === 0 && disp.Familiar.libre === 0) dotCls = 'dot-full';
     else if (disp.Mixta.libre < 8 || disp.Privada.libre === 0 || disp.Familiar.libre === 0) dotCls = 'dot-warn';
-    html += `<div class="dash-avail-row">
-      <div class="dash-avail-dot ${dotCls}"></div>
-      <div class="dash-avail-day">${label}</div>
-      <div class="dash-avail-nums">
-        <span class="dash-avail-num"><span class="pip pip-mixta" style="width:7px;height:7px;border-radius:1px;display:inline-block;flex-shrink:0"></span>${disp.Mixta.libre}</span>
-        <span class="dash-avail-num"><span class="pip pip-privada" style="width:7px;height:7px;border-radius:1px;display:inline-block;flex-shrink:0"></span>${disp.Privada.libre}</span>
-        <span class="dash-avail-num"><span class="pip pip-familiar" style="width:7px;height:7px;border-radius:1px;display:inline-block;flex-shrink:0"></span>${disp.Familiar.libre}</span>
+    const barColor = dotCls === 'dot-ok' ? '#4ade80' : dotCls === 'dot-warn' ? '#fbbf24' : '#f87171';
+    const mxOcup = Math.round((22 - disp.Mixta.libre) / 22 * 100);
+    items += `<div class="dash-avail-item">
+      <div class="dai-head">
+        <span class="dai-day">${dayLabel}</span>
+        <span class="dai-date">${dateLabel}</span>
+        <span class="dai-dot ${dotCls}"></span>
       </div>
+      <div class="dai-counts">
+        <span class="dai-count">${PIP('pip-mixta')} ${disp.Mixta.libre}<span class="dai-count-sub">/${disp.Mixta.total}</span></span>
+        <span class="dai-count">${PIP('pip-privada')} ${disp.Privada.libre}<span class="dai-count-sub">/${disp.Privada.total}</span></span>
+        <span class="dai-count">${PIP('pip-familiar')} ${disp.Familiar.libre}<span class="dai-count-sub">/${disp.Familiar.total}</span></span>
+      </div>
+      <div class="dai-bar"><div class="dai-bar-fill" style="width:${mxOcup}%;background:${barColor}"></div></div>
     </div>`;
   }
-  cont.innerHTML = html;
+  cont.innerHTML = `<div class="dash-avail-list">${items}</div>`;
 }
 
 function _renderDashChart() {
