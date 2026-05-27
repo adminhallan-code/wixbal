@@ -12,11 +12,11 @@ $SERVICE_NAMES = [1 => 'Mixta', 3 => 'Privada', 4 => 'Familiar'];
 $desde = $_GET['desde'] ?? date('Y-m-d', strtotime('-365 days'));
 $bridge = bridge_call('export_all', ['desde' => $desde]);
 
-if (empty($bridge['body']['success'])) {
-    json_error('No se pudo contactar el bridge de Amelia: ' . json_encode($bridge['body']), 502);
+if (!empty($bridge['error']) || empty($bridge['success'])) {
+    json_error('No se pudo contactar el bridge de Amelia: ' . json_encode($bridge), 502);
 }
 
-$amelia_bookings = $bridge['body']['data'] ?? [];
+$amelia_bookings = $bridge['data'] ?? [];
 if (empty($amelia_bookings)) {
     json_response(['faltantes' => [], 'total_amelia' => 0, 'total_supabase' => 0, 'mensaje' => 'No hay bookings en Amelia para el período.']);
 }
