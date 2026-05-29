@@ -111,6 +111,8 @@ $rv_row = $rv_data['body'][0] ?? [];
 error_log("[WEBHOOK QPAYPRO] rv_row: checkout_url=$checkout_url sb_http={$rv_data['status']} encontrado=" . (!empty($rv_row) ? 'SI' : 'NO') . " correo=" . ($rv_row['correo'] ?? 'null'));
 
 // ── Factura + email de confirmación al cliente ────────────────────────────────
+// Usar $rv_row si existe, sino usar datos de $link como fallback
+$factura = null;
 if ($rv_row) {
     $factura = felplex_emitir_factura(
         $rv_row['id'],
@@ -124,9 +126,18 @@ if ($rv_row) {
         $link['nombre_fiscal']       ?? null,
         $link['paquete']             ?? null
     );
-    if ($link['correo'] ?? null) {
-        enviar_confirmacion_cliente($link['correo'], $link['nombre'], $link['tipo_cabana'], $factura['url'] ?? null);
-    }
+    error_log("[WEBHOOK QPAYPRO] Factura: " . ($factura ? "OK uuid={$factura['uuid']}" : 'FALLIDA o sin API key'));
+} else {
+    error_log("[WEBHOOK QPAYPRO] AVISO: rv_row vacío — factura omitida, email igual se intenta");
+}
+
+// Enviar email de confirmación al cliente (usa $link, no depende de $rv_row)
+$correo_cliente = $link['correo'] ?? null;
+if ($correo_cliente) {
+    enviar_confirmacion_cliente($correo_cliente, $link['nombre'], $link['tipo_cabana'], $factura['url'] ?? null);
+    error_log("[WEBHOOK QPAYPRO] Email confirmación enviado a $correo_cliente");
+} else {
+    error_log("[WEBHOOK QPAYPRO] Sin correo en el link — email de confirmación omitido");
 }
 
 // ── Email interno de notificación ────────────────────────────────────────────

@@ -209,12 +209,14 @@ $rv_data = [
     'link_pago'              => $checkout_url,
 ];
 $rv_res = sb_post('reservaciones', $rv_data, false);
-if ($rv_res['status'] >= 300 && (
-    str_contains(json_encode($rv_res['body']), 'cantidad_veganos') ||
-    str_contains(json_encode($rv_res['body']), 'cantidad_vegetarianos')
-)) {
-    unset($rv_data['cantidad_veganos'], $rv_data['cantidad_vegetarianos']);
-    sb_post('reservaciones', $rv_data, false);
+error_log('[CREAR LINK] SB insert reservaciones: http=' . $rv_res['status'] . ' body=' . json_encode($rv_res['body']));
+if ($rv_res['status'] >= 300) {
+    if (str_contains(json_encode($rv_res['body']), 'cantidad_veganos') ||
+        str_contains(json_encode($rv_res['body']), 'cantidad_vegetarianos')) {
+        unset($rv_data['cantidad_veganos'], $rv_data['cantidad_vegetarianos']);
+        $rv_res2 = sb_post('reservaciones', $rv_data, false);
+        error_log('[CREAR LINK] SB insert reservaciones (retry): http=' . $rv_res2['status'] . ' body=' . json_encode($rv_res2['body']));
+    }
 }
 
 // ── 5. Sync Amelia (solo Wolfs) ───────────────────────────────────────────────
