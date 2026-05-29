@@ -22,7 +22,14 @@ function sb_get(string $path): array {
     ]);
     $body   = curl_exec($ch);
     $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curl_err = curl_error($ch);
     curl_close($ch);
+    if ($curl_err) {
+        error_log("[SUPABASE GET] curl_error=$curl_err path=$path");
+    }
+    if ($status >= 400) {
+        error_log("[SUPABASE GET] HTTP $status path=$path body=$body");
+    }
     return ['status' => $status, 'body' => json_decode($body, true) ?? []];
 }
 

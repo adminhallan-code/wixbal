@@ -39,17 +39,50 @@ if (!$invoice_num) {
 }
 
 // ── Verificar hash MD5 ────────────────────────────────────────────────────────
-if ($hash_recv && !qpaypro_verificar_hash($trans_id, $amount, $hash_recv)) {
-    error_log("[WEBHOOK QPAYPRO] ADVERTENCIA: x_MD5_Hash no coincide — trans_id=$trans_id amount=$amount hash=$hash_recv");
-    // Logear pero continuar — confirmar fórmula exacta con soporte QPayPro si es necesario.
+if ($hash_recv) {
+    if (!qpaypro_verificar_hash($trans_id, $amount, $hash_recv)) {
+        // Loguear todas las combinaciones posibles para identificar la fórmula correcta
+        $intentos = [
+            'SECRET+LOGIN+TRANS+AMOUNT' => md5(QPAYPRO_SECRET . QPAYPRO_LOGIN . $trans_id . $amount),
+            'KEY+LOGIN+TRANS+AMOUNT'    => md5(QPAYPRO_KEY    . QPAYPRO_LOGIN . $trans_id . $amount),
+            'LOGIN+TRANS+AMOUNT+SECRET' => md5(QPAYPRO_LOGIN  . $trans_id . $amount . QPAYPRO_SECRET),
+            'TRANS+AMOUNT+SECRET'       => md5($trans_id . $amount . QPAYPRO_SECRET),
+            'TRANS+AMOUNT+KEY'          => md5($trans_id . $amount . QPAYPRO_KEY),
+        ];
+        $match = 'ninguna';
+        foreach ($intentos as $formula => $hash_calculado) {
+            if (hash_equals($hash_calculado, strtolower($hash_recv))) {
+                $match = $formula;
+                break;
+            }
+        }
+        error_log("[WEBHOOK QPAYPRO] MD5 no coincide — formula_match=$match hash_recibido=$hash_recv");
+    } else {
+        error_log("[WEBHOOK QPAYPRO] MD5 OK — trans_id=$trans_id");
+    }
 }
 
 // ── Buscar el link en links_pendientes ───────────────────────────────────────
 $lp_res     = sb_get("links_pendientes?id=eq.$invoice_num&select=*");
 $pendientes = $lp_res['body'] ?? [];
 
+error_log("[WEBHOOK QPAYPRO] SB links_pendientes — query=id=eq.$invoice_num http={$lp_res['status']} registros=" . count($pendientes) . " raw=" . json_encode($lp_res['body']));
+
 if (empty($pendientes)) {
-    error_log("[WEBHOOK QPAYPRO] links_pendientes no encontrado para invoice=$invoice_num");
+    // Fallback: buscar por checkout_id (token de QPayPro) si viene en custom_fields
+    $fallback_token = $p['link_id'] ?? '';
+    if ($fallback_token) {
+        $lp_res2     = sb_get("links_pendientes?checkout_id=eq." . urlencode($fallback_token) . "&select=*");
+        $pendientes2 = $lp_res2['body'] ?? [];
+        error_log("[WEBHOOK QPAYPRO] Fallback por checkout_id=$fallback_token — registros=" . count($pendientes2) . " raw=" . json_encode($lp_res2['body']));
+        if (!empty($pendientes2)) {
+            $pendientes = $pendientes2;
+        }
+    }
+}
+
+if (empty($pendientes)) {
+    error_log("[WEBHOOK QPAYPRO] CRITICO: links_pendientes no encontrado — invoice=$invoice_num trans_id=$trans_id amount=$amount. Verificar Supabase RLS o si el registro fue cancelado.");
     header('Location: ' . $url_exito);
     exit;
 }
