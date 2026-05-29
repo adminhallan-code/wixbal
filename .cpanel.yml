@@ -1,0 +1,5 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home1/ixcanula/public_html/
+    - /bin/cp -R $REPOSITORY_ROOT/. $DEPLOYPATH
