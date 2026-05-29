@@ -37,17 +37,24 @@ json_response([
     'fecha'  => $fecha,
     'Mixta'  => [
         'capacidad' => $mixta_max,
+        'total'     => $mixta_max,
         'ocupado'   => $mixta_usado,
         'libre'     => max(0, $mixta_max - $mixta_usado),
     ],
     'Privada' => [
         'capacidad' => $privada_max,
+        'total'     => $privada_max,
         'ocupado'   => $privada_usada,
         'libre'     => max(0, $privada_max - $privada_usada),
     ],
     'Familiar' => [
         'capacidad' => $familiar_max,
+        'total'     => $familiar_max,
         'ocupado'   => $familiar_usada,
         'libre'     => max(0, $familiar_max - $familiar_usada),
+    ],
+    '_debug' => [
+        'reservaciones_encontradas' => count($reservas),
+        'links_pendientes_encontrados' => count($pendientes),
     ],
 ]);
