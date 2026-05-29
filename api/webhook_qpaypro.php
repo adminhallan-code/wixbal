@@ -20,8 +20,13 @@ $status_code = (string)($p['x_response_status'] ?? '');
 $resp_code   = (string)($p['x_response_code']   ?? '');
 $trans_id    = (string)($p['x_trans_id']        ?? '');
 $amount      = (string)($p['x_amount']          ?? '');
-$invoice_num = (int)($p['x_invoice_num']        ?? 0);
 $hash_recv   = (string)($p['x_MD5_Hash']        ?? '');
+
+// QPayPro ignora nuestro x_invoice_num y le asigna el suyo propio.
+// Nuestro lp_id (links_pendientes.id) viene de vuelta en el campo link_id
+// que se envió dentro de custom_fields al registrar la transacción.
+$invoice_num = (int)($p['link_id'] ?? $p['x_invoice_num'] ?? 0);
+error_log("[WEBHOOK QPAYPRO] invoice resuelto: link_id={$p['link_id']} x_invoice_num={$p['x_invoice_num']} → usando invoice_num=$invoice_num");
 
 error_log("[WEBHOOK QPAYPRO] status=$status_code code=$resp_code trans_id=$trans_id invoice=$invoice_num amount=$amount");
 
@@ -69,20 +74,7 @@ $pendientes = $lp_res['body'] ?? [];
 error_log("[WEBHOOK QPAYPRO] SB links_pendientes — query=id=eq.$invoice_num http={$lp_res['status']} registros=" . count($pendientes) . " raw=" . json_encode($lp_res['body']));
 
 if (empty($pendientes)) {
-    // Fallback: buscar por checkout_id (token de QPayPro) si viene en custom_fields
-    $fallback_token = $p['link_id'] ?? '';
-    if ($fallback_token) {
-        $lp_res2     = sb_get("links_pendientes?checkout_id=eq." . urlencode($fallback_token) . "&select=*");
-        $pendientes2 = $lp_res2['body'] ?? [];
-        error_log("[WEBHOOK QPAYPRO] Fallback por checkout_id=$fallback_token — registros=" . count($pendientes2) . " raw=" . json_encode($lp_res2['body']));
-        if (!empty($pendientes2)) {
-            $pendientes = $pendientes2;
-        }
-    }
-}
-
-if (empty($pendientes)) {
-    error_log("[WEBHOOK QPAYPRO] CRITICO: links_pendientes no encontrado — invoice=$invoice_num trans_id=$trans_id amount=$amount. Verificar Supabase RLS o si el registro fue cancelado.");
+    error_log("[WEBHOOK QPAYPRO] CRITICO: links_pendientes no encontrado — invoice=$invoice_num trans_id=$trans_id amount=$amount.");
     header('Location: ' . $url_exito);
     exit;
 }
