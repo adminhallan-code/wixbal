@@ -108,6 +108,7 @@ $rv_data = sb_get(
     . "&select=id,nombre,correo,precio,tipo_cabana,fecha_ascenso,link_pago,agencia,nit,tipo_identificacion,nombre_fiscal,paquete"
 );
 $rv_row = $rv_data['body'][0] ?? [];
+error_log("[WEBHOOK QPAYPRO] rv_row: checkout_url=$checkout_url sb_http={$rv_data['status']} encontrado=" . (!empty($rv_row) ? 'SI' : 'NO') . " correo=" . ($rv_row['correo'] ?? 'null'));
 
 // ── Factura + email de confirmación al cliente ────────────────────────────────
 if ($rv_row) {
