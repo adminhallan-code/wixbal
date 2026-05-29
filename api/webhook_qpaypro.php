@@ -1,27 +1,39 @@
 <?php
-// GET /webhook/qpaypro — Relay URL de QPayPro
-// QPayPro redirige el browser del cliente aquí después del pago.
-// Parámetros GET: x_response_status, x_response_code, x_trans_id, x_amount,
-//                 x_invoice_num (= links_pendientes.id), x_MD5_Hash, x_custom_fields
+// POST|GET /webhook/qpaypro — Relay server-to-server de QPayPro (x_relay_url)
+// QPayPro llama a este endpoint desde sus servidores cuando el pago se completa.
+// Parámetros: x_response_status, x_response_code, x_trans_id, x_amount,
+//             x_invoice_num (= links_pendientes.id), x_MD5_Hash, x_custom_fields
 
-$status_code  = $_GET['x_response_status'] ?? '';
-$resp_code    = $_GET['x_response_code']   ?? '';
-$trans_id     = $_GET['x_trans_id']        ?? '';
-$amount       = $_GET['x_amount']          ?? '';
-$invoice_num  = (int)($_GET['x_invoice_num'] ?? 0);
-$hash_recv    = $_GET['x_MD5_Hash']        ?? '';
-$event_type   = $_GET['x_response_text']   ?? '';
+// Leer parámetros de POST, GET o body JSON (QPayPro puede usar cualquiera)
+$raw_body = file_get_contents('php://input');
+$json_body = json_decode($raw_body, true);
+if (!empty($json_body)) {
+    $p = $json_body;
+} elseif (!empty($_POST)) {
+    $p = $_POST;
+} else {
+    $p = $_GET;
+}
+
+error_log('[WEBHOOK QPAYPRO] RAW method=' . $_SERVER['REQUEST_METHOD'] . ' body=' . $raw_body . ' GET=' . json_encode($_GET) . ' POST=' . json_encode($_POST));
+
+$status_code  = (string)($p['x_response_status'] ?? $p['responseCode']  ?? '');
+$resp_code    = (string)($p['x_response_code']   ?? $p['x_response_status'] ?? '');
+$trans_id     = (string)($p['x_trans_id']        ?? $p['idTransaction'] ?? '');
+$amount       = (string)($p['x_amount']          ?? '');
+$invoice_num  = (int)($p['x_invoice_num']        ?? 0);
+$hash_recv    = (string)($p['x_MD5_Hash']        ?? '');
 
 error_log("[WEBHOOK QPAYPRO] status=$status_code code=$resp_code trans_id=$trans_id invoice=$invoice_num amount=$amount");
 
-// ── Redirigir siempre al final (browser está esperando) ──────────────────────
-$url_exito  = 'https://wolfsacatenango.com';
-$url_error  = 'https://wolfsacatenango.com';
+// QPayPro server-to-server no espera redirect — solo responder OK
+$es_post_server = ($_SERVER['REQUEST_METHOD'] === 'POST');
 
-// Pago no aprobado — redirigir sin procesar
-if ($status_code !== '1' || $resp_code !== '1') {
-    error_log("[WEBHOOK QPAYPRO] Pago no aprobado — ignorando. status=$status_code code=$resp_code");
-    header('Location: ' . $url_error);
+// Pago no aprobado
+if (!in_array($status_code, ['1', '00', '100']) || (!in_array($resp_code, ['1', '00', '100']) && $resp_code !== '')) {
+    error_log("[WEBHOOK QPAYPRO] Pago no aprobado — status=$status_code code=$resp_code");
+    if ($es_post_server) { json_response(['received' => true]); }
+    header('Location: https://wolfsacatenango.com');
     exit;
 }
 
@@ -124,6 +136,9 @@ if (es_wolfs($agencia)) {
 
 error_log("[WEBHOOK QPAYPRO] Procesado OK — invoice=$invoice_num trans_id=$trans_id");
 
-// ── Redirigir al cliente a página de éxito ────────────────────────────────────
+// Si es POST server-to-server responder JSON, si es GET redirigir browser
+if ($es_post_server) {
+    json_response(['received' => true, 'procesado' => true]);
+}
 header('Location: ' . $url_exito);
 exit;
