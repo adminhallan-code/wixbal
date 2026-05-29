@@ -105,8 +105,21 @@ $nombre_parts = explode(' ', trim($nombre), 2);
 $x_first_name = $nombre_parts[0];
 $x_last_name  = $nombre_parts[1] ?? 'N/A';
 
+// Nombre del producto — incluye todos los detalles visibles en el checkout de QPayPro
+$prod_nombre_partes = ["$svc_label - Wolfs Acatenango"];
+$prod_nombre_partes[] = "Fecha ascenso: $fecha";
+if ($tipo_cabana === 'Mixta') $prod_nombre_partes[] = "Personas: $no_personas";
+$prod_nombre_partes[] = "Paquete: $paquete";
+if ($telefono)    $prod_nombre_partes[] = "Tel: $telefono";
+if ($notas)       $prod_nombre_partes[] = "Notas: $notas";
+if ($alergias)    $prod_nombre_partes[] = "Alergias: $alergias";
+if ($cantidad_veganos || $es_vegano)           $prod_nombre_partes[] = "Vegano: " . ($cantidad_veganos ?: 1) . " persona(s)";
+if ($cantidad_vegetarianos || $es_vegetariano) $prod_nombre_partes[] = "Vegetariano: " . ($cantidad_vegetarianos ?: 1) . " persona(s)";
+if ($es_cumpleanos) $prod_nombre_partes[] = "¡Cumpleaños!";
+$prod_nombre = implode(' | ', $prod_nombre_partes);
+
 $products_arr = json_encode([[
-    "$svc_label - Wolfs Acatenango",
+    $prod_nombre,
     'WOLF-' . strtoupper(substr($tipo_cabana, 0, 3)),
     '',
     1,
