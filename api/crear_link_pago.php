@@ -98,6 +98,7 @@ $lp_data = [
 ];
 $lp_insert = sb_post('links_pendientes', $lp_data, true);
 $lp_id = $lp_insert['body'][0]['id'] ?? null;
+error_log('[CREAR LINK] SB insert links_pendientes: http=' . $lp_insert['status'] . ' body=' . json_encode($lp_insert['body']) . ' lp_id=' . $lp_id);
 if (!$lp_id) json_error('Error al registrar link en base de datos', 500);
 
 // ── 2. Registrar transacción en QPayPro (Hosted Page) ────────────────────────
@@ -129,6 +130,7 @@ $products_arr = json_encode([[
 
 $relay_url = 'https://wixbal.com/webhook/qpaypro';
 
+error_log('[CREAR LINK] Enviando a QPayPro: lp_id=' . $lp_id . ' precio=' . $precio . ' nombre=' . $nombre);
 $qpp_res = qpaypro_register_token([
     'x_login'         => QPAYPRO_LOGIN,
     'x_api_key'       => QPAYPRO_KEY,
