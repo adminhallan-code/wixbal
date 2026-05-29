@@ -163,6 +163,8 @@ $qpp_res = qpaypro_register_token([
     'custom_fields'   => json_encode(['link_id' => $lp_id, 'agencia' => $agencia]),
 ]);
 
+error_log('[QPAYPRO TOKEN] status=' . $qpp_res['status'] . ' body=' . json_encode($qpp_res['body']));
+
 if ($qpp_res['status'] >= 300 || ($qpp_res['body']['estado'] ?? '') !== 'success') {
     // Limpiar el registro pendiente
     sb_patch("links_pendientes?id=eq.$lp_id", ['estado' => 'Cancelado']);
