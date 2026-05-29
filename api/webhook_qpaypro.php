@@ -25,8 +25,10 @@ $hash_recv   = (string)($p['x_MD5_Hash']        ?? '');
 // QPayPro ignora nuestro x_invoice_num y le asigna el suyo propio.
 // Nuestro lp_id (links_pendientes.id) viene de vuelta en el campo link_id
 // que se envió dentro de custom_fields al registrar la transacción.
-$invoice_num = (int)($p['link_id'] ?? $p['x_invoice_num'] ?? 0);
-error_log("[WEBHOOK QPAYPRO] invoice resuelto: link_id={$p['link_id']} x_invoice_num={$p['x_invoice_num']} → usando invoice_num=$invoice_num");
+$link_id_qpp = $p['link_id']       ?? '';
+$invoice_qpp = $p['x_invoice_num'] ?? '';
+$invoice_num = (int)($link_id_qpp ?: $invoice_qpp ?: 0);
+error_log("[WEBHOOK QPAYPRO] invoice resuelto: link_id=$link_id_qpp x_invoice_num=$invoice_qpp → usando invoice_num=$invoice_num");
 
 error_log("[WEBHOOK QPAYPRO] status=$status_code code=$resp_code trans_id=$trans_id invoice=$invoice_num amount=$amount");
 

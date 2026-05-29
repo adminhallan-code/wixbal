@@ -123,7 +123,7 @@ if ($method === 'POST' && $sol_id && $action === 'autorizar') {
         'tipo_identificacion' => $sol['tipo_identificacion'] ?? null,
         'nombre_fiscal'       => $sol['nombre_fiscal']       ?? null,
         'correo'              => $sol['correo']              ?? null,
-        'tipo_pago'           => 'QPayPro',
+        'tipo_pago'           => 'Qpaypro',
         'metodo_pago'         => 'Tarjeta',
         'estado_pago'         => 'Pendiente',
         'registrado_por'      => "Link autorizado por $autorizado_por",

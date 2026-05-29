@@ -145,7 +145,8 @@ function qpaypro_register_token(array $data): array {
  */
 function qpaypro_verificar_hash(string $trans_id, string $amount, string $hash_recibido): bool {
     if (!$hash_recibido) return false;
-    $esperado = md5(QPAYPRO_SECRET . QPAYPRO_LOGIN . $trans_id . $amount);
+    // Fórmula confirmada: MD5(QPAYPRO_KEY + QPAYPRO_LOGIN + trans_id + amount)
+    $esperado = md5(QPAYPRO_KEY . QPAYPRO_LOGIN . $trans_id . $amount);
     return hash_equals($esperado, strtolower($hash_recibido));
 }
 
