@@ -5,8 +5,8 @@ if (!fecha_valida($fecha)) json_error('Fecha inválida. Formato: YYYY-MM-DD');
 
 $agencia = $_GET['agencia'] ?? '';
 
-// Reservaciones del dia (no canceladas)
-$res = sb_get("reservaciones?fecha_ascenso=eq.$fecha&estado_pago=neq.Cancelado&select=tipo_cabana,no_personas,agencia");
+// Reservaciones del dia — incluye NULLs en estado_pago (neq solo en PostgreSQL no matchea NULL)
+$res = sb_get("reservaciones?fecha_ascenso=eq.$fecha&or=(estado_pago.neq.Cancelado,estado_pago.is.null)&select=tipo_cabana,no_personas,agencia");
 $reservas = $res['body'] ?? [];
 
 // Links pendientes de pago del mismo dia
@@ -18,7 +18,7 @@ $todas = array_merge($reservas, $pendientes);
 $map = SERVICE_MAP;
 
 $mixta_max    = $map['Mixta']['capacidad'];    // 22 personas
-$privada_max  = $map['Privada']['capacidad'];  // 1 cabaña
+$privada_max  = $map['Privada']['capacidad'];  // 2 cabañas
 $familiar_max = $map['Familiar']['capacidad']; // 1 cabaña
 
 $mixta_usado    = 0;
@@ -26,8 +26,8 @@ $privada_usada  = 0;
 $familiar_usada = 0;
 
 foreach ($todas as $r) {
-    $tipo = $r['tipo_cabana'] ?? '';
-    $pers = (int) ($r['no_personas'] ?? 1);
+    $tipo = ucfirst(strtolower(trim($r['tipo_cabana'] ?? '')));
+    $pers = max(1, (int)($r['no_personas'] ?? 1));
     if ($tipo === 'Mixta')    $mixta_usado    += $pers;
     if ($tipo === 'Privada')  $privada_usada  += 1;
     if ($tipo === 'Familiar') $familiar_usada += 1;

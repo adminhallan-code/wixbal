@@ -215,14 +215,18 @@ function get_body(): array {
 
 function get_disponibilidad(string $fecha, string $agencia = ''): array {
     $map = SERVICE_MAP;
-    $res = sb_get("reservaciones?fecha_ascenso=eq.$fecha&estado_pago=neq.Cancelado&select=tipo_cabana,no_personas");
+
+    // IMPORTANTE: usar or=(estado_pago.neq.Cancelado,estado_pago.is.null)
+    // porque en PostgreSQL "!= 'Cancelado'" NO incluye filas con NULL — se perderían.
+    $res = sb_get("reservaciones?fecha_ascenso=eq.$fecha&or=(estado_pago.neq.Cancelado,estado_pago.is.null)&select=tipo_cabana,no_personas");
     $lp  = sb_get("links_pendientes?fecha_ascenso=eq.$fecha&estado=eq.Esperando%20pago&select=tipo_cabana,no_personas");
     $todas = array_merge($res['body'] ?? [], $lp['body'] ?? []);
 
     $mixta_usado = $privada_usada = $familiar_usada = 0;
     foreach ($todas as $r) {
-        $tipo = $r['tipo_cabana'] ?? '';
-        if ($tipo === 'Mixta')    $mixta_usado    += (int)($r['no_personas'] ?? 1);
+        // ucfirst+strtolower para tolerar variaciones de mayúsculas en la BD
+        $tipo = ucfirst(strtolower(trim($r['tipo_cabana'] ?? '')));
+        if ($tipo === 'Mixta')    $mixta_usado    += max(1, (int)($r['no_personas'] ?? 1));
         if ($tipo === 'Privada')  $privada_usada  += 1;
         if ($tipo === 'Familiar') $familiar_usada += 1;
     }
