@@ -37,49 +37,76 @@ if ($method === 'POST' && $sol_id && $action === 'autorizar') {
     if ($cab === 'Privada'  && $disp['Privada']['libre']  === 0)      json_error('Cabañas privadas ya ocupadas para ese día.', 400);
     if ($cab === 'Familiar' && $disp['Familiar']['libre'] === 0)      json_error('Cabaña familiar ya ocupada para ese día.', 400);
 
-    // Crear producto Recurrente
-    $desc = "Fecha de ascenso: $fecha | Servicio: Cabaña $cab";
-    if (!empty($sol['notas']))    $desc .= " | Notas: {$sol['notas']}";
-    if (!empty($sol['alergias'])) $desc .= " | Alergias: {$sol['alergias']}";
-
-    $prod_res = recurrente_post('/products', ['product' => [
-        'name'        => $nombre, 'description' => $desc,
-        'prices_attributes' => [['amount_in_cents' => (int)round($precio * 100), 'currency' => 'GTQ', 'charge_type' => 'one_time']],
-        'adjustable_quantity' => false, 'billing_info_requirement' => 'required', 'phone_requirement' => 'required',
-        'success_url' => 'https://wolfsacatenango.com', 'cancel_url' => 'https://wolfsacatenango.com',
-    ]]);
-    if ($prod_res['status'] >= 300) json_error('Error Recurrente producto: ' . json_encode($prod_res['body']), 502);
-    $product_id = $prod_res['body']['id'] ?? '';
-
-    // Crear checkout
-    $expires_at = gmdate('Y-m-d\TH:i:s\Z', time() + 6 * 3600);
-    $co_res = recurrente_post('/checkouts', [
-        'items'       => [['product_id' => $product_id, 'quantity' => 1]],
-        'expires_at'  => $expires_at,
-        'success_url' => 'https://wolfsacatenango.com',
-        'cancel_url'  => 'https://wolfsacatenango.com',
-    ]);
-    if ($co_res['status'] >= 300) json_error('Error Recurrente checkout: ' . json_encode($co_res['body']), 502);
-    $checkout_url = $co_res['body']['checkout_url'] ?? $co_res['body']['url'] ?? '';
-    $checkout_id  = $co_res['body']['id'] ?? '';
-
-    // Guardar en links_pendientes
-    sb_post('links_pendientes', [
-        'checkout_id'  => $checkout_id, 'checkout_url' => $checkout_url, 'product_id' => $product_id,
-        'nombre'       => $nombre, 'fecha_ascenso' => $fecha, 'tipo_cabana' => $cab,
-        'no_personas'  => $sol['no_personas'] ?? null, 'precio' => $precio,
-        'agencia'      => $agencia, 'paquete' => $paquete,
-        'notas'        => $sol['notas'] ?? null, 'alergias' => $sol['alergias'] ?? null,
-        'es_vegano'    => false, 'es_vegetariano' => false, 'es_cumpleanos' => $sol['es_cumpleanos'] ?? false,
+    // ── Pre-insertar en links_pendientes para obtener el ID (= x_invoice_num) ──
+    $lp_sol_ins = sb_post('links_pendientes', [
+        'checkout_id'         => 'pending',
+        'checkout_url'        => 'pending',
+        'product_id'          => null,
+        'nombre'              => $nombre, 'fecha_ascenso' => $fecha, 'tipo_cabana' => $cab,
+        'no_personas'         => $sol['no_personas'] ?? null, 'precio' => $precio,
+        'agencia'             => $agencia, 'paquete' => $paquete,
+        'notas'               => $sol['notas'] ?? null, 'alergias' => $sol['alergias'] ?? null,
+        'es_vegano'           => false, 'es_vegetariano' => false, 'es_cumpleanos' => $sol['es_cumpleanos'] ?? false,
         'telefono'            => $sol['telefono']            ?? null,
         'identificacion'      => $sol['identificacion']      ?? null,
-        'nit'                 => $sol['nit']                 ?? $sol['identificacion'] ?? null,
+        'nit'                 => $sol['nit'] ?? $sol['identificacion'] ?? null,
         'tipo_identificacion' => $sol['tipo_identificacion'] ?? null,
         'nombre_fiscal'       => $sol['nombre_fiscal']       ?? null,
         'correo'              => $sol['correo']              ?? null,
         'generado_por'        => $autorizado_por,
         'estado'              => 'Esperando pago',
-    ], false);
+    ], true);
+    $lp_sol_id = $lp_sol_ins['body'][0]['id'] ?? null;
+    if (!$lp_sol_id) json_error('Error al registrar link en base de datos', 500);
+
+    // ── Crear checkout en QPayPro ──────────────────────────────────────────────
+    $desc = "Fecha de ascenso: $fecha | Servicio: Cabaña $cab";
+    if (!empty($sol['notas']))    $desc .= " | Notas: {$sol['notas']}";
+    if (!empty($sol['alergias'])) $desc .= " | Alergias: {$sol['alergias']}";
+
+    $nom_parts = explode(' ', trim($nombre), 2);
+    $svc_lbl   = "Cabaña $cab Wolfs Acatenango";
+    $prods_arr = json_encode([[$svc_lbl, 'WOLF-' . strtoupper(substr($cab, 0, 3)), '', 1,
+        number_format($precio, 2, '.', ''), number_format($precio, 2, '.', '')]]);
+
+    $qpp_sol = qpaypro_register_token([
+        'x_login'         => QPAYPRO_LOGIN,
+        'x_api_key'       => QPAYPRO_KEY,
+        'x_amount'        => number_format($precio, 2, '.', ''),
+        'x_currency_code' => 'GTQ',
+        'x_first_name'    => $nom_parts[0],
+        'x_last_name'     => $nom_parts[1] ?? 'N/A',
+        'x_phone'         => $sol['telefono'] ?? '00000000',
+        'x_email'         => $sol['correo']   ?? 'noreply@wolfsacatenango.com',
+        'x_description'   => $desc,
+        'x_invoice_num'   => $lp_sol_id,
+        'x_company'       => $sol['nit'] ?? 'C/F',
+        'x_address'       => 'Guatemala', 'x_city' => 'Guatemala',
+        'x_state'         => 'Guatemala', 'x_country' => 'Guatemala', 'x_zip' => '01001',
+        'x_freight'       => '0.00', 'taxes' => '0.00',
+        'x_type'          => 'AUTH_ONLY', 'x_method' => 'CC',
+        'x_visacuotas'    => 'no',
+        'x_relay_url'     => 'https://wixbal.com/webhook/qpaypro',
+        'x_url_cancel'    => 'https://wolfsacatenango.com',
+        'http_origin'     => 'wolfsacatenango.com',
+        'origen'          => 'PLUGIN', 'store_type' => 'hostedpage',
+        'x_discount'      => '0', 'products' => $prods_arr,
+        'custom_fields'   => json_encode(['link_id' => $lp_sol_id, 'agencia' => $agencia]),
+    ]);
+    if ($qpp_sol['status'] >= 300 || ($qpp_sol['body']['estado'] ?? '') !== 'success') {
+        sb_patch("links_pendientes?id=eq.$lp_sol_id", ['estado' => 'Cancelado']);
+        json_error('Error QPayPro: ' . json_encode($qpp_sol['body']), 502);
+    }
+    $token        = $qpp_sol['body']['data']['token'] ?? '';
+    $checkout_url = qpaypro_checkout_url($token);
+    $checkout_id  = $token;
+    $product_id   = null;
+
+    // Actualizar links_pendientes con token/URL
+    sb_patch("links_pendientes?id=eq.$lp_sol_id", [
+        'checkout_id'  => $token,
+        'checkout_url' => $checkout_url,
+    ]);
 
     // Crear reservación pendiente
     sb_post('reservaciones', [
@@ -94,7 +121,7 @@ if ($method === 'POST' && $sol_id && $action === 'autorizar') {
         'tipo_identificacion' => $sol['tipo_identificacion'] ?? null,
         'nombre_fiscal'       => $sol['nombre_fiscal']       ?? null,
         'correo'              => $sol['correo']              ?? null,
-        'tipo_pago'           => 'Recurrente',
+        'tipo_pago'           => 'QPayPro',
         'metodo_pago'         => 'Tarjeta',
         'estado_pago'         => 'Pendiente',
         'registrado_por'      => "Link autorizado por $autorizado_por",

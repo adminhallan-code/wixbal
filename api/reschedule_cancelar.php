@@ -8,8 +8,7 @@ $rows = $res['body'] ?? [];
 if (empty($rows)) json_error('Reprogramación no encontrada', 404);
 
 $resc = $rows[0];
-expirar_checkout($resc['checkout_id'] ?? '');
-borrar_producto($resc['product_id']   ?? '');
+// QPayPro: no hay API de expiración de token — solo marcamos Cancelado en BD.
 
 sb_patch("reschedule_pendientes?id=eq.$resc_id", ['estado' => 'Cancelado']);
 

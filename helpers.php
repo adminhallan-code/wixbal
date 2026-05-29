@@ -110,20 +110,20 @@ function enqueue_sync(string $action, array $data): void {
     }
 }
 
-// ── Recurrente ───────────────────────────────────────────────────────────────
+// ── QPayPro ───────────────────────────────────────────────────────────────────
 
-function recurrente_post(string $path, array $data): array {
-    $ch = curl_init(RECURRENTE_BASE . $path);
+/**
+ * Registra una transacción en QPayPro (Hosted Page) y devuelve el token.
+ * Respuesta exitosa: ['estado' => 'success', 'data' => ['token' => 'XXXX']]
+ */
+function qpaypro_register_token(array $data): array {
+    $ch = curl_init(QPAYPRO_BASE . '/register_transaction_store');
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST           => true,
         CURLOPT_POSTFIELDS     => json_encode($data),
-        CURLOPT_HTTPHEADER     => [
-            'X-PUBLIC-KEY: '  . RECURRENTE_API_KEY,
-            'X-SECRET-KEY: '  . RECURRENTE_SECRET,
-            'Content-Type: application/json',
-        ],
-        CURLOPT_TIMEOUT => 15,
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+        CURLOPT_TIMEOUT        => 15,
     ]);
     $body   = curl_exec($ch);
     $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -131,33 +131,22 @@ function recurrente_post(string $path, array $data): array {
     return ['status' => $status, 'body' => json_decode($body, true) ?? []];
 }
 
-function recurrente_delete(string $path): int {
-    $ch = curl_init(RECURRENTE_BASE . $path);
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_CUSTOMREQUEST  => 'DELETE',
-        CURLOPT_HTTPHEADER     => [
-            'X-PUBLIC-KEY: '  . RECURRENTE_API_KEY,
-            'X-SECRET-KEY: '  . RECURRENTE_SECRET,
-        ],
-        CURLOPT_TIMEOUT => 10,
-    ]);
-    curl_exec($ch);
-    $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    return $status;
+/**
+ * Verifica el x_MD5_Hash que QPayPro envía en el relay URL.
+ * Fórmula estándar compatible con Authorize.Net:
+ *   MD5(api_secret + x_login + x_trans_id + x_amount)
+ */
+function qpaypro_verificar_hash(string $trans_id, string $amount, string $hash_recibido): bool {
+    if (!$hash_recibido) return false;
+    $esperado = md5(QPAYPRO_SECRET . QPAYPRO_LOGIN . $trans_id . $amount);
+    return hash_equals($esperado, strtolower($hash_recibido));
 }
 
-function expirar_checkout(string $checkout_id): bool {
-    if (!$checkout_id) return false;
-    $r = recurrente_post("/checkouts/$checkout_id/expire", []);
-    return $r['status'] < 300;
-}
-
-function borrar_producto(string $product_id): bool {
-    if (!$product_id) return false;
-    $status = recurrente_delete("/products/$product_id");
-    return $status < 300;
+/**
+ * Construye la URL de checkout QPayPro a partir del token.
+ */
+function qpaypro_checkout_url(string $token): string {
+    return QPAYPRO_BASE . '/store?token=' . $token;
 }
 
 // ── Email (Resend) ────────────────────────────────────────────────────────────

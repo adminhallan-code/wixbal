@@ -70,44 +70,11 @@ if ($cantidad_vegetarianos || $es_vegetariano) $desc_partes[] = "Menú vegetaria
 if ($es_cumpleanos) $desc_partes[] = '¡Celebración de cumpleaños!';
 $descripcion = implode(' | ', $desc_partes);
 
-$monto_centavos = (int) round($precio * 100);
-
-// ── 1. Crear producto en Recurrente ──────────────────────────────────────────
-$prod_res = recurrente_post('/products', ['product' => [
-    'name'        => $nombre,
-    'description' => $descripcion,
-    'prices_attributes' => [[
-        'amount_in_cents' => $monto_centavos,
-        'currency'        => 'GTQ',
-        'charge_type'     => 'one_time',
-    ]],
-    'adjustable_quantity'      => false,
-    'billing_info_requirement' => 'required',
-    'phone_requirement'        => 'required',
-    'success_url' => 'https://wolfsacatenango.com',
-    'cancel_url'  => 'https://wolfsacatenango.com',
-]]);
-if ($prod_res['status'] >= 300) json_error('Error creando producto en Recurrente: ' . json_encode($prod_res['body']), 502);
-$product_id = $prod_res['body']['id'] ?? '';
-
-// ── 2. Crear checkout ─────────────────────────────────────────────────────────
-$expires_at = gmdate('Y-m-d\TH:i:s\Z', time() + 6 * 3600);
-$co_res = recurrente_post('/checkouts', [
-    'items'       => [['product_id' => $product_id, 'quantity' => 1]],
-    'expires_at'  => $expires_at,
-    'success_url' => 'https://wolfsacatenango.com',
-    'cancel_url'  => 'https://wolfsacatenango.com',
-]);
-if ($co_res['status'] >= 300) json_error('Error de Recurrente: ' . json_encode($co_res['body']), 502);
-$checkout_url = $co_res['body']['checkout_url'] ?? $co_res['body']['url'] ?? '';
-$checkout_id  = $co_res['body']['id'] ?? '';
-if (!$checkout_url) json_error('Recurrente no devolvió URL', 500);
-
-// ── 3. Guardar en links_pendientes ────────────────────────────────────────────
-sb_post('links_pendientes', [
-    'checkout_id'          => $checkout_id,
-    'checkout_url'         => $checkout_url,
-    'product_id'           => $product_id,
+// ── 1. Pre-insertar en links_pendientes para obtener el ID (= x_invoice_num) ──
+$lp_data = [
+    'checkout_id'          => 'pending',
+    'checkout_url'         => 'pending',
+    'product_id'           => null,
     'nombre'               => $nombre,
     'fecha_ascenso'        => $fecha,
     'tipo_cabana'          => $tipo_cabana,
@@ -128,7 +95,73 @@ sb_post('links_pendientes', [
     'tipo_identificacion'  => $tipo_identificacion,
     'nombre_fiscal'        => $nombre_fiscal,
     'estado'               => 'Esperando pago',
-], false);
+];
+$lp_insert = sb_post('links_pendientes', $lp_data, true);
+$lp_id = $lp_insert['body'][0]['id'] ?? null;
+if (!$lp_id) json_error('Error al registrar link en base de datos', 500);
+
+// ── 2. Registrar transacción en QPayPro (Hosted Page) ────────────────────────
+$nombre_parts = explode(' ', trim($nombre), 2);
+$x_first_name = $nombre_parts[0];
+$x_last_name  = $nombre_parts[1] ?? 'N/A';
+
+$products_arr = json_encode([[
+    "$svc_label - Wolfs Acatenango",
+    'WOLF-' . strtoupper(substr($tipo_cabana, 0, 3)),
+    '',
+    1,
+    number_format($precio, 2, '.', ''),
+    number_format($precio, 2, '.', ''),
+]]);
+
+$relay_url = 'https://wixbal.com/webhook/qpaypro';
+
+$qpp_res = qpaypro_register_token([
+    'x_login'         => QPAYPRO_LOGIN,
+    'x_api_key'       => QPAYPRO_KEY,
+    'x_amount'        => number_format($precio, 2, '.', ''),
+    'x_currency_code' => 'GTQ',
+    'x_first_name'    => $x_first_name,
+    'x_last_name'     => $x_last_name,
+    'x_phone'         => $telefono ?: '00000000',
+    'x_email'         => $correo   ?: 'noreply@wolfsacatenango.com',
+    'x_description'   => $descripcion,
+    'x_invoice_num'   => $lp_id,
+    'x_company'       => $nit ?: 'C/F',
+    'x_address'       => 'Guatemala',
+    'x_city'          => 'Guatemala',
+    'x_state'         => 'Guatemala',
+    'x_country'       => 'Guatemala',
+    'x_zip'           => '01001',
+    'x_freight'       => '0.00',
+    'taxes'           => '0.00',
+    'x_type'          => 'AUTH_ONLY',
+    'x_method'        => 'CC',
+    'x_visacuotas'    => 'no',
+    'x_relay_url'     => $relay_url,
+    'x_url_cancel'    => 'https://wolfsacatenango.com',
+    'http_origin'     => 'wolfsacatenango.com',
+    'origen'          => 'PLUGIN',
+    'store_type'      => 'hostedpage',
+    'x_discount'      => '0',
+    'products'        => $products_arr,
+    'custom_fields'   => json_encode(['link_id' => $lp_id, 'agencia' => $agencia]),
+]);
+
+if ($qpp_res['status'] >= 300 || ($qpp_res['body']['estado'] ?? '') !== 'success') {
+    // Limpiar el registro pendiente
+    sb_patch("links_pendientes?id=eq.$lp_id", ['estado' => 'Cancelado']);
+    json_error('Error creando checkout en QPayPro: ' . json_encode($qpp_res['body']), 502);
+}
+
+$token        = $qpp_res['body']['data']['token'] ?? '';
+$checkout_url = qpaypro_checkout_url($token);
+
+// ── 3. Actualizar links_pendientes con token y URL definitivos ────────────────
+sb_patch("links_pendientes?id=eq.$lp_id", [
+    'checkout_id'  => $token,
+    'checkout_url' => $checkout_url,
+]);
 
 // ── 4. Guardar reservación pendiente ──────────────────────────────────────────
 $rv_data = [
@@ -150,7 +183,7 @@ $rv_data = [
     'telefono'               => $telefono,
     'identificacion'         => $identificacion,
     'correo'                 => $correo,
-    'tipo_pago'              => 'Recurrente',
+    'tipo_pago'              => 'QPayPro',
     'metodo_pago'            => 'Tarjeta',
     'estado_pago'            => 'Pendiente',
     'registrado_por'         => $generado_por,
@@ -184,9 +217,9 @@ if (es_wolfs($agencia)) {
         'no_personas'   => $no_personas ?: 1,
         'precio'        => $precio,
         'estado'        => 'pending',
-        'link_id'       => $checkout_id,
+        'link_id'       => $token,
         'extra_info'    => implode(' | ', $notas_extra),
     ]);
 }
 
-json_response(['checkout_url' => $checkout_url, 'checkout_id' => $checkout_id]);
+json_response(['checkout_url' => $checkout_url, 'checkout_id' => $token]);

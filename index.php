@@ -41,9 +41,9 @@ if ($method === 'POST' && $s0 === 'cancelar-link' && $s1) {
     require __DIR__ . '/api/cancelar_link.php';
 }
 
-// POST /webhook/recurrente
-if ($method === 'POST' && $s0 === 'webhook' && $s1 === 'recurrente') {
-    require __DIR__ . '/api/webhook_recurrente.php';
+// GET /webhook/qpaypro  — relay URL (redirect del browser del cliente después del pago)
+if ($method === 'GET' && $s0 === 'webhook' && $s1 === 'qpaypro') {
+    require __DIR__ . '/api/webhook_qpaypro.php';
 }
 
 // POST /webhook/amelia

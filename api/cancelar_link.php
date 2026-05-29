@@ -23,9 +23,9 @@ $fecha_ascenso = $row['fecha_ascenso'] ?? '';
 $tipo_cabana   = $row['tipo_cabana']   ?? '';
 $nombre        = $row['nombre']        ?? '';
 
-// Expirar en Recurrente y borrar producto
-$checkout_expirado = expirar_checkout($checkout_id);
-$producto_borrado  = borrar_producto($product_id);
+// QPayPro: los tokens no tienen API de expiración — solo marcamos en BD.
+$checkout_expirado = true;
+$producto_borrado  = true;
 
 // Marcar link como Cancelado
 sb_patch("links_pendientes?id=eq.$link_id", ['estado' => 'Cancelado']);
