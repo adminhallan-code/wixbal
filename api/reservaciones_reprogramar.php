@@ -7,16 +7,37 @@ $nueva_fecha = $data['nueva_fecha'] ?? '';
 if (!$res_id)                    json_error('ID inválido', 400);
 if (!fecha_valida($nueva_fecha)) json_error('Fecha inválida');
 
-$res = sb_get("reservaciones?id=eq.$res_id&select=link_pago,agencia,tipo_cabana,fecha_ascenso");
+$res = sb_get("reservaciones?id=eq.$res_id&select=link_pago,agencia,tipo_cabana,fecha_ascenso,nombre,paquete");
 $rows = $res['body'] ?? [];
 if (empty($rows)) json_error('Reservación no encontrada', 404);
 
-$rv        = $rows[0];
-$link_pago = $rv['link_pago'] ?? '';
-$agencia   = $rv['agencia']   ?? '';
+$rv           = $rows[0];
+$link_pago    = $rv['link_pago']    ?? '';
+$agencia      = $rv['agencia']      ?? '';
+$fecha_vieja  = $rv['fecha_ascenso'] ?? '';
+$nombre_rv    = $rv['nombre']       ?? '—';
+$tipo_cabana  = $rv['tipo_cabana']  ?? '—';
+$paquete_rv   = $rv['paquete']      ?? '—';
 
 // Actualizar Supabase
 sb_patch("reservaciones?id=eq.$res_id", ['fecha_ascenso' => $nueva_fecha]);
+
+// ── Notificación Telegram si afecta el cuadro de mañana ──────────────────────
+$manana_gt = gmdate('Y-m-d', time() + (-6 * 3600) + 86400);
+if ($fecha_vieja === $manana_gt) {
+    telegram_notify(
+        "🔄 <b>Reprogramación — sale del cuadro de mañana</b>\n" .
+        "👤 " . htmlspecialchars($nombre_rv) . "\n" .
+        "🏕 $tipo_cabana · $paquete_rv\n" .
+        "📅 Nueva fecha: $nueva_fecha"
+    );
+} elseif ($nueva_fecha === $manana_gt) {
+    telegram_notify(
+        "🔄 <b>Reprogramación — entra al cuadro de mañana</b>\n" .
+        "👤 " . htmlspecialchars($nombre_rv) . "\n" .
+        "🏕 $tipo_cabana · $paquete_rv"
+    );
+}
 
 // Sincronizar Amelia
 if ($link_pago && es_wolfs($agencia)) {

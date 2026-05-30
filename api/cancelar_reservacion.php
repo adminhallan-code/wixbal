@@ -61,6 +61,16 @@ enviar_email(
     </div>"
 );
 
+// ── Notificación Telegram (solo si el ascenso es mañana) ─────────────────────
+$manana_gt = gmdate('Y-m-d', time() + (-6 * 3600) + 86400);
+if ($fecha_ascenso === $manana_gt) {
+    $msg_cancel = "❌ <b>Cancelación en el cuadro de mañana</b>\n" .
+        "👤 " . htmlspecialchars($nombre) . "\n" .
+        "🏕 $tipo_cabana · $paquete";
+    if ($motivo) $msg_cancel .= "\n📝 Motivo: " . htmlspecialchars($motivo);
+    telegram_notify($msg_cancel);
+}
+
 // Sync Amelia
 if ($link_pago && es_wolfs($agencia)) {
     if (str_starts_with($link_pago, 'amelia_booking_')) {

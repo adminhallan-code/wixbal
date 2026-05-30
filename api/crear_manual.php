@@ -77,6 +77,18 @@
 
     // ── 4. Notificar al equipo ────────────────────────────────────────────────────
     $no_pers = (int)($data['no_personas'] ?? 1);
+
+    // Telegram solo si el ascenso es mañana
+    $manana_gt = gmdate('Y-m-d', time() + (-6 * 3600) + 86400);
+    if ($fecha === $manana_gt) {
+        telegram_notify(
+            "🆕 <b>Nueva reservación manual</b>\n" .
+            "👤 " . htmlspecialchars($nombre) . "\n" .
+            "🏕 $tipo_cabana · " . ($data['paquete'] ?? '—') . "\n" .
+            "👥 $no_pers persona(s)"
+        );
+    }
+
     enviar_email(
         "🧾 Nueva reservación presencial: $nombre — $fecha",
         html_notif_pago_equipo($nombre, $tipo_cabana, $fecha, $precio, $no_pers, $data['registrado_por'] ?? null)
