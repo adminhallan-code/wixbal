@@ -180,8 +180,8 @@ tr.fila-reserva.selected td{background:#e8f0fe!important;outline:2px solid #3b82
                   <th>Paquete</th>
                   <th>Agencia</th>
                   <th>Estado</th>
-                  <th>Notas / Alergias</th>
-                  <th>Menú especial</th>
+                  <th>Notas</th>
+                  <th>Alergias / Menú especial</th>
                 </tr>
               </thead>
               <tbody id="cuadro-tbody"></tbody>
@@ -324,8 +324,8 @@ function renderTabla(){
   document.getElementById('cuadro-tbody').innerHTML = datosActuales.map((r,i)=>{
     const nVgn=(r.cantidad_veganos||0)+(r.es_vegano?1:0);
     const nVeg=(r.cantidad_vegetarianos||0)+(r.es_vegetariano?1:0);
-    const menus=[nVgn?`🌿 Vegano x${nVgn}`:'',nVeg?`🥦 Veg. x${nVeg}`:''].filter(Boolean).join(' ');
-    const notasAler=[r.alergias,r.notas].filter(Boolean).join(' | ');
+    const menus=[nVgn?`🌿 Vegano ×${nVgn}`:'',nVeg?`🥦 Vegetariano ×${nVeg}`:'',r.es_cumpleanos?'🎂 Cumpleaños':''].filter(Boolean).join(' · ');
+    const alerMenuHtml=[r.alergias?`⚠️ ${esc(r.alergias)}`:'', menus].filter(Boolean).join('<br>');
     const estadoColor=r.estado_pago==='Completado'?'#065f46':'#92400e';
     const personas=personasDisplay(r);
     const esDefault=(r.tipo_cabana!=='Mixta')&&((r.no_personas||1)<=1);
@@ -338,8 +338,8 @@ function renderTabla(){
       <td style="text-align:center">${esc(r.paquete||'—')}</td>
       <td style="font-size:11px">${esc(r.agencia||'—')}</td>
       <td style="text-align:center;font-weight:600;color:${estadoColor};white-space:nowrap">${r.estado_pago||'—'}</td>
-      <td class="${notasAler?'alergia-cell':''}" style="font-size:11px">${esc(notasAler||'—')}</td>
-      <td class="${menus?'menu-cell':''}" style="font-size:11px">${menus||'—'}</td>
+      <td style="font-size:11px;color:var(--text2)">${esc(r.notas||'—')}</td>
+      <td class="${r.alergias?'alergia-cell':''}" style="font-size:11px">${alerMenuHtml||'—'}</td>
     </tr>`;
   }).join('');
 
