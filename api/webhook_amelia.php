@@ -45,6 +45,11 @@ if ($is_cancelacion && $appointment_id) {
         sb_patch("reservaciones?id=eq." . $row['id'], ['estado_pago' => 'Cancelado']);
         error_log("[WEBHOOK AMELIA] Reservacion " . $row['id'] . " cancelada.");
     }
+    telegram_notif_res(
+        "❌ <b>Cancelación desde web (Amelia)</b>\n" .
+        "📅 $fecha_ascenso\n" .
+        "🏕 $tipo_cabana"
+    );
     json_response(['received' => true, 'accion' => 'cancelado_desde_amelia']);
 }
 
@@ -69,6 +74,11 @@ if ($is_reprogramada && $appointment_id && $nueva_fecha) {
         sb_patch("reservaciones?id=eq." . $row['id'], ['fecha_ascenso' => $nueva_fecha]);
         error_log("[WEBHOOK AMELIA] Reservacion " . $row['id'] . " reprogramada a $nueva_fecha.");
     }
+    telegram_notif_res(
+        "🔄 <b>Reprogramación desde web (Amelia)</b>\n" .
+        "🏕 $tipo_cabana\n" .
+        "📅 $fecha_ascenso → <b>$nueva_fecha</b>"
+    );
     json_response(['received' => true, 'accion' => 'reprogramado_desde_amelia']);
 }
 
@@ -181,6 +191,16 @@ if ($is_cambio && $appointment_id && isset($mapa_estados[$amelia_status])) {
 
         $r = sb_post('reservaciones', $nueva);
         error_log("[WEBHOOK AMELIA] Nueva reservacion creada: status={$r['status']}");
+        if ($r['status'] < 300) {
+            telegram_notif_res(
+                "🌐 <b>Nueva reservación — Web (Amelia)</b>\n" .
+                "👤 " . htmlspecialchars($nombre) . "\n" .
+                "📅 $fecha_ascenso\n" .
+                "🏕 $tipo_cabana\n" .
+                "💰 Q" . number_format($precio, 2) .
+                ($alergias_val ? "\n⚠️ " . htmlspecialchars($alergias_val) : '')
+            );
+        }
     }
 
     json_response(['received' => true, 'accion' => "estado_actualizado_$nuevo_estado"]);

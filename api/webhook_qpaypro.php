@@ -142,7 +142,17 @@ if ($correo_cliente) {
     error_log("[WEBHOOK QPAYPRO] Sin correo en el link — email de confirmación omitido");
 }
 
-// ── Notificación Telegram (solo si el ascenso es mañana) ─────────────────────
+// ── Notificación Telegram ────────────────────────────────────────────────────
+// Grupo reservaciones: todos los pagos confirmados
+telegram_notif_res(
+    "💳 <b>Pago confirmado — QPayPro</b>\n" .
+    "👤 " . htmlspecialchars($link['nombre']      ?? '—') . "\n" .
+    "📅 " . ($link['fecha_ascenso'] ?? '—') . "\n" .
+    "🏕 " . ($link['tipo_cabana']   ?? '—') . " · " . ($link['paquete'] ?? '—') . "\n" .
+    "💰 Q" . number_format((float)($link['precio'] ?? 0), 2) . "\n" .
+    "📞 " . ($link['telefono'] ?? 'Sin teléfono')
+);
+// Grupo cuadros: solo si el ascenso es mañana
 $manana_gt = gmdate('Y-m-d', time() + (-6 * 3600) + 86400);
 if (($link['fecha_ascenso'] ?? '') === $manana_gt) {
     telegram_notify(

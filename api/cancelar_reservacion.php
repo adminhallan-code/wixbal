@@ -61,14 +61,21 @@ enviar_email(
     </div>"
 );
 
-// ── Notificación Telegram (solo si el ascenso es mañana) ─────────────────────
+// ── Notificación Telegram ────────────────────────────────────────────────────
+$msg_cancel_res = "❌ <b>Reservación cancelada</b>\n" .
+    "👤 " . htmlspecialchars($nombre) . "\n" .
+    "📅 $fecha_ascenso\n" .
+    "🏕 $tipo_cabana · $paquete";
+if ($motivo) $msg_cancel_res .= "\n📝 Motivo: " . htmlspecialchars($motivo);
+// Grupo reservaciones: siempre
+telegram_notif_res($msg_cancel_res);
+// Grupo cuadros: solo si era mañana
 $manana_gt = gmdate('Y-m-d', time() + (-6 * 3600) + 86400);
 if ($fecha_ascenso === $manana_gt) {
-    $msg_cancel = "❌ <b>Cancelación en el cuadro de mañana</b>\n" .
+    telegram_notify("❌ <b>Cancelación en el cuadro de mañana</b>\n" .
         "👤 " . htmlspecialchars($nombre) . "\n" .
-        "🏕 $tipo_cabana · $paquete";
-    if ($motivo) $msg_cancel .= "\n📝 Motivo: " . htmlspecialchars($motivo);
-    telegram_notify($msg_cancel);
+        "🏕 $tipo_cabana · $paquete" .
+        ($motivo ? "\n📝 Motivo: " . htmlspecialchars($motivo) : ''));
 }
 
 // Sync Amelia

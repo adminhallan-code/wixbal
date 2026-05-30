@@ -160,20 +160,20 @@ function qpaypro_checkout_url(string $token): string {
 // ── Telegram ─────────────────────────────────────────────────────────────────
 
 /**
- * Envía un mensaje al grupo/canal de Telegram configurado.
- * Requiere que config.php defina TELEGRAM_TOKEN y TELEGRAM_CHAT_ID.
- * Soporta HTML básico: <b>, <i>, <code>, <a href="...">
+ * Envía un mensaje a un chat de Telegram.
+ * $chat_id opcional: si se omite usa TELEGRAM_CHAT_ID (grupo de cuadros).
  */
-function telegram_notify(string $msg): void {
+function telegram_notify(string $msg, string $chat_id = ''): void {
     if (!defined('TELEGRAM_TOKEN') || !TELEGRAM_TOKEN) return;
-    if (!defined('TELEGRAM_CHAT_ID') || !TELEGRAM_CHAT_ID) return;
+    $cid = $chat_id ?: (defined('TELEGRAM_CHAT_ID') ? TELEGRAM_CHAT_ID : '');
+    if (!$cid) return;
     $url = 'https://api.telegram.org/bot' . TELEGRAM_TOKEN . '/sendMessage';
     $ch  = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST           => true,
         CURLOPT_POSTFIELDS     => json_encode([
-            'chat_id'    => TELEGRAM_CHAT_ID,
+            'chat_id'    => $cid,
             'text'       => $msg,
             'parse_mode' => 'HTML',
         ]),
@@ -188,6 +188,12 @@ function telegram_notify(string $msg): void {
         $body = json_decode($res, true);
         if (!($body['ok'] ?? false)) error_log('[TELEGRAM] Error: ' . $res);
     }
+}
+
+/** Envía al grupo de reservaciones (TELEGRAM_NOTIF_ID). */
+function telegram_notif_res(string $msg): void {
+    if (!defined('TELEGRAM_NOTIF_ID') || !TELEGRAM_NOTIF_ID) return;
+    telegram_notify($msg, TELEGRAM_NOTIF_ID);
 }
 
 // ── Email (Resend) ────────────────────────────────────────────────────────────
