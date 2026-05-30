@@ -26,9 +26,12 @@ sb_patch("reservaciones?id=eq.$res_id", ['fecha_ascenso' => $nueva_fecha]);
 // Grupo reservaciones: siempre
 telegram_notif_res(
     "🔄 <b>Reprogramación de reservación</b>\n" .
-    "👤 " . htmlspecialchars($nombre_rv) . "\n" .
-    "🏕 $tipo_cabana · $paquete_rv\n" .
-    "📅 $fecha_vieja → <b>$nueva_fecha</b>"
+    "━━━━━━━━━━━━━━━━━━━\n" .
+    "👤 Nombre: <b>" . htmlspecialchars($nombre_rv) . "</b>\n" .
+    "🏕 Cabaña: $tipo_cabana\n" .
+    "📦 Paquete: $paquete_rv\n" .
+    "📅 Fecha anterior: $fecha_vieja\n" .
+    "📅 Nueva fecha: <b>$nueva_fecha</b>"
 );
 // Grupo cuadros: solo si afecta mañana
 $manana_gt = gmdate('Y-m-d', time() + (-6 * 3600) + 86400);

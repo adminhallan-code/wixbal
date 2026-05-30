@@ -47,8 +47,9 @@ if ($is_cancelacion && $appointment_id) {
     }
     telegram_notif_res(
         "❌ <b>Cancelación desde web (Amelia)</b>\n" .
-        "📅 $fecha_ascenso\n" .
-        "🏕 $tipo_cabana"
+        "━━━━━━━━━━━━━━━━━━━\n" .
+        "📅 Fecha de ascenso: $fecha_ascenso\n" .
+        "🏕 Cabaña: $tipo_cabana"
     );
     json_response(['received' => true, 'accion' => 'cancelado_desde_amelia']);
 }
@@ -76,8 +77,10 @@ if ($is_reprogramada && $appointment_id && $nueva_fecha) {
     }
     telegram_notif_res(
         "🔄 <b>Reprogramación desde web (Amelia)</b>\n" .
-        "🏕 $tipo_cabana\n" .
-        "📅 $fecha_ascenso → <b>$nueva_fecha</b>"
+        "━━━━━━━━━━━━━━━━━━━\n" .
+        "🏕 Cabaña: $tipo_cabana\n" .
+        "📅 Fecha anterior: $fecha_ascenso\n" .
+        "📅 Nueva fecha: <b>$nueva_fecha</b>"
     );
     json_response(['received' => true, 'accion' => 'reprogramado_desde_amelia']);
 }
@@ -194,11 +197,13 @@ if ($is_cambio && $appointment_id && isset($mapa_estados[$amelia_status])) {
         if ($r['status'] < 300) {
             telegram_notif_res(
                 "🌐 <b>Nueva reservación — Web (Amelia)</b>\n" .
-                "👤 " . htmlspecialchars($nombre) . "\n" .
-                "📅 $fecha_ascenso\n" .
-                "🏕 $tipo_cabana\n" .
-                "💰 Q" . number_format($precio, 2) .
-                ($alergias_val ? "\n⚠️ " . htmlspecialchars($alergias_val) : '')
+                "━━━━━━━━━━━━━━━━━━━\n" .
+                "👤 Nombre: <b>" . htmlspecialchars($nombre) . "</b>\n" .
+                "📅 Fecha de ascenso: <b>$fecha_ascenso</b>\n" .
+                "🏕 Cabaña: <b>$tipo_cabana</b>\n" .
+                "👥 Personas: $personas\n" .
+                "💰 Precio: Q" . number_format($precio, 2) .
+                ($alergias_val ? "\n⚠️ Alergias: " . htmlspecialchars($alergias_val) : '')
             );
         }
     }

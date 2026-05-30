@@ -143,23 +143,29 @@ if ($correo_cliente) {
 }
 
 // ── Notificación Telegram ────────────────────────────────────────────────────
-// Grupo reservaciones: todos los pagos confirmados
+$tel_res = $link['telefono'] ?? null;
+$cor_res = $link['correo']   ?? null;
+$aler_res = $link['alergias'] ?? null;
 telegram_notif_res(
-    "💳 <b>Pago confirmado — QPayPro</b>\n" .
-    "👤 " . htmlspecialchars($link['nombre']      ?? '—') . "\n" .
-    "📅 " . ($link['fecha_ascenso'] ?? '—') . "\n" .
-    "🏕 " . ($link['tipo_cabana']   ?? '—') . " · " . ($link['paquete'] ?? '—') . "\n" .
-    "💰 Q" . number_format((float)($link['precio'] ?? 0), 2) . "\n" .
-    "📞 " . ($link['telefono'] ?? 'Sin teléfono')
+    "💳 <b>Pago confirmado — Link QPayPro</b>\n" .
+    "━━━━━━━━━━━━━━━━━━━\n" .
+    "👤 Nombre: <b>" . htmlspecialchars($link['nombre'] ?? '—') . "</b>\n" .
+    "📅 Fecha de ascenso: <b>" . ($link['fecha_ascenso'] ?? '—') . "</b>\n" .
+    "🏕 Cabaña: <b>" . ($link['tipo_cabana'] ?? '—') . "</b>\n" .
+    "📦 Paquete: " . ($link['paquete'] ?? '—') . "\n" .
+    "💰 Precio: Q" . number_format((float)($link['precio'] ?? 0), 2) .
+    ($tel_res ? "\n📞 Teléfono: $tel_res" : '') .
+    ($cor_res ? "\n✉️ Correo: $cor_res" : '') .
+    ($aler_res ? "\n⚠️ Alergias: " . htmlspecialchars($aler_res) : '')
 );
 // Grupo cuadros: solo si el ascenso es mañana
 $manana_gt = gmdate('Y-m-d', time() + (-6 * 3600) + 86400);
 if (($link['fecha_ascenso'] ?? '') === $manana_gt) {
     telegram_notify(
-        "🆕 <b>Nueva reservación — pago confirmado</b>\n" .
-        "👤 " . htmlspecialchars($link['nombre']  ?? '—') . "\n" .
-        "🏕 " . ($link['tipo_cabana'] ?? '—') . " · " . ($link['paquete'] ?? '—') . "\n" .
-        "💰 Q" . number_format((float)($link['precio'] ?? 0), 2)
+        "🆕 <b>Nuevo pago confirmado para mañana</b>\n" .
+        "👤 Nombre: " . htmlspecialchars($link['nombre'] ?? '—') . "\n" .
+        "🏕 Cabaña: " . ($link['tipo_cabana'] ?? '—') . " · " . ($link['paquete'] ?? '—') . "\n" .
+        "💰 Precio: Q" . number_format((float)($link['precio'] ?? 0), 2)
     );
 }
 

@@ -78,25 +78,22 @@
     // ── 4. Notificar al equipo ────────────────────────────────────────────────────
     $no_pers = (int)($data['no_personas'] ?? 1);
 
-    // Grupo reservaciones: siempre
+    // Grupo reservaciones: siempre (no va al grupo de cuadros)
+    $aler_txt = !empty($data['alergias']) ? "\n⚠️ Alergias: " . htmlspecialchars($data['alergias']) : '';
+    $notas_txt = !empty($data['notas']) ? "\n📝 Notas: " . htmlspecialchars($data['notas']) : '';
+    $tel_txt = !empty($data['telefono']) ? "\n📞 Teléfono: " . htmlspecialchars($data['telefono']) : '';
     telegram_notif_res(
         "📝 <b>Nueva reservación presencial</b>\n" .
-        "👤 " . htmlspecialchars($nombre) . "\n" .
-        "📅 $fecha\n" .
-        "🏕 $tipo_cabana · " . ($data['paquete'] ?? '—') . "\n" .
-        "👥 $no_pers persona(s)  ·  💰 Q" . number_format($precio, 2) . "\n" .
-        "🧑‍💼 " . htmlspecialchars($data['registrado_por'] ?? 'Admin')
+        "━━━━━━━━━━━━━━━━━━━\n" .
+        "👤 Nombre: <b>" . htmlspecialchars($nombre) . "</b>\n" .
+        "📅 Fecha de ascenso: <b>$fecha</b>\n" .
+        "🏕 Cabaña: <b>$tipo_cabana</b>\n" .
+        "📦 Paquete: " . ($data['paquete'] ?? '—') . "\n" .
+        "👥 Personas: $no_pers\n" .
+        "💰 Precio: Q" . number_format($precio, 2) .
+        $tel_txt . $aler_txt . $notas_txt . "\n" .
+        "🧑‍💼 Registrado por: " . htmlspecialchars($data['registrado_por'] ?? 'Admin')
     );
-    // Grupo cuadros: solo si es mañana
-    $manana_gt = gmdate('Y-m-d', time() + (-6 * 3600) + 86400);
-    if ($fecha === $manana_gt) {
-        telegram_notify(
-            "🆕 <b>Nueva reservación manual</b>\n" .
-            "👤 " . htmlspecialchars($nombre) . "\n" .
-            "🏕 $tipo_cabana · " . ($data['paquete'] ?? '—') . "\n" .
-            "👥 $no_pers persona(s)"
-        );
-    }
 
     enviar_email(
         "🧾 Nueva reservación presencial: $nombre — $fecha",
