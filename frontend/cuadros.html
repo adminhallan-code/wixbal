@@ -10,6 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="/auth.js"></script>
 <script src="/update.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root{--bg:#f7f7f7;--surface:#fff;--surface2:#eeeeee;--border:#e0e0e0;--text:#111;--text2:#555;--text3:#888;
   --accent:#111;--radius:10px;--radius-lg:16px;--success:#166534;--success-light:#f0fdf4;
@@ -534,30 +535,56 @@ async function enviarFotoTelegram(){
   const fecha = document.getElementById('fecha-cuadro').value;
   if(!fecha || !datosActuales.length){ toast('Cargá el cuadro primero'); return; }
 
-  const btn = document.getElementById('btn-telegram');
+  const btn  = document.getElementById('btn-telegram');
   const orig = btn.textContent;
-  btn.textContent = '⏳ Generando imagen...';
+  btn.textContent = '⏳ Capturando...';
   btn.disabled = true;
 
-  try{
-    const res = await fetch(`/api/cron/telegram-cuadro?fecha=${fecha}`);
-    const data = await res.json();
+  // Cerrar el panel lateral para que no quede en la foto
+  cerrarPanel();
 
-    if(res.ok && data.ok){
-      const now = new Date();
-      const hora = now.toLocaleTimeString('es-GT',{hour:'2-digit',minute:'2-digit'});
-      const label = `📤 Último envío: ${hora} — ${data.reservaciones} reserv. · ${data.total_personas} personas`;
-      localStorage.setItem('tg_envio_' + fecha, hora + ' — ' + data.reservaciones + ' reserv. · ' + data.total_personas + ' personas');
-      const div = document.getElementById('telegram-ultimo-envio');
-      div.textContent = label;
-      div.style.display = 'block';
-      toast('✅ Cuadro enviado al grupo 📸');
-    } else {
-      toast('Error: ' + (data.message || data.error || 'desconocido'));
-    }
+  try{
+    // Capturar el cuadro tal como se ve en pantalla
+    const el = document.getElementById('cuadro-resultado');
+    const canvas = await html2canvas(el, {
+      scale: 2,                 // alta resolución
+      useCORS: true,
+      backgroundColor: '#f7f7f7',
+      logging: false,
+      windowWidth: 1200,        // simular pantalla ancha para que no se corte
+    });
+
+    btn.textContent = '📤 Enviando...';
+
+    // Convertir a blob y enviar al servidor
+    canvas.toBlob(async (blob) => {
+      try{
+        const form = new FormData();
+        form.append('foto', blob, 'cuadro.png');
+        form.append('fecha', fecha);
+        form.append('reservaciones', datosActuales.length);
+        form.append('total_personas', datosActuales.reduce((s,r)=>s+personasDisplay(r),0));
+
+        const res = await fetch('/api/telegram-foto-cuadro', { method:'POST', body:form });
+        const data = await res.json().catch(()=>({}));
+
+        if(res.ok && data.ok){
+          const hora = new Date().toLocaleTimeString('es-GT',{hour:'2-digit',minute:'2-digit'});
+          const txt  = hora + ' — ' + datosActuales.length + ' reserv. · ' + datosActuales.reduce((s,r)=>s+personasDisplay(r),0) + ' personas';
+          localStorage.setItem('tg_envio_' + fecha, txt);
+          const div = document.getElementById('telegram-ultimo-envio');
+          div.textContent = '📤 Último envío: ' + txt;
+          div.style.display = 'block';
+          toast('✅ Cuadro enviado al grupo 📸');
+        } else {
+          toast('Error: ' + (data.error || data.message || 'desconocido'));
+        }
+      }catch(e){ toast('Error de red: ' + e.message); }
+      finally{ btn.textContent = orig; btn.disabled = false; }
+    }, 'image/png');
+
   }catch(e){
-    toast('Error de red: ' + e.message);
-  }finally{
+    toast('Error al capturar: ' + e.message);
     btn.textContent = orig;
     btn.disabled = false;
   }

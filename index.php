@@ -214,6 +214,11 @@ if ($method === 'GET' && $s0 === 'api' && $s1 === 'cron' && $s2 === 'telegram-cu
     require __DIR__ . '/api/cron_telegram_cuadro.php';
 }
 
+// POST /api/telegram-foto-cuadro  (recibe captura de pantalla desde el browser y la envía a Telegram)
+if ($method === 'POST' && $s0 === 'api' && $s1 === 'telegram-foto-cuadro') {
+    require __DIR__ . '/api/telegram_foto_cuadro.php';
+}
+
 // GET /api/tmp_anular  (temporal)
 if ($method === 'GET' && $s0 === 'api' && $s1 === 'tmp_anular') {
     require __DIR__ . '/api/tmp_anular.php';
