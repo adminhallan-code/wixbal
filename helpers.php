@@ -157,6 +157,39 @@ function qpaypro_checkout_url(string $token): string {
     return QPAYPRO_BASE . '/store?token=' . $token;
 }
 
+// ── Telegram ─────────────────────────────────────────────────────────────────
+
+/**
+ * Envía un mensaje al grupo/canal de Telegram configurado.
+ * Requiere que config.php defina TELEGRAM_TOKEN y TELEGRAM_CHAT_ID.
+ * Soporta HTML básico: <b>, <i>, <code>, <a href="...">
+ */
+function telegram_notify(string $msg): void {
+    if (!defined('TELEGRAM_TOKEN') || !TELEGRAM_TOKEN) return;
+    if (!defined('TELEGRAM_CHAT_ID') || !TELEGRAM_CHAT_ID) return;
+    $url = 'https://api.telegram.org/bot' . TELEGRAM_TOKEN . '/sendMessage';
+    $ch  = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => json_encode([
+            'chat_id'    => TELEGRAM_CHAT_ID,
+            'text'       => $msg,
+            'parse_mode' => 'HTML',
+        ]),
+        CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+        CURLOPT_TIMEOUT    => 5,
+    ]);
+    $res = curl_exec($ch);
+    $err = curl_error($ch);
+    curl_close($ch);
+    if ($err) error_log("[TELEGRAM] curl_error=$err");
+    else {
+        $body = json_decode($res, true);
+        if (!($body['ok'] ?? false)) error_log('[TELEGRAM] Error: ' . $res);
+    }
+}
+
 // ── Email (Resend) ────────────────────────────────────────────────────────────
 
 function enviar_email(string $asunto, string $html): void {

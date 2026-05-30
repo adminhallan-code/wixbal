@@ -142,6 +142,16 @@ if ($correo_cliente) {
     error_log("[WEBHOOK QPAYPRO] Sin correo en el link — email de confirmación omitido");
 }
 
+// ── Notificación Telegram ────────────────────────────────────────────────────
+telegram_notify(
+    "✅ <b>Pago confirmado — QPayPro</b>\n" .
+    "👤 " . htmlspecialchars($link['nombre']    ?? '—') . "\n" .
+    "📅 " . ($link['fecha_ascenso'] ?? '—') . "\n" .
+    "🏕 " . ($link['tipo_cabana']   ?? '—') . " · " . ($link['paquete'] ?? '—') . "\n" .
+    "💰 Q" . number_format((float)($link['precio'] ?? 0), 2) . "\n" .
+    "📞 " . ($link['telefono'] ?? 'Sin teléfono')
+);
+
 // ── Email interno de notificación ────────────────────────────────────────────
 enviar_email(
     "Pago recibido QPayPro: " . ($link['nombre'] ?? '') . " | $fecha_ascenso | Q" . number_format((float)($link['precio'] ?? 0)),

@@ -209,6 +209,11 @@ if ($method === 'GET' && $s0 === 'api' && $s1 === 'cron' && $s2 === 'amelia-sync
     require __DIR__ . '/api/cron_amelia_sync.php';
 }
 
+// GET /api/cron/telegram-cuadro  (manda cuadro del día siguiente al grupo Telegram)
+if ($method === 'GET' && $s0 === 'api' && $s1 === 'cron' && $s2 === 'telegram-cuadro') {
+    require __DIR__ . '/api/cron_telegram_cuadro.php';
+}
+
 // GET /api/tmp_anular  (temporal)
 if ($method === 'GET' && $s0 === 'api' && $s1 === 'tmp_anular') {
     require __DIR__ . '/api/tmp_anular.php';
