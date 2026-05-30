@@ -70,14 +70,6 @@ if ($cantidad_vegetarianos || $es_vegetariano) $desc_partes[] = "Menú vegetaria
 if ($es_cumpleanos) $desc_partes[] = '¡Celebración de cumpleaños!';
 $descripcion = implode(' | ', $desc_partes);
 
-// ── 0. Upsert cliente ─────────────────────────────────────────────────────────
-$cliente_id = upsert_cliente($nombre, $telefono, $correo, [
-    'identificacion'      => $identificacion,
-    'nit'                 => $nit,
-    'tipo_identificacion' => $tipo_identificacion,
-    'nombre_fiscal'       => $nombre_fiscal,
-]);
-
 // ── 1. Pre-insertar en links_pendientes para obtener el ID (= x_invoice_num) ──
 $lp_data = [
     'checkout_id'          => 'pending',
@@ -103,7 +95,6 @@ $lp_data = [
     'tipo_identificacion'  => $tipo_identificacion,
     'nombre_fiscal'        => $nombre_fiscal,
     'estado'               => 'Esperando pago',
-    'cliente_id'           => $cliente_id,
 ];
 $lp_insert = sb_post('links_pendientes', $lp_data, true);
 $lp_id = $lp_insert['body'][0]['id'] ?? null;
