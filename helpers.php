@@ -642,24 +642,6 @@ function telegram_send_photo(string $img_path, string $caption): array {
     }
     $msg_id = $body['result']['message_id'] ?? null;
 
-    // Fijar el mensaje para notificar a todos los miembros
-    if ($msg_id) {
-        $pin = curl_init('https://api.telegram.org/bot' . TELEGRAM_TOKEN . '/pinChatMessage');
-        curl_setopt_array($pin, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => json_encode([
-                'chat_id'              => TELEGRAM_CHAT_ID,
-                'message_id'           => $msg_id,
-                'disable_notification' => false,
-            ]),
-            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-            CURLOPT_TIMEOUT    => 10,
-        ]);
-        curl_exec($pin);
-        curl_close($pin);
-    }
-
     return ['ok' => true, 'message_id' => $msg_id];
 }
 
