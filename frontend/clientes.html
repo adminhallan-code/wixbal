@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Wolfs — Clientes</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icon-192.png" type="image/png">
+<meta name="theme-color" content="#111111">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="/auth.js"></script>
+<script src="/update.js"></script>
+<style>
+:root{
+  --bg:#f7f7f7;--surface:#fff;--surface2:#eeeeee;--border:#e0e0e0;
+  --text:#111111;--text2:#555555;--text3:#888888;
+  --accent:#111111;--accent-light:#f0f0f0;
+  --green:#166534;--green-light:#f0fdf4;
+  --warn:#b45309;--warn-light:#fef3c7;
+  --danger:#991b1b;--danger-light:#fef2f2;
+  --radius:10px;--radius-lg:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* Login */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2.5rem;width:100%;max-width:380px;text-align:center}
+.login-icon{font-size:40px;margin-bottom:1rem}
+.login-title{font-family:'DM Serif Display',serif;font-size:24px;margin-bottom:.5rem}
+.login-sub{font-size:13px;color:var(--text3);margin-bottom:2rem}
+.login-card input{width:100%;padding:10px 14px;font-size:15px;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);text-align:center;letter-spacing:.15em;margin-bottom:12px}
+.login-card input:focus{outline:none;border-color:var(--accent);background:#fff}
+.login-err{font-size:13px;color:var(--danger);margin-bottom:10px;display:none}
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.1rem;border-radius:var(--radius);font-size:.9rem;font-family:inherit;font-weight:500;cursor:pointer;border:1.5px solid transparent;transition:all .15s}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{opacity:.85}
+
+/* Nav */
+nav.nav{background:#111;color:#fff;display:flex;align-items:center;gap:.5rem;padding:.65rem 1.25rem;position:sticky;top:0;z-index:100}
+
+/* Layout */
+.app{display:none}
+.page-wrap{max-width:1200px;margin:0 auto;padding:1.5rem 1.25rem}
+
+/* Header */
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;gap:1rem;flex-wrap:wrap}
+.page-title{font-family:'DM Serif Display',serif;font-size:1.6rem}
+.page-sub{font-size:.9rem;color:var(--text3);margin-top:.2rem}
+
+/* Buscador */
+.search-bar{display:flex;gap:.75rem;margin-bottom:1.25rem;flex-wrap:wrap}
+.search-input{flex:1;min-width:200px;padding:.6rem 1rem;font-size:.95rem;font-family:inherit;border:1.5px solid var(--border);border-radius:var(--radius);background:#fff;color:var(--text)}
+.search-input:focus{outline:none;border-color:var(--accent)}
+
+/* Grid layout */
+.clientes-layout{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+@media(max-width:768px){.clientes-layout{grid-template-columns:1fr}}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.card-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-weight:600;font-size:.95rem}
+.card-count{font-size:.8rem;color:var(--text3);background:var(--surface2);padding:.2rem .6rem;border-radius:20px}
+
+/* Lista de clientes */
+.cliente-item{display:flex;align-items:center;gap:.85rem;padding:.9rem 1.25rem;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s}
+.cliente-item:last-child{border-bottom:none}
+.cliente-item:hover{background:var(--accent-light)}
+.cliente-item.selected{background:#f0f0f0;border-left:3px solid var(--accent)}
+.cliente-avatar{width:38px;height:38px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.95rem;font-weight:700;flex-shrink:0}
+.cliente-info{flex:1;min-width:0}
+.cliente-nombre{font-weight:600;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cliente-meta{font-size:.78rem;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cliente-badge{font-size:.75rem;font-weight:600;background:var(--accent);color:#fff;border-radius:20px;padding:.15rem .5rem;flex-shrink:0}
+.cliente-badge.cero{background:var(--surface2);color:var(--text3)}
+
+/* Detalle */
+.detail-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem 1.5rem;color:var(--text3);text-align:center;gap:.5rem}
+.detail-empty-icon{font-size:2.5rem}
+.detail-section{padding:1.25rem}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem 1.25rem;margin-bottom:1.25rem}
+@media(max-width:480px){.detail-grid{grid-template-columns:1fr}}
+.detail-field label{font-size:.75rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+.detail-field span{font-size:.9rem;color:var(--text)}
+.detail-field span.empty{color:var(--text3);font-style:italic}
+
+/* Notas internas */
+.notas-wrap{margin-bottom:1.25rem}
+.notas-wrap label{font-size:.75rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.4rem}
+.notas-textarea{width:100%;padding:.65rem .9rem;font-size:.88rem;font-family:inherit;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);resize:vertical;min-height:72px;transition:border .15s}
+.notas-textarea:focus{outline:none;border-color:var(--accent);background:#fff}
+.notas-actions{display:flex;gap:.5rem;margin-top:.5rem}
+.btn-sm{padding:.35rem .8rem;font-size:.82rem}
+.btn-outline{background:transparent;color:var(--accent);border-color:var(--border)}
+.btn-outline:hover{background:var(--accent-light)}
+
+/* Reservaciones del cliente */
+.rv-header{font-size:.8rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding:.6rem 1.25rem;background:var(--surface2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.rv-item{display:grid;grid-template-columns:auto 1fr auto;gap:.5rem .75rem;align-items:center;padding:.75rem 1.25rem;border-bottom:1px solid var(--border);font-size:.88rem}
+.rv-item:last-child{border-bottom:none}
+.rv-fecha{font-family:'DM Mono',monospace;font-size:.8rem;color:var(--text3);white-space:nowrap}
+.rv-nombre{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rv-precio{font-family:'DM Mono',monospace;font-size:.82rem;text-align:right;white-space:nowrap}
+.rv-sub{font-size:.75rem;color:var(--text3);grid-column:2;margin-top:-2px}
+.badge{display:inline-block;padding:.15rem .55rem;border-radius:20px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.b-completado{background:#dcfce7;color:#166534}
+.b-pendiente{background:#fef3c7;color:#92400e}
+.b-cancelado{background:#fee2e2;color:#991b1b}
+
+/* Empty / loading */
+.empty{text-align:center;padding:2.5rem;color:var(--text3);font-size:.9rem}
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:.4rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Toast */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#111;color:#fff;padding:.7rem 1.2rem;border-radius:var(--radius);font-size:.88rem;z-index:9999;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="login-wrap" id="login-wrap">
+  <div class="login-card">
+    <div class="login-icon">🏕</div>
+    <div class="login-title">Wolfs Acatenango</div>
+    <div class="login-sub">Ingresá tu PIN para continuar</div>
+    <div class="login-err" id="login-err">PIN incorrecto</div>
+    <input type="password" id="pin-input" placeholder="••••••" maxlength="20"
+      onkeydown="if(event.key==='Enter')doLogin()" autofocus>
+    <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <nav class="nav"></nav>
+
+  <div class="page-wrap">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Clientes</div>
+        <div class="page-sub" id="sub-count">Cargando...</div>
+      </div>
+    </div>
+
+    <div class="search-bar">
+      <input class="search-input" id="search-input" type="search"
+        placeholder="Buscar por nombre, teléfono o correo..."
+        oninput="onSearch(this.value)">
+    </div>
+
+    <div class="clientes-layout">
+      <!-- Lista -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Lista</span>
+          <span class="card-count" id="lista-count">—</span>
+        </div>
+        <div id="lista-wrap">
+          <div class="empty"><span class="spinner"></span>Cargando clientes...</div>
+        </div>
+      </div>
+
+      <!-- Detalle -->
+      <div class="card" id="detail-card">
+        <div class="card-header">
+          <span class="card-title" id="detail-title">Detalle</span>
+        </div>
+        <div id="detail-wrap">
+          <div class="detail-empty">
+            <div class="detail-empty-icon">👆</div>
+            <div>Seleccioná un cliente para ver su historial</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '';
+let clienteSeleccionado = null;
+let searchTimer = null;
+let todosClientes = [];
+
+// ── LOGIN ──────────────────────────────────────────────────────────────────────
+function doLogin(){
+  const pin = document.getElementById('pin-input').value;
+  if(window.authLogin) {
+    authLogin(pin, mostrarApp, ()=>{
+      const err = document.getElementById('login-err');
+      err.style.display='block';
+      document.getElementById('pin-input').value='';
+    });
+  }
+}
+
+function mostrarApp(user){
+  document.getElementById('login-wrap').style.display='none';
+  document.getElementById('app').style.display='block';
+  if(typeof window._setNavUser==='function') window._setNavUser(user.nombre);
+  if(typeof authNav==='function') authNav(user);
+  cargarClientes();
+}
+
+// ── CARGA ──────────────────────────────────────────────────────────────────────
+async function cargarClientes(q=''){
+  document.getElementById('lista-wrap').innerHTML =
+    '<div class="empty"><span class="spinner"></span>Cargando...</div>';
+
+  const url = q ? `${API}/api/clientes?q=${encodeURIComponent(q)}` : `${API}/api/clientes`;
+  const res  = await fetch(url, {credentials:'include'});
+  const data = await res.json();
+  todosClientes = data.clientes || [];
+
+  renderLista(todosClientes);
+  document.getElementById('sub-count').textContent =
+    `${todosClientes.length} cliente${todosClientes.length!==1?'s':''} registrado${todosClientes.length!==1?'s':''}`;
+}
+
+function renderLista(clientes){
+  const wrap = document.getElementById('lista-wrap');
+  document.getElementById('lista-count').textContent = clientes.length;
+
+  if(!clientes.length){
+    wrap.innerHTML='<div class="empty">Sin clientes encontrados</div>';
+    return;
+  }
+
+  wrap.innerHTML = clientes.map(c => {
+    const iniciales = (c.nombre||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    const meta = [c.telefono, c.correo].filter(Boolean).join(' · ') || 'Sin contacto';
+    const total = c.total_reservaciones || 0;
+    const sel   = clienteSeleccionado===c.id ? ' selected' : '';
+    return `<div class="cliente-item${sel}" onclick="seleccionar(${c.id})" data-id="${c.id}">
+      <div class="cliente-avatar">${iniciales}</div>
+      <div class="cliente-info">
+        <div class="cliente-nombre">${esc(c.nombre)}</div>
+        <div class="cliente-meta">${esc(meta)}</div>
+      </div>
+      <div class="cliente-badge${total===0?' cero':''}">${total}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── BÚSQUEDA ──────────────────────────────────────────────────────────────────
+function onSearch(val){
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(()=> cargarClientes(val.trim()), 350);
+}
+
+// ── SELECCIONAR CLIENTE ───────────────────────────────────────────────────────
+async function seleccionar(id){
+  clienteSeleccionado = id;
+  // Marcar seleccionado en lista
+  document.querySelectorAll('.cliente-item').forEach(el=>{
+    el.classList.toggle('selected', parseInt(el.dataset.id)===id);
+  });
+
+  document.getElementById('detail-wrap').innerHTML =
+    '<div class="empty"><span class="spinner"></span>Cargando...</div>';
+
+  const res  = await fetch(`${API}/api/clientes/${id}`, {credentials:'include'});
+  const data = await res.json();
+  renderDetalle(data.cliente, data.reservaciones || []);
+}
+
+// ── RENDER DETALLE ────────────────────────────────────────────────────────────
+function renderDetalle(c, reservaciones){
+  document.getElementById('detail-title').textContent = c.nombre;
+
+  const totalQ = reservaciones
+    .filter(r=>r.estado_pago==='Completado')
+    .reduce((s,r)=>s+(parseFloat(r.precio)||0), 0);
+
+  const campos = [
+    {label:'Teléfono',    val: c.telefono},
+    {label:'Correo',      val: c.correo},
+    {label:'Identificación', val: c.identificacion},
+    {label:'NIT',         val: c.nit},
+    {label:'Nombre fiscal', val: c.nombre_fiscal},
+    {label:'Cliente desde', val: c.creado_at ? c.creado_at.slice(0,10) : null},
+    {label:'Reservaciones', val: `${reservaciones.length} total · Q${totalQ.toFixed(2)} pagado`},
+  ];
+
+  const fieldsHtml = campos.map(f=>`
+    <div class="detail-field">
+      <label>${f.label}</label>
+      <span ${!f.val?'class="empty"':''}>${f.val ? esc(String(f.val)) : 'No registrado'}</span>
+    </div>`).join('');
+
+  const rvHtml = reservaciones.length ? reservaciones.map(r=>{
+    const est = (r.estado_pago||'').toLowerCase();
+    const cls = est==='completado'?'b-completado':est==='cancelado'?'b-cancelado':'b-pendiente';
+    return `<div class="rv-item">
+      <div class="rv-fecha">${r.fecha_ascenso||'—'}</div>
+      <div>
+        <div class="rv-nombre">${esc(r.nombre||'')}</div>
+        <div class="rv-sub">${esc(r.tipo_cabana||'')} · ${esc(r.paquete||'')} · ${esc(r.agencia||'')}</div>
+      </div>
+      <div>
+        <div class="rv-precio">Q${parseFloat(r.precio||0).toFixed(2)}</div>
+        <div style="text-align:right;margin-top:2px"><span class="badge ${cls}">${r.estado_pago||'—'}</span></div>
+      </div>
+    </div>`;
+  }).join('') : '<div class="empty">Sin reservaciones registradas</div>';
+
+  document.getElementById('detail-wrap').innerHTML = `
+    <div class="detail-section">
+      <div class="detail-grid">${fieldsHtml}</div>
+      <div class="notas-wrap">
+        <label>Notas internas</label>
+        <textarea class="notas-textarea" id="notas-textarea" placeholder="Observaciones, preferencias, historial especial...">${esc(c.notas_internas||'')}</textarea>
+        <div class="notas-actions">
+          <button class="btn btn-primary btn-sm" onclick="guardarNotas(${c.id})">Guardar notas</button>
+          <button class="btn btn-outline btn-sm" onclick="seleccionar(${c.id})">↺ Recargar</button>
+        </div>
+      </div>
+    </div>
+    <div class="rv-header">Historial de reservaciones (${reservaciones.length})</div>
+    ${rvHtml}
+  `;
+}
+
+// ── GUARDAR NOTAS ─────────────────────────────────────────────────────────────
+async function guardarNotas(id){
+  const notas = document.getElementById('notas-textarea').value;
+  const res   = await fetch(`${API}/api/clientes/${id}`, {
+    method:'PATCH',
+    credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({notas_internas: notas}),
+  });
+  if(res.ok){ toast('Notas guardadas ✓'); }
+  else       { toast('Error al guardar'); }
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+function esc(str){ return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', ()=>{
+  if(window.authCheck){
+    authCheck(mostrarApp, ()=>{
+      document.getElementById('login-wrap').style.display='flex';
+    });
+  }
+});
+</script>
+<script src="/nav.js"></script>
+</body>
+</html>

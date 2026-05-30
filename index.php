@@ -186,6 +186,19 @@ if ($method === 'GET' && $s0 === 'api' && $s1 === 'version') {
     require __DIR__ . '/api/version.php';
 }
 
+// GET  /api/clientes
+// GET  /api/clientes/{id}
+if ($method === 'GET' && $s0 === 'api' && $s1 === 'clientes') {
+    $_route_cliente_id = $s2 ? (int)$s2 : 0;
+    require __DIR__ . '/api/clientes.php';
+}
+
+// PATCH /api/clientes/{id}
+if ($method === 'PATCH' && $s0 === 'api' && $s1 === 'clientes' && $s2) {
+    $_route_cliente_id = (int)$s2;
+    require __DIR__ . '/api/clientes_patch.php';
+}
+
 // GET /api/cron/recordatorios  (llamado por cron job de cPanel)
 if ($method === 'GET' && $s0 === 'api' && $s1 === 'cron' && $s2 === 'recordatorios') {
     require __DIR__ . '/api/cron_recordatorios.php';
@@ -241,7 +254,7 @@ if ($method === 'GET' && $s0 === 'api' && $s1 === 'amelia-sync-test') {
 }
 
 // Frontend pages (serve from /frontend/ or return 404)
-$frontend_pages = ['', 'index', 'jefes', 'it', 'links', 'facturacion', 'cocina', 'gestion', 'cuadros'];
+$frontend_pages = ['', 'index', 'jefes', 'it', 'links', 'facturacion', 'cocina', 'gestion', 'cuadros', 'clientes'];
 if ($method === 'GET' && in_array($s0, $frontend_pages) && !$s1) {
     $page = $s0 ?: 'index';
     $file = __DIR__ . "/frontend/{$page}.html";

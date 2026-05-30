@@ -131,6 +131,7 @@
     '<a href="/facturacion" class="nav-link' + (act('/facturacion') ? ' active' : '') + '" data-req="facturacion" onclick="_closeNav()">Facturación</a>' +
     '<a href="/cocina"      class="nav-link' + (act('/cocina')      ? ' active' : '') + '" data-req="cocina"      onclick="_closeNav()">Cocina</a>' +
     '<a href="/gestion"     class="nav-link' + (act('/gestion')     ? ' active' : '') + '" data-req="gestion"     onclick="_closeNav()">Gestión</a>' +
+    '<a href="/clientes"   class="nav-link' + (act('/clientes')   ? ' active' : '') + '" data-req="clientes"   onclick="_closeNav()">Clientes</a>' +
 
     /* ── Derecha ── */
     '<div class="nav-spacer"></div>' +

@@ -245,6 +245,48 @@ function get_disponibilidad(string $fecha, string $agencia = ''): array {
     ];
 }
 
+// ── Clientes ─────────────────────────────────────────────────────────────────
+
+/**
+ * Busca un cliente existente por teléfono o correo.
+ * Si lo encuentra lo actualiza, si no lo crea.
+ * Devuelve el cliente_id (int) o null si falla.
+ */
+function upsert_cliente(string $nombre, ?string $telefono, ?string $correo, array $extra = []): ?int {
+    $cliente = null;
+
+    // Buscar por teléfono primero
+    if ($telefono) {
+        $res = sb_get("clientes?telefono=eq." . urlencode($telefono) . "&limit=1&select=*");
+        $cliente = $res['body'][0] ?? null;
+    }
+    // Buscar por correo si no encontró por teléfono
+    if (!$cliente && $correo) {
+        $res = sb_get("clientes?correo=eq." . urlencode($correo) . "&limit=1&select=*");
+        $cliente = $res['body'][0] ?? null;
+    }
+
+    $data = [
+        'nombre'              => $nombre,
+        'actualizado_at'      => gmdate('Y-m-d\TH:i:s\Z'),
+    ];
+    if ($telefono)                          $data['telefono']            = $telefono;
+    if ($correo)                            $data['correo']              = $correo;
+    if ($extra['identificacion'] ?? null)   $data['identificacion']      = $extra['identificacion'];
+    if ($extra['nit'] ?? null)              $data['nit']                 = $extra['nit'];
+    if ($extra['tipo_identificacion'] ?? null) $data['tipo_identificacion'] = $extra['tipo_identificacion'];
+    if ($extra['nombre_fiscal'] ?? null)    $data['nombre_fiscal']       = $extra['nombre_fiscal'];
+
+    if ($cliente) {
+        sb_patch("clientes?id=eq.{$cliente['id']}", $data);
+        return (int) $cliente['id'];
+    } else {
+        $insert = sb_post('clientes', $data, true);
+        $id = $insert['body'][0]['id'] ?? null;
+        return $id ? (int) $id : null;
+    }
+}
+
 // ── FELplex ───────────────────────────────────────────────────────────────────
 
 define('FELPLEX_BASE', 'https://app.felplex.com');
