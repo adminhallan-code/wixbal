@@ -191,6 +191,31 @@ sb_patch("links_pendientes?id=eq.$lp_id", [
     'checkout_url' => $checkout_url,
 ]);
 
+// ── Notificación Telegram — link generado ─────────────────────────────────────
+$aler_lk  = $alergias ?? null;
+$tel_lk   = $telefono ?? null;
+$cor_lk   = $correo   ?? null;
+$menu_lk  = [];
+if ($es_vegano   || $cantidad_veganos)      $menu_lk[] = 'Vegano ×' . ($cantidad_veganos   ?: 1);
+if ($es_vegetariano || $cantidad_vegetarianos) $menu_lk[] = 'Vegetariano ×' . ($cantidad_vegetarianos ?: 1);
+if ($es_cumpleanos) $menu_lk[] = '🎂 Cumpleaños';
+$pers_txt = $tipo_cabana === 'Mixta' ? "\n👥 Personas: $no_personas" : '';
+telegram_notif_res(
+    "🔗 <b>Link de pago generado</b>\n" .
+    "━━━━━━━━━━━━━━━━━━━\n" .
+    "👤 Nombre: <b>" . htmlspecialchars($nombre) . "</b>\n" .
+    "📅 Fecha de ascenso: <b>$fecha</b>\n" .
+    "🏕 Cabaña: <b>$tipo_cabana</b>\n" .
+    "📦 Paquete: $paquete" .
+    $pers_txt . "\n" .
+    "💰 Precio: Q" . number_format($precio, 2) .
+    ($tel_lk ? "\n📞 Teléfono: $tel_lk" : '') .
+    ($cor_lk ? "\n✉️ Correo: $cor_lk" : '') .
+    ($aler_lk ? "\n⚠️ Alergias: " . htmlspecialchars($aler_lk) : '') .
+    ($menu_lk ? "\n🥗 Menú: " . implode(', ', $menu_lk) : '') .
+    ($generado_por ? "\n🧑‍💼 Generado por: " . htmlspecialchars($generado_por) : '')
+);
+
 // ── 4. Guardar reservación pendiente ──────────────────────────────────────────
 $rv_data = [
     'nombre'                 => $nombre,

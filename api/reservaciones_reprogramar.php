@@ -2,7 +2,8 @@
 // POST /api/reservaciones/{id}/reprogramar  — reprogramacion directa sin cobro
 $res_id = $_route_res_id ?? 0;
 $data   = get_body();
-$nueva_fecha = $data['nueva_fecha'] ?? '';
+$nueva_fecha    = $data['nueva_fecha']    ?? '';
+$reprogramado_por = $data['reprogramado_por'] ?? '';
 
 if (!$res_id)                    json_error('ID inválido', 400);
 if (!fecha_valida($nueva_fecha)) json_error('Fecha inválida');
@@ -31,7 +32,8 @@ telegram_notif_res(
     "🏕 Cabaña: $tipo_cabana\n" .
     "📦 Paquete: $paquete_rv\n" .
     "📅 Fecha anterior: $fecha_vieja\n" .
-    "📅 Nueva fecha: <b>$nueva_fecha</b>"
+    "📅 Nueva fecha: <b>$nueva_fecha</b>" .
+    ($reprogramado_por ? "\n🧑‍💼 Reprogramado por: " . htmlspecialchars($reprogramado_por) : '')
 );
 // Grupo cuadros: solo si afecta mañana
 $manana_gt = gmdate('Y-m-d', time() + (-6 * 3600) + 86400);

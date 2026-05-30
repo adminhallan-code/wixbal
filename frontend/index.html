@@ -1189,7 +1189,11 @@ async function cancelarLink(id){
 async function eliminar(id){
   if(!confirm('¿Eliminar/Cancelar esta reservación? Esta acción liberará el espacio en la web.'))return;
   try{
-    await fetch(`${BACKEND_URL}/api/reservaciones/${id}/cancelar`, {method:'POST'});
+    await fetch(`${BACKEND_URL}/api/reservaciones/${id}/cancelar`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({cancelado_por: authUser()?.nombre || 'Admin'})
+    });
     const idx=datos.findIndex(r=>r.id===id);
     if(idx>-1)datos[idx].estado_pago='Cancelado';
     renderTabla();renderMetrics();renderPendientes();
@@ -1220,7 +1224,7 @@ async function guardarReprogramacion() {
     await fetch(`${BACKEND_URL}/api/reservaciones/${reprogramarId}/reprogramar`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({nueva_fecha: nueva})
+      body: JSON.stringify({nueva_fecha: nueva, reprogramado_por: authUser()?.nombre || 'Admin'})
     });
     
     const idx=datos.findIndex(r=>r.id===reprogramarId);
