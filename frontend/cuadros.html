@@ -25,7 +25,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .login-card input:focus{outline:none;border-color:var(--accent);background:#fff}
 .login-err{font-size:13px;color:var(--danger);margin-bottom:10px;display:none}
 .app{display:none}
-.main{max-width:1100px;margin:0 auto;padding:1.75rem 1.5rem}
+
+/* ── Layout principal con panel lateral ── */
+.app-body{display:flex;min-height:calc(100vh - 50px)}
+.main{flex:1;max-width:1100px;margin:0 auto;padding:1.75rem 1.5rem;min-width:0;transition:margin .25s}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.25rem}
 .card-title{font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:1.25rem}
 .btn{padding:9px 18px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;border-radius:var(--radius);cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--text);transition:all .15s}
@@ -34,6 +37,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .btn-primary:hover{background:#333}
 .btn-print{background:#166534;border-color:#166534;color:#fff}
 .btn-print:hover{background:#14532d}
+.btn-danger{background:#991b1b;border-color:#991b1b;color:#fff}
+.btn-sm{padding:6px 12px;font-size:13px}
 .spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:#111;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{text-align:center;padding:3rem;color:var(--text3);font-size:14px}
@@ -54,13 +59,51 @@ table{width:100%;border-collapse:collapse;font-size:12px}
 th{background:#1a1a2e;color:#fff;padding:8px 10px;text-align:left;font-size:11px;font-weight:700;border:1px solid #000;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
 td{padding:7px 10px;border:1px solid #ccc;vertical-align:middle}
 tr:nth-child(even) td{background:#fafafa}
+tr.fila-reserva{cursor:pointer;transition:background .12s}
+tr.fila-reserva:hover td{background:#f0f7ff!important}
+tr.fila-reserva.selected td{background:#e8f0fe!important;outline:2px solid #3b82f6;outline-offset:-1px}
 .alergia-cell{background:#fef3c7!important;font-weight:700;color:#92400e}
 .menu-cell{color:#166534;font-weight:600}
+.personas-default{color:#888;font-style:italic}
+
+/* ── Panel lateral de detalle/edición ── */
+.detail-panel{width:360px;min-width:360px;background:var(--surface);border-left:1px solid var(--border);
+  position:sticky;top:50px;height:calc(100vh - 50px);overflow-y:auto;
+  display:none;flex-direction:column}
+.detail-panel.open{display:flex}
+.dp-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1}
+.dp-nombre{font-weight:700;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-right:.5rem}
+.dp-close{background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--text3);padding:.2rem .4rem;border-radius:6px;flex-shrink:0}
+.dp-close:hover{background:var(--surface2)}
+.dp-body{padding:1rem 1.25rem;flex:1}
+.dp-section{margin-bottom:1.25rem}
+.dp-section-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:.6rem;padding-bottom:.3rem;border-bottom:1px solid var(--border)}
+.dp-field{margin-bottom:.75rem}
+.dp-field label{font-size:.75rem;font-weight:600;color:var(--text3);display:block;margin-bottom:.25rem}
+.dp-field .dp-val{font-size:.88rem;color:var(--text)}
+.dp-field .dp-val.empty{color:var(--text3);font-style:italic}
+.dp-input{width:100%;padding:.45rem .75rem;font-size:.88rem;font-family:inherit;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);transition:border .15s}
+.dp-input:focus{outline:none;border-color:var(--accent);background:#fff}
+.dp-input-sm{width:80px}
+.dp-check-row{display:flex;align-items:center;gap:.4rem;margin-bottom:.45rem;font-size:.88rem;cursor:pointer}
+.dp-check-row input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:#111}
+.dp-actions{padding:1rem 1.25rem;border-top:1px solid var(--border);position:sticky;bottom:0;background:var(--surface);display:flex;gap:.5rem}
+.dp-actions .btn{flex:1;justify-content:center;display:flex;align-items:center}
+.badge-estado{display:inline-block;padding:.2rem .65rem;border-radius:20px;font-size:.75rem;font-weight:700;text-transform:uppercase}
+.b-completado{background:#dcfce7;color:#166534}
+.b-pendiente{background:#fef3c7;color:#92400e}
+.b-cancelado{background:#fee2e2;color:#991b1b}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:#111;color:#fff;padding:.7rem 1.2rem;
+  border-radius:var(--radius);font-size:.88rem;z-index:9999;opacity:0;transform:translateY(8px);
+  transition:all .25s;pointer-events:none;max-width:280px}
+.toast.show{opacity:1;transform:translateY(0)}
 
 /* ── Print ── */
 @media print{
   .no-print{display:none!important}
-  .app > nav,.nav{display:none!important}
+  .app > nav,.nav,.detail-panel{display:none!important}
   .main{padding:0!important;max-width:100%!important}
   .card{border:none!important;padding:0!important;margin:0!important;box-shadow:none!important}
   body{background:#fff!important;font-size:11px}
@@ -78,6 +121,8 @@ tr:nth-child(even) td{background:#fafafa}
   .res strong{font-size:20px}
   .btn{min-height:44px}
   input[type=date]{font-size:16px!important;min-height:44px;padding:10px 12px}
+  .detail-panel{position:fixed;top:0;left:0;right:0;bottom:0;width:100%!important;min-width:0!important;
+    z-index:200;border-left:none;height:100vh}
 }
 </style>
 </head>
@@ -98,74 +143,115 @@ tr:nth-child(even) td{background:#fafafa}
   <nav class="nav"></nav>
   <script src="/nav.js"></script>
 
-  <div class="main">
-    <!-- Selector de fecha -->
-    <div class="card no-print">
-      <div class="card-title">📋 Cuadros de ascenso</div>
-      <div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
-        <div>
-          <label style="font-size:11px;font-weight:700;color:var(--text3);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em">Fecha de ascenso</label>
-          <input type="date" id="fecha-cuadro" style="padding:8px 12px;font-size:14px;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text)">
+  <div class="app-body">
+    <div class="main">
+      <!-- Selector de fecha -->
+      <div class="card no-print">
+        <div class="card-title">📋 Cuadros de ascenso</div>
+        <div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text3);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em">Fecha de ascenso</label>
+            <input type="date" id="fecha-cuadro" style="padding:8px 12px;font-size:14px;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text)">
+          </div>
+          <button class="btn btn-primary" onclick="cargarCuadro()">Cargar cuadro</button>
+          <button class="btn btn-print no-print" id="btn-imprimir" style="display:none" onclick="window.print()">🖨️ Imprimir / PDF</button>
+          <div class="no-print" style="font-size:12px;color:var(--text3);align-self:center">
+            💡 Hacé clic en una fila para ver y editar los datos completos
+          </div>
         </div>
-        <button class="btn btn-primary" onclick="cargarCuadro()">Cargar cuadro</button>
-        <button class="btn btn-print no-print" id="btn-imprimir" style="display:none" onclick="window.print()">🖨️ Imprimir / PDF</button>
+      </div>
+
+      <!-- Cuadro resultado -->
+      <div id="cuadro-resultado" style="display:none">
+        <div class="card">
+          <div class="cuadro-header">
+            <div class="cuadro-titulo">🏔️ Wolfs Acatenango — Ascenso del <span id="cuadro-fecha-leg"></span></div>
+            <div class="cuadro-sub" id="cuadro-generado"></div>
+          </div>
+          <div class="resumen" id="cuadro-resumen"></div>
+          <div class="table-wrap">
+            <table id="cuadro-tabla">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Nombre</th>
+                  <th>Cabaña</th>
+                  <th>Personas</th>
+                  <th>Paquete</th>
+                  <th>Agencia</th>
+                  <th>Estado</th>
+                  <th>Notas / Alergias</th>
+                  <th>Menú especial</th>
+                </tr>
+              </thead>
+              <tbody id="cuadro-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="cuadro-empty" style="display:none">
+        <div class="card"><div class="empty">Sin reservaciones para esa fecha.</div></div>
+      </div>
+      <div id="cuadro-loading" style="display:none">
+        <div class="card"><div class="empty"><span class="spinner"></span>Cargando...</div></div>
       </div>
     </div>
 
-    <!-- Cuadro resultado -->
-    <div id="cuadro-resultado" style="display:none">
-      <div class="card">
-        <div class="cuadro-header">
-          <div class="cuadro-titulo">🏔️ Wolfs Acatenango — Ascenso del <span id="cuadro-fecha-leg"></span></div>
-          <div class="cuadro-sub" id="cuadro-generado"></div>
-        </div>
-        <div class="resumen" id="cuadro-resumen"></div>
-        <div class="table-wrap">
-          <table id="cuadro-tabla">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Nombre</th>
-                <th>Cabaña</th>
-                <th>Personas</th>
-                <th>Paquete</th>
-                <th>Agencia</th>
-                <th>Estado</th>
-                <th>Notas / Alergias</th>
-                <th>Menú especial</th>
-              </tr>
-            </thead>
-            <tbody id="cuadro-tbody"></tbody>
-          </table>
-        </div>
+    <!-- ── Panel lateral de detalle ── -->
+    <div class="detail-panel no-print" id="detail-panel">
+      <div class="dp-header">
+        <span class="dp-nombre" id="dp-nombre">—</span>
+        <button class="dp-close" onclick="cerrarPanel()" title="Cerrar">✕</button>
       </div>
-    </div>
-
-    <div id="cuadro-empty" style="display:none">
-      <div class="card"><div class="empty">Sin reservaciones para esa fecha.</div></div>
-    </div>
-    <div id="cuadro-loading" style="display:none">
-      <div class="card"><div class="empty"><span class="spinner"></span>Cargando...</div></div>
+      <div class="dp-body" id="dp-body">
+        <!-- Se llena dinámicamente -->
+      </div>
+      <div class="dp-actions" id="dp-actions" style="display:none">
+        <button class="btn btn-primary btn-sm" onclick="guardarCambios()">💾 Guardar cambios</button>
+        <button class="btn btn-sm" onclick="cerrarPanel()">Cancelar</button>
+      </div>
     </div>
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
-const SB='https://vimymnzlagzhfpbpjrvl.supabase.co';
-const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpbXltbnpsYWd6aGZwYnBqcnZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NzcwNzEsImV4cCI6MjA5MjU1MzA3MX0.7p8ob8zr2dYkAvCV-8p_Mmp65laYlsG5KwCuyj7MdLc';
-const HDR={'apikey':KEY,'Authorization':'Bearer '+KEY};
+const SB  = 'https://vimymnzlagzhfpbpjrvl.supabase.co';
+const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpbXltbnpsYWd6aGZwYnBqcnZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NzcwNzEsImV4cCI6MjA5MjU1MzA3MX0.7p8ob8zr2dYkAvCV-8p_Mmp65laYlsG5KwCuyj7MdLc';
+const HDR = {'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json','Prefer':'return=minimal'};
 
-function fmtFecha(f){if(!f)return'—';const[y,m,d]=f.split('-');return`${d}/${m}/${y}`;}
-function fmtLeg(f){if(!f)return'';const[y,m,d]=f.split('-');
-  const meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-  return`${parseInt(d)} de ${meses[parseInt(m)-1]} de ${y}`;}
+let datosActuales = [];
+let reservaEditando = null;
 
-function mananaGT(){
-  const gt=new Date(Date.now()-6*3600000);
-  const man=new Date(gt.getTime()+86400000);
-  return man.toISOString().slice(0,10);
+// Personas por defecto según cabaña
+const PERSONAS_DEFAULT = { Mixta: null, Privada: 2, Familiar: 4 };
+
+function personasDisplay(r){
+  const n = r.no_personas || 1;
+  if(r.tipo_cabana === 'Privada')  return n > 1 ? n : PERSONAS_DEFAULT.Privada;
+  if(r.tipo_cabana === 'Familiar') return n > 1 ? n : PERSONAS_DEFAULT.Familiar;
+  return n || '—';
 }
 
+// ── UTILS ────────────────────────────────────────────────────────────────────
+function fmtFecha(f){if(!f)return'—';const[y,m,d]=f.split('-');return`${d}/${m}/${y}`;}
+function fmtLeg(f){if(!f)return'';const[y,m,d]=f.split('-');
+  const M=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  return`${parseInt(d)} de ${M[parseInt(m)-1]} de ${y}`;}
+function mananaGT(){
+  const gt=new Date(Date.now()-6*3600000);
+  return new Date(gt.getTime()+86400000).toISOString().slice(0,10);
+}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function toast(msg,dur=2800){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),dur);
+}
+
+// ── LOGIN ────────────────────────────────────────────────────────────────────
 function verificarPwd(){
   const pw=document.getElementById('pwd-input').value;
   const user=authLogin(pw);
@@ -180,10 +266,12 @@ function verificarPwd(){
   document.getElementById('fecha-cuadro').value=mananaGT();
 }
 
+// ── CARGAR CUADRO ────────────────────────────────────────────────────────────
 async function cargarCuadro(){
   const fecha=document.getElementById('fecha-cuadro').value;
   if(!fecha){alert('Seleccioná una fecha.');return;}
 
+  cerrarPanel();
   document.getElementById('cuadro-resultado').style.display='none';
   document.getElementById('cuadro-empty').style.display='none';
   document.getElementById('cuadro-loading').style.display='block';
@@ -192,52 +280,30 @@ async function cargarCuadro(){
   try{
     const r=await fetch(`${SB}/rest/v1/reservaciones?fecha_ascenso=eq.${fecha}&estado_pago=neq.Cancelado&select=*&order=tipo_cabana.asc`,{headers:HDR});
     const raw=await r.json();
-
-    // Ordenar Mixta → Privada → Familiar
     const orden={Mixta:1,Privada:2,Familiar:3};
-    const datos=raw.sort((a,b)=>(orden[a.tipo_cabana]||4)-(orden[b.tipo_cabana]||4));
+    datosActuales=raw.sort((a,b)=>(orden[a.tipo_cabana]||4)-(orden[b.tipo_cabana]||4));
 
     document.getElementById('cuadro-loading').style.display='none';
 
-    if(!datos.length){
+    if(!datosActuales.length){
       document.getElementById('cuadro-empty').style.display='block';
       return;
     }
 
-    // Resumen
-    const totalMixta=datos.filter(r=>r.tipo_cabana==='Mixta').reduce((s,r)=>s+(r.no_personas||0),0);
-    const totalPrivada=datos.filter(r=>r.tipo_cabana==='Privada').length;
-    const totalFamiliar=datos.filter(r=>r.tipo_cabana==='Familiar').length;
+    // Resumen — personas Mixta usa display con default
+    const totalMixta  = datosActuales.filter(r=>r.tipo_cabana==='Mixta').reduce((s,r)=>s+personasDisplay(r),0);
+    const totalPrivada = datosActuales.filter(r=>r.tipo_cabana==='Privada').reduce((s,r)=>s+personasDisplay(r),0);
+    const totalFamiliar = datosActuales.filter(r=>r.tipo_cabana==='Familiar').reduce((s,r)=>s+personasDisplay(r),0);
 
     document.getElementById('cuadro-fecha-leg').textContent=fmtLeg(fecha);
-    document.getElementById('cuadro-generado').textContent=`Generado el ${fmtFecha(new Date().toISOString().slice(0,10))} · ${datos.length} reservación(es)`;
+    document.getElementById('cuadro-generado').textContent=
+      `Generado el ${fmtFecha(new Date().toISOString().slice(0,10))} · ${datosActuales.length} reservación(es)`;
     document.getElementById('cuadro-resumen').innerHTML=`
       <div class="res res-m"><strong>${totalMixta}</strong><span>personas Mixta</span></div>
-      <div class="res res-p"><strong>${totalPrivada}</strong><span>cab. Privada</span></div>
-      <div class="res res-f"><strong>${totalFamiliar}</strong><span>cab. Familiar</span></div>`;
+      <div class="res res-p"><strong>${totalPrivada}</strong><span>personas Privada</span></div>
+      <div class="res res-f"><strong>${totalFamiliar}</strong><span>personas Familiar</span></div>`;
 
-    const colCab=c=>c==='Mixta'?'#dbeafe':c==='Privada'?'#fce7f3':'#d1fae5';
-    const colTxt=c=>c==='Mixta'?'#1e40af':c==='Privada'?'#9d174d':'#065f46';
-
-    document.getElementById('cuadro-tbody').innerHTML=datos.map((r,i)=>{
-      const nVgn=(r.cantidad_veganos||0)+(r.es_vegano?1:0);
-      const nVeg=(r.cantidad_vegetarianos||0)+(r.es_vegetariano?1:0);
-      const menus=[nVgn?`🌿 Vegano x${nVgn}`:'',nVeg?`🥦 Veg. x${nVeg}`:''].filter(Boolean).join(' ');
-      const notasAler=[r.alergias,r.notas].filter(Boolean).join(' | ');
-      const estadoColor=r.estado_pago==='Completado'?'#065f46':'#92400e';
-      return`<tr>
-        <td style="text-align:center;color:#888;font-size:11px">${i+1}</td>
-        <td><strong>${r.nombre||'—'}</strong></td>
-        <td style="background:${colCab(r.tipo_cabana)};color:${colTxt(r.tipo_cabana)};font-weight:700;text-align:center;white-space:nowrap">${r.tipo_cabana||'—'}</td>
-        <td style="text-align:center">${r.no_personas||'—'}</td>
-        <td style="text-align:center">${r.paquete||'—'}</td>
-        <td style="font-size:11px">${r.agencia||'—'}</td>
-        <td style="text-align:center;font-weight:600;color:${estadoColor};white-space:nowrap">${r.estado_pago||'—'}</td>
-        <td class="${notasAler?'alergia-cell':''}" style="font-size:11px">${notasAler||'—'}</td>
-        <td class="${menus?'menu-cell':''}" style="font-size:11px">${menus||'—'}</td>
-      </tr>`;
-    }).join('');
-
+    renderTabla();
     document.getElementById('cuadro-resultado').style.display='block';
     document.getElementById('btn-imprimir').style.display='inline-block';
 
@@ -247,6 +313,194 @@ async function cargarCuadro(){
   }
 }
 
+function renderTabla(){
+  const colCab=c=>c==='Mixta'?'#dbeafe':c==='Privada'?'#fce7f3':'#d1fae5';
+  const colTxt=c=>c==='Mixta'?'#1e40af':c==='Privada'?'#9d174d':'#065f46';
+
+  document.getElementById('cuadro-tbody').innerHTML = datosActuales.map((r,i)=>{
+    const nVgn=(r.cantidad_veganos||0)+(r.es_vegano?1:0);
+    const nVeg=(r.cantidad_vegetarianos||0)+(r.es_vegetariano?1:0);
+    const menus=[nVgn?`🌿 Vegano x${nVgn}`:'',nVeg?`🥦 Veg. x${nVeg}`:''].filter(Boolean).join(' ');
+    const notasAler=[r.alergias,r.notas].filter(Boolean).join(' | ');
+    const estadoColor=r.estado_pago==='Completado'?'#065f46':'#92400e';
+    const personas=personasDisplay(r);
+    const esDefault=(r.tipo_cabana!=='Mixta')&&((r.no_personas||1)<=1);
+
+    return`<tr class="fila-reserva" data-id="${r.id}" onclick="abrirPanel(${r.id})">
+      <td style="text-align:center;color:#888;font-size:11px">${i+1}</td>
+      <td><strong>${esc(r.nombre||'—')}</strong></td>
+      <td style="background:${colCab(r.tipo_cabana)};color:${colTxt(r.tipo_cabana)};font-weight:700;text-align:center;white-space:nowrap">${r.tipo_cabana||'—'}</td>
+      <td style="text-align:center" class="${esDefault?'personas-default':''}" title="${esDefault?'Valor por defecto — editá para personalizar':''}">${personas}</td>
+      <td style="text-align:center">${esc(r.paquete||'—')}</td>
+      <td style="font-size:11px">${esc(r.agencia||'—')}</td>
+      <td style="text-align:center;font-weight:600;color:${estadoColor};white-space:nowrap">${r.estado_pago||'—'}</td>
+      <td class="${notasAler?'alergia-cell':''}" style="font-size:11px">${esc(notasAler||'—')}</td>
+      <td class="${menus?'menu-cell':''}" style="font-size:11px">${menus||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── PANEL LATERAL ────────────────────────────────────────────────────────────
+function abrirPanel(id){
+  const r = datosActuales.find(x=>x.id===id);
+  if(!r) return;
+  reservaEditando = {...r};
+
+  // Marcar fila seleccionada
+  document.querySelectorAll('.fila-reserva').forEach(el=>{
+    el.classList.toggle('selected', parseInt(el.dataset.id)===id);
+  });
+
+  document.getElementById('dp-nombre').textContent = r.nombre || '—';
+  document.getElementById('dp-actions').style.display = 'flex';
+
+  const esDefault=(r.tipo_cabana!=='Mixta')&&((r.no_personas||1)<=1);
+  const personasVal = esDefault ? PERSONAS_DEFAULT[r.tipo_cabana] : (r.no_personas||1);
+
+  document.getElementById('dp-body').innerHTML = `
+
+    <!-- Info de solo lectura -->
+    <div class="dp-section">
+      <div class="dp-section-title">Datos de la reservación</div>
+      <div class="dp-field"><label>Nombre</label><div class="dp-val">${esc(r.nombre||'—')}</div></div>
+      <div class="dp-field"><label>Fecha de ascenso</label><div class="dp-val">${r.fecha_ascenso||'—'}</div></div>
+      <div class="dp-field"><label>Cabaña</label><div class="dp-val">${r.tipo_cabana||'—'}</div></div>
+      <div class="dp-field"><label>Agencia</label><div class="dp-val">${esc(r.agencia||'—')}</div></div>
+      <div class="dp-field"><label>Tipo de pago</label><div class="dp-val">${esc(r.tipo_pago||'—')}</div></div>
+      <div class="dp-field"><label>Precio</label><div class="dp-val">Q${parseFloat(r.precio||0).toFixed(2)}</div></div>
+      <div class="dp-field"><label>Correo</label><div class="dp-val ${!r.correo?'empty':''}">${esc(r.correo||'No registrado')}</div></div>
+      <div class="dp-field"><label>Teléfono</label><div class="dp-val ${!r.telefono?'empty':''}">${esc(r.telefono||'No registrado')}</div></div>
+      <div class="dp-field"><label>Identificación</label><div class="dp-val ${!r.identificacion?'empty':''}">${esc(r.identificacion||'No registrado')}</div></div>
+      <div class="dp-field"><label>Estado</label>
+        <div class="dp-val">
+          <span class="badge-estado ${(r.estado_pago||'').toLowerCase()==='completado'?'b-completado':(r.estado_pago||'').toLowerCase()==='cancelado'?'b-cancelado':'b-pendiente'}">
+            ${r.estado_pago||'—'}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Campos editables -->
+    <div class="dp-section">
+      <div class="dp-section-title">✏️ Editar</div>
+
+      <div class="dp-field">
+        <label>Personas ${r.tipo_cabana!=='Mixta'?`<span style="color:#f59e0b;font-style:italic">(default ${PERSONAS_DEFAULT[r.tipo_cabana]} por tipo)</span>`:''}</label>
+        <input class="dp-input dp-input-sm" type="number" id="edit-personas" min="1" max="30" value="${personasVal}">
+      </div>
+
+      <div class="dp-field">
+        <label>Paquete</label>
+        <select class="dp-input" id="edit-paquete">
+          <option value="Trekking" ${r.paquete==='Trekking'?'selected':''}>Trekking</option>
+          <option value="4x4" ${r.paquete==='4x4'?'selected':''}>4x4</option>
+        </select>
+      </div>
+
+      <div class="dp-field">
+        <label>Estado de pago</label>
+        <select class="dp-input" id="edit-estado">
+          <option value="Pendiente"  ${r.estado_pago==='Pendiente' ?'selected':''}>Pendiente</option>
+          <option value="Completado" ${r.estado_pago==='Completado'?'selected':''}>Completado</option>
+          <option value="Cancelado"  ${r.estado_pago==='Cancelado' ?'selected':''}>Cancelado</option>
+        </select>
+      </div>
+
+      <div class="dp-field">
+        <label>Notas</label>
+        <textarea class="dp-input" id="edit-notas" rows="2" style="resize:vertical">${esc(r.notas||'')}</textarea>
+      </div>
+
+      <div class="dp-field">
+        <label>Alergias</label>
+        <input class="dp-input" type="text" id="edit-alergias" value="${esc(r.alergias||'')}" placeholder="Ninguna">
+      </div>
+
+      <div class="dp-field">
+        <label>Menús especiales</label>
+        <label class="dp-check-row">
+          <input type="checkbox" id="edit-vegano" ${r.es_vegano?'checked':''}> Menú vegano
+        </label>
+        <label class="dp-check-row">
+          <input type="checkbox" id="edit-vegetariano" ${r.es_vegetariano?'checked':''}> Menú vegetariano
+        </label>
+        <div style="display:flex;gap:.75rem;margin-top:.4rem">
+          <div class="dp-field" style="margin:0;flex:1">
+            <label>Cant. veganos</label>
+            <input class="dp-input" type="number" id="edit-cant-vgn" min="0" max="20" value="${r.cantidad_veganos||0}" style="padding:.35rem .6rem">
+          </div>
+          <div class="dp-field" style="margin:0;flex:1">
+            <label>Cant. vegetarianos</label>
+            <input class="dp-input" type="number" id="edit-cant-veg" min="0" max="20" value="${r.cantidad_vegetarianos||0}" style="padding:.35rem .6rem">
+          </div>
+        </div>
+      </div>
+
+      <label class="dp-check-row" style="margin-top:.25rem">
+        <input type="checkbox" id="edit-cumple" ${r.es_cumpleanos?'checked':''}> 🎂 Es cumpleaños
+      </label>
+    </div>
+  `;
+
+  document.getElementById('detail-panel').classList.add('open');
+}
+
+function cerrarPanel(){
+  document.getElementById('detail-panel').classList.remove('open');
+  document.querySelectorAll('.fila-reserva').forEach(el=>el.classList.remove('selected'));
+  reservaEditando = null;
+}
+
+// ── GUARDAR CAMBIOS ───────────────────────────────────────────────────────────
+async function guardarCambios(){
+  if(!reservaEditando) return;
+
+  const update = {
+    no_personas:          parseInt(document.getElementById('edit-personas').value)||1,
+    paquete:              document.getElementById('edit-paquete').value,
+    estado_pago:          document.getElementById('edit-estado').value,
+    notas:                document.getElementById('edit-notas').value.trim()||null,
+    alergias:             document.getElementById('edit-alergias').value.trim()||null,
+    es_vegano:            document.getElementById('edit-vegano').checked,
+    es_vegetariano:       document.getElementById('edit-vegetariano').checked,
+    cantidad_veganos:     parseInt(document.getElementById('edit-cant-vgn').value)||0,
+    cantidad_vegetarianos:parseInt(document.getElementById('edit-cant-veg').value)||0,
+    es_cumpleanos:        document.getElementById('edit-cumple').checked,
+  };
+
+  const btn = document.querySelector('#dp-actions .btn-primary');
+  btn.textContent='Guardando...';btn.disabled=true;
+
+  try{
+    const r = await fetch(`${SB}/rest/v1/reservaciones?id=eq.${reservaEditando.id}`,{
+      method:'PATCH',
+      headers:{...HDR,'Prefer':'return=minimal'},
+      body:JSON.stringify(update),
+    });
+
+    if(r.ok||r.status===204){
+      // Actualizar datos en memoria
+      const idx = datosActuales.findIndex(x=>x.id===reservaEditando.id);
+      if(idx>=0) datosActuales[idx]={...datosActuales[idx],...update};
+      renderTabla();
+      // Actualizar fila seleccionada
+      document.querySelectorAll('.fila-reserva').forEach(el=>{
+        if(parseInt(el.dataset.id)===reservaEditando.id) el.classList.add('selected');
+      });
+      reservaEditando={...reservaEditando,...update};
+      toast('✓ Cambios guardados');
+    } else {
+      const err=await r.json().catch(()=>({}));
+      toast('Error: '+(err.message||r.status));
+    }
+  }catch(e){
+    toast('Error de red: '+e.message);
+  }finally{
+    btn.textContent='💾 Guardar cambios';btn.disabled=false;
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
 (function(){
   const u=authUser();
   if(u&&u.acceso.includes('cuadros')){
