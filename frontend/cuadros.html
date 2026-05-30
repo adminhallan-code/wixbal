@@ -185,6 +185,7 @@ tr.fila-reserva.selected td{background:#e8f0fe!important;outline:2px solid #3b82
                 </tr>
               </thead>
               <tbody id="cuadro-tbody"></tbody>
+            <tfoot id="cuadro-tfoot"></tfoot>
             </table>
           </div>
         </div>
@@ -290,20 +291,12 @@ async function cargarCuadro(){
       return;
     }
 
-    // Resumen — personas Mixta usa display con default
-    const totalMixta  = datosActuales.filter(r=>r.tipo_cabana==='Mixta').reduce((s,r)=>s+personasDisplay(r),0);
-    const totalPrivada = datosActuales.filter(r=>r.tipo_cabana==='Privada').reduce((s,r)=>s+personasDisplay(r),0);
-    const totalFamiliar = datosActuales.filter(r=>r.tipo_cabana==='Familiar').reduce((s,r)=>s+personasDisplay(r),0);
-
     document.getElementById('cuadro-fecha-leg').textContent=fmtLeg(fecha);
     document.getElementById('cuadro-generado').textContent=
       `Generado el ${fmtFecha(new Date().toISOString().slice(0,10))} · ${datosActuales.length} reservación(es)`;
-    document.getElementById('cuadro-resumen').innerHTML=`
-      <div class="res res-m"><strong>${totalMixta}</strong><span>personas Mixta</span></div>
-      <div class="res res-p"><strong>${totalPrivada}</strong><span>personas Privada</span></div>
-      <div class="res res-f"><strong>${totalFamiliar}</strong><span>personas Familiar</span></div>`;
 
     renderTabla();
+    renderResumen();
     document.getElementById('cuadro-resultado').style.display='block';
     document.getElementById('btn-imprimir').style.display='inline-block';
 
@@ -311,6 +304,17 @@ async function cargarCuadro(){
     document.getElementById('cuadro-loading').style.display='none';
     alert('Error cargando datos: '+e.message);
   }
+}
+
+function renderResumen(){
+  if(!datosActuales.length) return;
+  const totalMixta   = datosActuales.filter(r=>r.tipo_cabana==='Mixta').reduce((s,r)=>s+personasDisplay(r),0);
+  const totalPrivada = datosActuales.filter(r=>r.tipo_cabana==='Privada').reduce((s,r)=>s+personasDisplay(r),0);
+  const totalFamiliar= datosActuales.filter(r=>r.tipo_cabana==='Familiar').reduce((s,r)=>s+personasDisplay(r),0);
+  document.getElementById('cuadro-resumen').innerHTML=`
+    <div class="res res-m"><strong>${totalMixta}</strong><span>personas Mixta</span></div>
+    <div class="res res-p"><strong>${totalPrivada}</strong><span>personas Privada</span></div>
+    <div class="res res-f"><strong>${totalFamiliar}</strong><span>personas Familiar</span></div>`;
 }
 
 function renderTabla(){
@@ -338,6 +342,20 @@ function renderTabla(){
       <td class="${menus?'menu-cell':''}" style="font-size:11px">${menus||'—'}</td>
     </tr>`;
   }).join('');
+
+  // Fila de totales al final de la tabla
+  const totalMixta   = datosActuales.filter(r=>r.tipo_cabana==='Mixta').reduce((s,r)=>s+personasDisplay(r),0);
+  const totalPrivada = datosActuales.filter(r=>r.tipo_cabana==='Privada').reduce((s,r)=>s+personasDisplay(r),0);
+  const totalFamiliar= datosActuales.filter(r=>r.tipo_cabana==='Familiar').reduce((s,r)=>s+personasDisplay(r),0);
+  const totalGeneral = totalMixta + totalPrivada + totalFamiliar;
+  document.getElementById('cuadro-tfoot').innerHTML=`
+    <tr style="background:#1a1a2e;color:#fff;font-weight:700;font-size:12px">
+      <td colspan="3" style="text-align:right;padding:8px 10px;border:1px solid #000;text-transform:uppercase;letter-spacing:.04em">🏕 Total Wolfs</td>
+      <td style="text-align:center;padding:8px 10px;font-size:18px;border:1px solid #000">${totalGeneral}</td>
+      <td colspan="5" style="padding:8px 10px;border:1px solid #000;font-size:11px;color:#ccc">
+        personas · Mixta: ${totalMixta} &nbsp;·&nbsp; Privada: ${totalPrivada} &nbsp;·&nbsp; Familiar: ${totalFamiliar}
+      </td>
+    </tr>`;
 }
 
 // ── PANEL LATERAL ────────────────────────────────────────────────────────────
@@ -483,6 +501,7 @@ async function guardarCambios(){
       const idx = datosActuales.findIndex(x=>x.id===reservaEditando.id);
       if(idx>=0) datosActuales[idx]={...datosActuales[idx],...update};
       renderTabla();
+      renderResumen();
       // Actualizar fila seleccionada
       document.querySelectorAll('.fila-reserva').forEach(el=>{
         if(parseInt(el.dataset.id)===reservaEditando.id) el.classList.add('selected');
