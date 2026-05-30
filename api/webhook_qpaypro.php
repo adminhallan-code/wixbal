@@ -167,6 +167,7 @@ if (($link['fecha_ascenso'] ?? '') === $manana_gt) {
         "🏕 Cabaña: " . ($link['tipo_cabana'] ?? '—') . " · " . ($link['paquete'] ?? '—') . "\n" .
         "💰 Precio: Q" . number_format((float)($link['precio'] ?? 0), 2)
     );
+    enviar_cuadro_telegram($manana_gt);
 }
 
 // ── Email interno de notificación ────────────────────────────────────────────

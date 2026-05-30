@@ -80,8 +80,10 @@ if ($fecha_ascenso === $manana_gt) {
         "❌ <b>Cancelación en el cuadro de mañana</b>\n" .
         "👤 Nombre: " . htmlspecialchars($nombre) . "\n" .
         "🏕 Cabaña: $tipo_cabana · $paquete" .
-        ($motivo ? "\n📝 Motivo: " . htmlspecialchars($motivo) : '')
+        ($motivo ? "\n📝 Motivo: " . htmlspecialchars($motivo) : '') .
+        ($cancelado_por ? "\n🧑‍💼 Cancelado por: " . htmlspecialchars($cancelado_por) : '')
     );
+    enviar_cuadro_telegram($manana_gt);
 }
 
 // Sync Amelia

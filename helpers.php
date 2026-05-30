@@ -615,6 +615,50 @@ function enviar_confirmacion_cliente(string $correo, string $nombre, string $tip
     curl_close($ch);
 }
 
+// ── Telegram: generar y enviar cuadro actualizado ────────────────────────────
+
+/**
+ * Genera la imagen PNG del cuadro de una fecha y la manda al grupo CUADROS.
+ * Usado tras cancelaciones, reprogramaciones y pagos que afectan mañana.
+ */
+function enviar_cuadro_telegram(string $fecha): void {
+    $res  = sb_get(
+        "reservaciones?fecha_ascenso=eq.{$fecha}&estado_pago=neq.Cancelado"
+        . "&select=nombre,tipo_cabana,no_personas,paquete,agencia,alergias,notas,"
+        . "es_vegano,es_vegetariano,cantidad_veganos,cantidad_vegetarianos,es_cumpleanos,estado_pago"
+        . "&order=tipo_cabana.asc"
+    );
+    $rows = $res['body'] ?? [];
+
+    $totales = ['Mixta' => 0, 'Privada' => 0, 'Familiar' => 0];
+    foreach ($rows as $r) {
+        $cab = $r['tipo_cabana'] ?? '';
+        $n   = (int)($r['no_personas'] ?? 1);
+        if ($cab === 'Privada'  && $n <= 1) $n = 2;
+        if ($cab === 'Familiar' && $n <= 1) $n = 4;
+        $totales[$cab] = ($totales[$cab] ?? 0) + $n;
+    }
+    $total_g = array_sum($totales);
+
+    $meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    [$y, $m, $d] = explode('-', $fecha);
+    $fecha_leg = (int)$d . ' de ' . $meses[(int)$m - 1] . ' de ' . $y;
+
+    if (empty($rows)) {
+        telegram_notify("📋 <b>Cuadro actualizado — {$fecha_leg}</b>\n\nSin reservaciones para este día.");
+        return;
+    }
+
+    $img_path = generar_cuadro_png($fecha, $fecha_leg, $rows, $totales);
+    $caption  =
+        "📋 <b>Cuadro actualizado — {$fecha_leg}</b>\n" .
+        "👥 <b>{$total_g} personas</b>  ·  " .
+        "Mixta: {$totales['Mixta']}  ·  Privada: {$totales['Privada']}  ·  Familiar: {$totales['Familiar']}\n" .
+        "📌 " . count($rows) . " reservacion(es)";
+    telegram_send_photo($img_path, $caption);
+    @unlink($img_path);
+}
+
 // ── Telegram: enviar foto ─────────────────────────────────────────────────────
 
 /**

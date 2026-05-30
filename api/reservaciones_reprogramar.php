@@ -40,16 +40,20 @@ $manana_gt = gmdate('Y-m-d', time() + (-6 * 3600) + 86400);
 if ($fecha_vieja === $manana_gt) {
     telegram_notify(
         "🔄 <b>Reprogramación — sale del cuadro de mañana</b>\n" .
-        "👤 " . htmlspecialchars($nombre_rv) . "\n" .
+        "👤 Nombre: " . htmlspecialchars($nombre_rv) . "\n" .
         "🏕 $tipo_cabana · $paquete_rv\n" .
-        "📅 Nueva fecha: $nueva_fecha"
+        "📅 Nueva fecha: $nueva_fecha" .
+        ($reprogramado_por ? "\n🧑‍💼 Reprogramado por: " . htmlspecialchars($reprogramado_por) : '')
     );
+    enviar_cuadro_telegram($manana_gt);
 } elseif ($nueva_fecha === $manana_gt) {
     telegram_notify(
         "🔄 <b>Reprogramación — entra al cuadro de mañana</b>\n" .
-        "👤 " . htmlspecialchars($nombre_rv) . "\n" .
-        "🏕 $tipo_cabana · $paquete_rv"
+        "👤 Nombre: " . htmlspecialchars($nombre_rv) . "\n" .
+        "🏕 $tipo_cabana · $paquete_rv" .
+        ($reprogramado_por ? "\n🧑‍💼 Reprogramado por: " . htmlspecialchars($reprogramado_por) : '')
     );
+    enviar_cuadro_telegram($manana_gt);
 }
 
 // Sincronizar Amelia
