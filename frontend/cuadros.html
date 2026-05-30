@@ -155,8 +155,10 @@ tr.fila-reserva.selected td{background:#e8f0fe!important;outline:2px solid #3b82
           </div>
           <button class="btn btn-primary" onclick="cargarCuadro()">Cargar cuadro</button>
           <button class="btn btn-print no-print" id="btn-imprimir" style="display:none" onclick="window.print()">🖨️ Imprimir / PDF</button>
-          <div class="no-print" style="font-size:12px;color:var(--text3);align-self:center">
-            💡 Hacé clic en una fila para ver y editar los datos completos
+          <button class="btn no-print" id="btn-telegram" style="display:none;background:#229ED9;border-color:#229ED9;color:#fff" onclick="enviarFotoTelegram()">📸 Enviar al grupo</button>
+          <div class="no-print" style="display:flex;flex-direction:column;gap:2px;align-self:center">
+            <div style="font-size:12px;color:var(--text3)">💡 Hacé clic en una fila para ver y editar los datos completos</div>
+            <div id="telegram-ultimo-envio" style="font-size:11px;color:#229ED9;display:none"></div>
           </div>
         </div>
       </div>
@@ -301,6 +303,12 @@ async function cargarCuadro(){
     renderResumen();
     document.getElementById('cuadro-resultado').style.display='block';
     document.getElementById('btn-imprimir').style.display='inline-block';
+    document.getElementById('btn-telegram').style.display='inline-block';
+    // Mostrar último envío guardado para esta fecha
+    const ultimoEnvio = localStorage.getItem('tg_envio_' + fecha);
+    const divEnvio = document.getElementById('telegram-ultimo-envio');
+    if(ultimoEnvio){ divEnvio.textContent='📤 Último envío: ' + ultimoEnvio; divEnvio.style.display='block'; }
+    else { divEnvio.style.display='none'; }
 
   }catch(e){
     document.getElementById('cuadro-loading').style.display='none';
@@ -518,6 +526,40 @@ async function guardarCambios(){
     toast('Error de red: '+e.message);
   }finally{
     btn.textContent='💾 Guardar cambios';btn.disabled=false;
+  }
+}
+
+// ── ENVIAR FOTO AL GRUPO TELEGRAM ────────────────────────────────────────────
+async function enviarFotoTelegram(){
+  const fecha = document.getElementById('fecha-cuadro').value;
+  if(!fecha || !datosActuales.length){ toast('Cargá el cuadro primero'); return; }
+
+  const btn = document.getElementById('btn-telegram');
+  const orig = btn.textContent;
+  btn.textContent = '⏳ Generando imagen...';
+  btn.disabled = true;
+
+  try{
+    const res = await fetch(`/api/cron/telegram-cuadro?fecha=${fecha}`);
+    const data = await res.json();
+
+    if(res.ok && data.ok){
+      const now = new Date();
+      const hora = now.toLocaleTimeString('es-GT',{hour:'2-digit',minute:'2-digit'});
+      const label = `📤 Último envío: ${hora} — ${data.reservaciones} reserv. · ${data.total_personas} personas`;
+      localStorage.setItem('tg_envio_' + fecha, hora + ' — ' + data.reservaciones + ' reserv. · ' + data.total_personas + ' personas');
+      const div = document.getElementById('telegram-ultimo-envio');
+      div.textContent = label;
+      div.style.display = 'block';
+      toast('✅ Cuadro enviado al grupo 📸');
+    } else {
+      toast('Error: ' + (data.message || data.error || 'desconocido'));
+    }
+  }catch(e){
+    toast('Error de red: ' + e.message);
+  }finally{
+    btn.textContent = orig;
+    btn.disabled = false;
   }
 }
 

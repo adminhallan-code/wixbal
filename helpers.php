@@ -605,3 +605,215 @@ function enviar_confirmacion_cliente(string $correo, string $nombre, string $tip
     curl_exec($ch);
     curl_close($ch);
 }
+
+// ── Telegram: enviar foto ─────────────────────────────────────────────────────
+
+/**
+ * Envía un archivo de imagen PNG al grupo de Telegram y lo fija (notifica a todos).
+ * Devuelve ['ok'=>true,'message_id'=>N] o ['error'=>'...'].
+ */
+function telegram_send_photo(string $img_path, string $caption): array {
+    if (!defined('TELEGRAM_TOKEN') || !TELEGRAM_TOKEN) return ['error' => 'no configurado'];
+    if (!defined('TELEGRAM_CHAT_ID') || !TELEGRAM_CHAT_ID) return ['error' => 'no configurado'];
+
+    $url   = 'https://api.telegram.org/bot' . TELEGRAM_TOKEN . '/sendPhoto';
+    $cfile = new CURLFile($img_path, 'image/png', 'cuadro.png');
+    $ch    = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => [
+            'chat_id'    => TELEGRAM_CHAT_ID,
+            'photo'      => $cfile,
+            'caption'    => $caption,
+            'parse_mode' => 'HTML',
+        ],
+        CURLOPT_TIMEOUT => 30,
+    ]);
+    $res = curl_exec($ch);
+    $err = curl_error($ch);
+    curl_close($ch);
+
+    if ($err) { error_log("[TELEGRAM FOTO] curl: $err"); return ['error' => $err]; }
+    $body = json_decode($res, true);
+    if (!($body['ok'] ?? false)) {
+        error_log('[TELEGRAM FOTO] ' . $res);
+        return ['error' => $body['description'] ?? 'unknown'];
+    }
+    $msg_id = $body['result']['message_id'] ?? null;
+
+    // Fijar el mensaje para notificar a todos los miembros
+    if ($msg_id) {
+        $pin = curl_init('https://api.telegram.org/bot' . TELEGRAM_TOKEN . '/pinChatMessage');
+        curl_setopt_array($pin, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => json_encode([
+                'chat_id'              => TELEGRAM_CHAT_ID,
+                'message_id'           => $msg_id,
+                'disable_notification' => false,
+            ]),
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+            CURLOPT_TIMEOUT    => 10,
+        ]);
+        curl_exec($pin);
+        curl_close($pin);
+    }
+
+    return ['ok' => true, 'message_id' => $msg_id];
+}
+
+/**
+ * Genera una imagen PNG del cuadro de ascenso usando PHP GD.
+ * Devuelve el path del archivo temporal generado.
+ */
+function generar_cuadro_png(string $fecha_str, string $fecha_leg, array $rows, array $totales): string {
+    $W     = 960;
+    $row_h = 32;
+    $n     = count($rows);
+    $H     = 72 + 62 + 34 + ($n * $row_h) + 36;
+
+    $img = imagecreatetruecolor($W, $H);
+
+    $c = [
+        'bg'      => imagecolorallocate($img, 247, 247, 247),
+        'navy'    => imagecolorallocate($img,  26,  26,  46),
+        'white'   => imagecolorallocate($img, 255, 255, 255),
+        'lgray'   => imagecolorallocate($img, 250, 250, 250),
+        'border'  => imagecolorallocate($img, 200, 200, 200),
+        'black'   => imagecolorallocate($img,   0,   0,   0),
+        'text'    => imagecolorallocate($img,  17,  17,  17),
+        'text2'   => imagecolorallocate($img,  85,  85,  85),
+        'text3'   => imagecolorallocate($img, 136, 136, 136),
+        'mix_bg'  => imagecolorallocate($img, 219, 234, 254),
+        'mix_t'   => imagecolorallocate($img,  30,  64, 175),
+        'pri_bg'  => imagecolorallocate($img, 252, 231, 243),
+        'pri_t'   => imagecolorallocate($img, 157,  23,  77),
+        'fam_bg'  => imagecolorallocate($img, 209, 250, 229),
+        'fam_t'   => imagecolorallocate($img,   6,  95,  70),
+        'warn_bg' => imagecolorallocate($img, 254, 243, 199),
+        'warn_t'  => imagecolorallocate($img, 146,  64,  14),
+        'ok_t'    => imagecolorallocate($img,   6,  95,  70),
+        'menu_t'  => imagecolorallocate($img,  22, 101,  52),
+        'nav_sub' => imagecolorallocate($img, 160, 160, 200),
+    ];
+
+    imagefilledrectangle($img, 0, 0, $W-1, $H-1, $c['bg']);
+
+    // Buscar fuente TTF para mejor calidad visual
+    $ttf = null;
+    foreach ([
+        '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+        '/usr/share/fonts/dejavu/DejaVuSans.ttf',
+        '/usr/share/fonts/TTF/DejaVuSans.ttf',
+        '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
+    ] as $p) { if (file_exists($p)) { $ttf = $p; break; } }
+
+    $txt = function(int $x, int $y, string $s, $col, int $sz = 11) use ($img, $ttf) {
+        if ($ttf && function_exists('imagettftext')) {
+            imagettftext($img, $sz, 0, $x, $y + $sz, $col, $ttf, $s);
+        } else {
+            $f = $sz >= 14 ? 5 : ($sz >= 11 ? 4 : ($sz >= 9 ? 3 : 2));
+            imagestring($img, $f, $x, $y, $s, $col);
+        }
+    };
+
+    // Encabezado
+    imagefilledrectangle($img, 0, 0, $W-1, 71, $c['navy']);
+    $txt(20, 12, "Wolfs Acatenango — Ascenso del {$fecha_leg}", $c['white'], 15);
+    $txt(20, 40, count($rows) . " reservaciones  |  generado " . gmdate('d/m/Y H:i') . " GT", $c['nav_sub'], 10);
+
+    // Estadísticas
+    $total_g = array_sum($totales);
+    $sw = 210; $sh = 48; $sg = 10;
+    $stx = (int)(($W - (4*$sw + 3*$sg)) / 2);
+    $sy  = 82;
+    foreach ([
+        ['Mixta',    $totales['Mixta'],    'mix_bg', 'mix_t'],
+        ['Privada',  $totales['Privada'],  'pri_bg', 'pri_t'],
+        ['Familiar', $totales['Familiar'], 'fam_bg', 'fam_t'],
+        ['TOTAL',    $total_g,             'navy',   'white'],
+    ] as $i => [$lbl, $val, $bk, $tk]) {
+        $sx = $stx + $i*($sw+$sg);
+        imagefilledrectangle($img, $sx, $sy, $sx+$sw-1, $sy+$sh-1, $c[$bk]);
+        imagerectangle($img, $sx, $sy, $sx+$sw-1, $sy+$sh-1, $c['border']);
+        $txt($sx+10, $sy+4,  (string)$val, $c[$tk], 16);
+        $txt($sx+10, $sy+28, $lbl,         $c[$tk], 10);
+    }
+
+    // Cabecera tabla
+    $thy = 144;
+    imagefilledrectangle($img, 0, $thy, $W-1, $thy+33, $c['navy']);
+    // anchos: 32+185+78+48+72+112+92+136+205 = 960
+    $col_defs = [
+        ['#',32],['NOMBRE',185],['CABANA',78],['PERS',48],
+        ['PAQUETE',72],['AGENCIA',112],['ESTADO',92],['NOTAS',136],['ALERGIA/MENU',205],
+    ];
+    $cx = 0;
+    foreach ($col_defs as [$lbl, $cw]) {
+        imageline($img, $cx, $thy, $cx, $thy+33, $c['black']);
+        $txt($cx+4, $thy+9, $lbl, $c['white'], 9);
+        $cx += $cw;
+    }
+    imageline($img, $W-1, $thy, $W-1, $thy+33, $c['black']);
+
+    // Filas
+    $ry = $thy + 34;
+    foreach ($rows as $idx => $r) {
+        $rbg = ($idx % 2 === 0) ? $c['white'] : $c['lgray'];
+        $cab = $r['tipo_cabana'] ?? '';
+        $np  = (int)($r['no_personas'] ?? 1);
+        if ($cab === 'Privada'  && $np <= 1) $np = 2;
+        if ($cab === 'Familiar' && $np <= 1) $np = 4;
+
+        $nVgn  = (int)($r['cantidad_veganos'] ?? 0) + ($r['es_vegano'] ? 1 : 0);
+        $nVeg  = (int)($r['cantidad_vegetarianos'] ?? 0) + ($r['es_vegetariano'] ? 1 : 0);
+        $cumple = $r['es_cumpleanos'] ?? false;
+        $mp    = array_filter([
+            $nVgn   ? "Vegano x{$nVgn}"  : '',
+            $nVeg   ? "Veg x{$nVeg}"     : '',
+            $cumple ? 'Cumple!'           : '',
+        ]);
+        $aler  = $r['alergias'] ?? '';
+        $am_bg = $aler ? $c['warn_bg'] : $rbg;
+        $am_t  = $aler ? $c['warn_t']  : $c['menu_t'];
+        $am    = $aler ? mb_substr("ALR: {$aler}", 0, 26) : mb_substr(implode(' ', $mp), 0, 26);
+        $est   = $r['estado_pago'] ?? '';
+
+        if ($cab === 'Mixta')      { $cbg = $c['mix_bg']; $ct = $c['mix_t']; }
+        elseif ($cab === 'Privada') { $cbg = $c['pri_bg']; $ct = $c['pri_t']; }
+        else                       { $cbg = $c['fam_bg']; $ct = $c['fam_t']; }
+
+        $cells = [
+            [($idx+1),                              32,  $rbg,   $c['text3']],
+            [mb_substr($r['nombre']??'—',0,23),    185, $rbg,   $c['text']],
+            [mb_substr($cab,0,9),                   78,  $cbg,   $ct],
+            [(string)$np,                           48,  $rbg,   $c['text']],
+            [mb_substr($r['paquete']??'—',0,8),    72,  $rbg,   $c['text2']],
+            [mb_substr($r['agencia']??'—',0,14),   112, $rbg,   $c['text2']],
+            [mb_substr($est,0,12),                  92,  $rbg,   ($est==='Completado'?$c['ok_t']:$c['warn_t'])],
+            [mb_substr($r['notas']??'—',0,17),     136, $rbg,   $c['text2']],
+            [$am ?: '—',                            205, $am_bg, $am_t],
+        ];
+
+        $cx = 0;
+        foreach ($cells as [$val, $cw, $cbg2, $ct2]) {
+            imagefilledrectangle($img, $cx, $ry, $cx+$cw-1, $ry+$row_h-1, $cbg2);
+            imageline($img, $cx,    $ry,          $cx,       $ry+$row_h-1, $c['border']);
+            imageline($img, $cx,    $ry+$row_h-1, $cx+$cw-1, $ry+$row_h-1, $c['border']);
+            $txt($cx+4, $ry+8, (string)$val, $ct2, 10);
+            $cx += $cw;
+        }
+        imageline($img, $W-1, $ry, $W-1, $ry+$row_h-1, $c['border']);
+        $ry += $row_h;
+    }
+    imageline($img, 0, $ry, $W-1, $ry, $c['border']);
+
+    // Pie
+    $txt(20, $ry+10, "Wolfs Acatenango · Sistema de Reservaciones · " . gmdate('d/m/Y H:i') . " GT", $c['text3'], 9);
+
+    $path = sys_get_temp_dir() . '/cuadro_' . $fecha_str . '_' . time() . '.png';
+    imagepng($img, $path, 6);
+    imagedestroy($img);
+    return $path;
+}
