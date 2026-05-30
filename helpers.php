@@ -167,6 +167,9 @@ function telegram_notify(string $msg, string $chat_id = ''): void {
     if (!defined('TELEGRAM_TOKEN') || !TELEGRAM_TOKEN) return;
     $cid = $chat_id ?: (defined('TELEGRAM_CHAT_ID') ? TELEGRAM_CHAT_ID : '');
     if (!$cid) return;
+    $fecha_gt = gmdate('d/m/Y H:i', time() + (-6 * 3600));
+    $msg = "🗓 <i>$fecha_gt (GT)</i>\n" . $msg;
+
     $url = 'https://api.telegram.org/bot' . TELEGRAM_TOKEN . '/sendMessage';
     $ch  = curl_init($url);
     curl_setopt_array($ch, [
